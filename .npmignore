@@ -1,0 +1,41 @@
+# Source files (we publish dist, not src)
+src/
+*.ts
+!*.d.ts
+tsconfig*.json
+
+# Development files
+.git/
+.gitignore
+.prettierrc
+.prettierignore
+eslint.config.js
+*.test.js
+*.spec.js
+__tests__/
+test/
+tests/
+
+# Documentation (keep LICENSE and README)
+*.md
+!README.md
+CONTRIBUTING.md
+CLA.md
+SECURITY.md
+
+# Build artifacts
+*.log
+npm-debug.log*
+.npm
+node_modules/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Temp files
+.DS_Store
+Thumbs.db

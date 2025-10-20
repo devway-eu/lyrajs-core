@@ -1,0 +1,17 @@
+import { LyraConsole } from "@/core/console/LyraConsole"
+
+import { MigrationGeneratorHelper } from "../utils"
+import {TmpManager} from "@/core/loader"
+
+
+export class GenerateMigrationCommand {
+  async execute() {
+    await TmpManager.refreshTmpEntities()
+    const migrator = new MigrationGeneratorHelper()
+    const queries = await migrator.buildCreateTableQueries()
+
+    migrator.generateMigrationFile(queries)
+
+    LyraConsole.success("Migration created", "")
+  }
+}

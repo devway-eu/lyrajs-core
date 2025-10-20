@@ -1,0 +1,32 @@
+export const sqlTypeChoices = [
+  "tinyint",
+  "smallint",
+  "mediumint",
+  "int",
+  "integer",
+  "bigint",
+  "bool",
+  "float",
+  "double",
+  "decimal",
+  "char",
+  "varchar",
+  "tinytext",
+  "text",
+  "mediumtext",
+  "longtext",
+  "json",
+  "tinyblob",
+  "blob",
+  "mediumblob",
+  "longblob",
+  "date",
+  "time",
+  "year",
+  "datetime",
+  "timestamp",
+  "enum",
+  "relation"
+]
+
+export const onDeleteChoices = ["CASCADE", "SET NULL", "NO ACTION", "RESTRICT", "SET DEFAULT"]
