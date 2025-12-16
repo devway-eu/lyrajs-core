@@ -2,6 +2,7 @@ import fs from "fs"
 import inquirer from "inquirer"
 import * as console from "node:console"
 import path from "path"
+import { pathToFileURL } from "url"
 
 import { ConsoleInputValidator, ControllerRouteType, RoutesGeneratorHelper } from "@/core/cli/utils"
 
@@ -23,7 +24,8 @@ export class CreateRoutesCommand {
       }
     ])
 
-    const controllerModule = await import(`file://${path.join(controllerFolder, `${baseController}.ts`)}`)
+    const controllerPath = path.join(controllerFolder, `${baseController}.ts`)
+    const controllerModule = await import(pathToFileURL(controllerPath).href)
 
     const ControllerClass = controllerModule[baseController]
     if (!ControllerClass) {

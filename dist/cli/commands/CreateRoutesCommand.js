@@ -1,6 +1,7 @@
 import fs from "fs";
 import inquirer from "inquirer";
 import path from "path";
+import { pathToFileURL } from "url";
 import { ConsoleInputValidator, RoutesGeneratorHelper } from "../../cli/utils/index.js";
 export class CreateRoutesCommand {
     async execute() {
@@ -17,7 +18,8 @@ export class CreateRoutesCommand {
                 choices: existingControllers
             }
         ]);
-        const controllerModule = await import(`file://${path.join(controllerFolder, `${baseController}.ts`)}`);
+        const controllerPath = path.join(controllerFolder, `${baseController}.ts`);
+        const controllerModule = await import(pathToFileURL(controllerPath).href);
         const ControllerClass = controllerModule[baseController];
         if (!ControllerClass) {
             throw new Error(`Controller ${baseController} not found`);

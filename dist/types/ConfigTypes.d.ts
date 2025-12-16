@@ -10,7 +10,7 @@ export type DbConfig = {
     password: string;
     name: string;
 };
-export type SecurityConfigKey = "jwt" | "access_control" | "role_hierarchy";
+export type SecurityConfigKey = "jwt" | "access_control" | "role_hierarchy" | "limits";
 export type SecurityConfigType = {
     jwt: {
         secret_key: string;

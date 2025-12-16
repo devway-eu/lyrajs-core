@@ -1,9 +1,11 @@
 # @lyra-js/core
 
-[![npm version](https://img.shields.io/npm/v/@lyra-js/core)](https://www.npmjs.com/package/%40lyrajs/core)
+[![npm version](https://img.shields.io/npm/v/@lyra-js/core)](https://www.npmjs.com/package/@lyrajs/core)
 [![CLA Assistant](https://cla-assistant.io/readme/badge/devway-eu/lyrajs-core)](https://cla-assistant.io/devway-eu/lyrajs-core)
 [![docs](https://img.shields.io/badge/docs-read-green)](https://lyrajs.dev)
 [![Discord](https://img.shields.io/discord/1449345012604342427?label=discord&logo=discord&logoColor=white)](https://discord.gg/cWvUh8pQNU)
+![License](https://img.shields.io/github/license/devway-eu/lyrajs-core)
+
 
 The core framework package for LyraJS - a lightweight and modern TypeScript framework for building robust APIs.
 
