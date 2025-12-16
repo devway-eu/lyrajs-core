@@ -1,6 +1,6 @@
 # @lyrajs/core
 
-[![npm version](https://img.shields.io/npm/v/%40lyrajs/core)](https://www.npmjs.com/package/%40lyrajs/core)
+[![npm version](https://img.shields.io/npm/v/%40lyra-js/core)](https://www.npmjs.com/package/%40lyrajs/core)
 [![CLA Assistant](https://cla-assistant.io/readme/badge/devway-eu/lyrajs-core)](https://cla-assistant.io/devway-eu/lyrajs-core)
 [![docs](https://img.shields.io/badge/docs-read-green)](https://lyrajs.dev)
 [![Discord](https://img.shields.io/discord/1449345012604342427?label=discord&logo=discord&logoColor=white)](https://discord.gg/cWvUh8pQNU)
