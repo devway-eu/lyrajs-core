@@ -1,11 +1,20 @@
 #!/usr/bin/env node
+import { spawn } from "child_process";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-import { register } from "node:module";
-import { pathToFileURL } from "node:url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Register tsx for TypeScript support
-register("tsx/esm", pathToFileURL("./"));
+// Use tsx to run the Kernel with TypeScript support
+const tsxPath = join(__dirname, "../node_modules/.bin/tsx");
+const kernelPath = join(__dirname, "../dist/cli/Kernel.js");
 
-import { Kernel } from "../dist/cli/Kernel.js";
+const child = spawn(process.platform === "win32" ? "tsx.cmd" : "tsx", [kernelPath, ...process.argv.slice(2)], {
+  stdio: "inherit",
+  shell: process.platform === "win32",
+});
 
-Kernel.run(process.argv);
+child.on("exit", (code) => {
+  process.exit(code || 0);
+});
