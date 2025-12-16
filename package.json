@@ -1,6 +1,6 @@
 {
   "name": "@lyra-js/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
@@ -22,7 +22,15 @@
     "prepublishOnly": "npm run build"
   },
   "description": "A lightweight TypeScript framework for building APIs with ORM, CLI tools, and authentication",
-  "keywords": ["framework", "typescript", "api", "orm", "mysql", "express", "lyrajs"],
+  "keywords": [
+    "framework",
+    "typescript",
+    "api",
+    "orm",
+    "mysql",
+    "express",
+    "lyrajs"
+  ],
   "author": "Matthieu Fergola & Anthony Dewitte",
   "license": "GPL-3.0",
   "repository": {
