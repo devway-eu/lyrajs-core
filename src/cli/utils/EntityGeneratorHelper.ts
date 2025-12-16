@@ -11,7 +11,7 @@ export class EntityGeneratorHelper {
   }
 
   static importsString = () => {
-    return `import { Column, Entity, Table } from "@lyrajs/core"\n\n`
+    return `import { Column, Entity, Table } from "@lyra-js/core"\n\n`
   }
 
   static tableDecorator = () => {

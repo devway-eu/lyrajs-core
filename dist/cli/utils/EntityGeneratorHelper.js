@@ -8,7 +8,7 @@ export class EntityGeneratorHelper {
         column: " })"
     };
     static importsString = () => {
-        return `import { Column, Entity, Table } from "@lyrajs/core"\n\n`;
+        return `import { Column, Entity, Table } from "@lyra-js/core"\n\n`;
     };
     static tableDecorator = () => {
         return this.starts.table + this.ends.table + "\n";

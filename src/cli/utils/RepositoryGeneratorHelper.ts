@@ -1,7 +1,7 @@
 export class RepositoryGeneratorHelper {
   static importsString = (entityName: string) => {
     return (
-      `import { Repository } from "@lyrajs/core"\n\n` +
+      `import { Repository } from "@lyra-js/core"\n\n` +
       `import { ${entityName} } from "@entity/${entityName}"\n\n`
     )
   }
