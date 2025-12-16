@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://lyrajs.dev/docs
+    about: Check the documentation for guides, API reference, and examples
+  - name: 💬 GitHub Discussions
+    url: https://github.com/devway-eu/lyrajs-core/discussions
+    about: Ask questions, share ideas, and discuss LyraJS with the community
+  - name: 📧 Contact Support
+    url: mailto:matthieu@dev-way.eu
+    about: Contact the maintainers directly for sensitive issues

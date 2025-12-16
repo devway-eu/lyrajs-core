@@ -1,0 +1,90 @@
+name: Bug Report
+description: Report a bug in LyraJS Core
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug in LyraJS Core!
+
+        Please fill out the sections below to help us understand and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Create project with 'npm create lyrajs'
+        2. Add entity with 'npx maestro make:entity'
+        3. Run 'npx maestro make:migration'
+        4. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: The migration should be created successfully
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: Error message or unexpected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Your environment details
+      placeholder: |
+        - @lyrajs/core version: 1.0.0
+        - Node.js version: 18.17.0
+        - npm version: 9.6.7
+        - OS: Windows 11 / macOS 13 / Ubuntu 22.04
+        - Database: MySQL 8.0 / MariaDB 10.11
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Paste any relevant error logs or stack traces
+      render: shell
+      placeholder: |
+        Paste error logs here...
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Code Sample
+      description: If applicable, paste relevant code that triggers the bug
+      render: typescript
+      placeholder: |
+        // Paste code here...
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (screenshots, related issues, etc.)
