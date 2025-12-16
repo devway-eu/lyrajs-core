@@ -34,11 +34,19 @@ export class Config {
     }
 
     if (configFileName === "security") {
-      throw new Error("Security config access is not allowed")
+      throw new Error(
+        'Direct security config access is not allowed. Use SecurityConfig class instead:\n' +
+        'import { SecurityConfig } from "@lyra-js/core"\n' +
+        'const securityConfig = new SecurityConfig().getConfig()'
+      )
     }
 
     if (configFileName === "database") {
-      throw new Error("Database config access is not allowed")
+      throw new Error(
+        'Direct database config access is not allowed. Use DatabaseConfig class instead:\n' +
+        'import { DatabaseConfig } from "@lyra-js/core"\n' +
+        'const databaseConfig = new DatabaseConfig().getConfig()'
+      )
     }
 
     // if (!key) {
