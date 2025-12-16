@@ -1,4 +1,4 @@
-# @lyrajs/core
+# @lyra-js/core
 
 [![npm version](https://img.shields.io/npm/v/@lyra-js/core)](https://www.npmjs.com/package/%40lyrajs/core)
 [![CLA Assistant](https://cla-assistant.io/readme/badge/devway-eu/lyrajs-core)](https://cla-assistant.io/devway-eu/lyrajs-core)
@@ -9,11 +9,11 @@ The core framework package for LyraJS - a lightweight and modern TypeScript fram
 
 ## About
 
-`@lyrajs/core` is the heart of the LyraJS framework. It provides all the essential building blocks, utilities, and tools needed to build modern, type-safe APIs with TypeScript. This package is designed to be installed via the LyraJS project template and contains the framework's core functionality.
+`@lyra-js/core` is the heart of the LyraJS framework. It provides all the essential building blocks, utilities, and tools needed to build modern, type-safe APIs with TypeScript. This package is designed to be installed via the LyraJS project template and contains the framework's core functionality.
 
 ## Role in the Framework
 
-`@lyrajs/core` serves as the foundation layer that powers LyraJS applications. It provides:
+`@lyra-js/core` serves as the foundation layer that powers LyraJS applications. It provides:
 
 - **Core abstractions** - Base classes and interfaces for entities, repositories, and controllers
 - **CLI tooling** - The Maestro CLI for code generation and database management
@@ -82,7 +82,7 @@ The core package is published to npm and installed as a dependency in LyraJS pro
 
 ## Installation
 
-`@lyrajs/core` is typically installed automatically when creating a new LyraJS project:
+`@lyra-js/core` is typically installed automatically when creating a new LyraJS project:
 
 ```bash
 npm create lyrajs
@@ -91,7 +91,7 @@ npm create lyrajs
 For manual installation in an existing project:
 
 ```bash
-npm install @lyrajs/core
+npm install @lyra-js/core
 ```
 
 ## Usage
@@ -104,7 +104,7 @@ For complete usage documentation, tutorials, and examples, please refer to:
 
 ## Contributing
 
-We welcome contributions to `@lyrajs/core`! Here's how you can help:
+We welcome contributions to `@lyra-js/core`! Here's how you can help:
 
 ### Getting Started
 
@@ -130,7 +130,7 @@ We welcome contributions to `@lyrajs/core`! Here's how you can help:
 
    # In a test project
    cd /path/to/test-project
-   npm link @lyrajs/core
+   npm link @lyra-js/core
    ```
 
 ### Contribution Guidelines
@@ -283,7 +283,7 @@ Main files:
 ## Links
 
 - **GitHub Repository**: [github.com/devway-eu/lyrajs-core](https://github.com/devway-eu/lyrajs-core)
-- **npm Package**: [npmjs.com/package/@lyrajs/core](https://www.npmjs.com/package/@lyrajs/core)
+- **npm Package**: [npmjs.com/package/@lyra-js/core](https://www.npmjs.com/package/@lyra-js/core)
 - **Documentation**: [lyrajs.dev](https://lyrajs.dev)
 - **Main Repository**: [github.com/devway-eu/lyrajs](https://github.com/devway-eu/lyrajs)
 - **Issue Tracker**: [github.com/devway-eu/lyrajs-core/issues](https://github.com/devway-eu/lyrajs-core/issues)
