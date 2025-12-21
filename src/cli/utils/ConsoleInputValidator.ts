@@ -3,7 +3,7 @@ export class ConsoleInputValidator {
     entityName: /^[A-Z][a-z]*(?:[A-Z][a-z]*)*$/,
     controllerName: /^[A-Z][a-z]*(?:[A-Z][a-z]*)*$/,
     propertyName: /^[a-z]+(_[a-z]+)*$/,
-    routePathEnd: /^\/[a-zA-Z0-9\/_:?=&-]*$/
+    routePathEnd: /^\/[a-zA-Z0-9\/_:-]*$/
   }
 
   public static isEntityNameValid(input: string): boolean | string {
