@@ -4,7 +4,6 @@ import mysql from "mysql2/promise"
 import { LyraConsole } from "@/core/console/LyraConsole"
 
 dotenv.config()
-dotenv.config()
 
 export class CreateDatabaseCommand {
   async execute() {

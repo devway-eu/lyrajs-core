@@ -4,7 +4,7 @@ import { SecurityConfig } from "@/core/config"
 import { UnauthorizedException } from "@/core/errors"
 import { AccessControl } from "@/core/security"
 import { AuthenticatedRequest, ProtectedRouteType } from "@/core/types"
-// import { userRepository } from "@repository/UserRepository"
+
 import { userRepository } from "@/core/loader"
 export const accessMiddleware = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {
   try {

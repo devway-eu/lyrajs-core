@@ -3,6 +3,7 @@ src/
 *.ts
 !*.d.ts
 tsconfig*.json
+package-lock.json
 
 # Development files
 .git/

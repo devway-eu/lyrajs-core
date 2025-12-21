@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import { LyraConsole } from "../../console/LyraConsole.js";
 dotenv.config();
-dotenv.config();
 export class CreateDatabaseCommand {
     async execute() {
         const connection = mysql.createPool({

@@ -1,7 +1,6 @@
 import { SecurityConfig } from "../../config/index.js";
 import { UnauthorizedException } from "../../errors/index.js";
 import { AccessControl } from "../../security/index.js";
-// import { userRepository } from "@repository/UserRepository"
 import { userRepository } from "../../loader/index.js";
 export const accessMiddleware = async (req, res, next) => {
     try {
