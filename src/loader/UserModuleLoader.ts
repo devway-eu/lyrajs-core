@@ -47,7 +47,15 @@ class UserModuleLoader {
 
                 // Extract just the filename without path and extension
                 const fileName = path.basename(modulePath)
-                return module[fileName] || undefined
+
+                // For repositories, convert to camelCase (first letter lowercase)
+                // For entities and other modules, keep PascalCase
+                let exportName = fileName
+                if (modulePath.startsWith('repository/')) {
+                    exportName = fileName.charAt(0).toLowerCase() + fileName.slice(1)
+                }
+
+                return module[exportName] || undefined
             } catch (error) {
                 // File doesn't exist, import failed, or timeout - try next extension
                 continue
