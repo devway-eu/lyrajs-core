@@ -26,7 +26,15 @@ export const httpRequestMiddleware = async (req: Request, res: Response, next: N
     // Try to get authenticated user (don't throw error if not authenticated)
     (req as any).user = null
     try {
-      const token = (req as any).cookies?.Token
+      // Try to get token from cookies first, then from Authorization header
+      let token = (req as any).cookies?.Token
+      if (!token) {
+        const authHeader = req.headers.authorization
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          token = authHeader.substring(7)
+        }
+      }
+
       if (token) {
         const decoded = AccessControl.isTokenValid(token)
         if (userRepository && decoded?.id) {

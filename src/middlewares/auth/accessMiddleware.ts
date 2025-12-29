@@ -16,7 +16,14 @@ export const accessMiddleware = async (req: AuthenticatedRequest<Request>, res: 
       return next()
     }
 
-    const token = req.cookies.Token
+    // Try to get token from cookies first, then from Authorization header
+    let token = req.cookies.Token
+    if (!token) {
+      const authHeader = req.headers.authorization
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7)
+      }
+    }
 
     if (!token) throw new UnauthorizedException("No token provided")
 

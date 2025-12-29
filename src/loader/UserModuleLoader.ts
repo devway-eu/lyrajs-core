@@ -28,7 +28,9 @@ class UserModuleLoader {
         try {
             await fs.access(fullPath)
             const module = await import(`file://${fullPath}`)
-            const className = modulePath.replace('.ts', '').replace('.js', '')
+            // Extract just the filename without path and extension
+            const fileName = path.basename(modulePath)
+            const className = fileName.replace('.ts', '').replace('.js', '')
             return module[className]
         } catch (error) {
             // console.error(`Failed to load user module "${modulePath}" from "${fullPath}": ${error}`)
