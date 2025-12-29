@@ -5,14 +5,24 @@ import { AccessControl } from "@/core/security"
 import { RouterHelper } from "@/core/security"
 import { getUserRepository } from "@/core/loader"
 
+// Helper function to match route patterns with parameters
+const matchRoute = (pattern: string, path: string): boolean => {
+  // Convert route pattern to regex (e.g., "/user/:id" -> /^\/user\/[^\/]+$/)
+  const regexPattern = pattern
+    .replace(/:[^/]+/g, '[^/]+') // Replace :param with regex
+    .replace(/\//g, '\\/') // Escape slashes
+  const regex = new RegExp(`^${regexPattern}$`)
+  return regex.test(path)
+}
+
 export const httpRequestMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Check if route exists
     const routerRoutes = RouterHelper.listRoutes()
     const routeWithMethod = routerRoutes.find(
-      (route) => route.path === req.originalUrl && route.httpMethod === req.method
+      (route) => matchRoute(route.path, req.originalUrl) && route.httpMethod === req.method
     )
-    const routeExists = routerRoutes.find((route) => route.path === req.originalUrl)
+    const routeExists = routerRoutes.find((route) => matchRoute(route.path, req.originalUrl))
 
     // Handle route not found or method not allowed
     if (!routeWithMethod) {

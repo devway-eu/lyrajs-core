@@ -2,12 +2,21 @@ import { MethodNotAllowedException, NotFoundException } from "../../errors/index
 import { AccessControl } from "../../security/index.js";
 import { RouterHelper } from "../../security/index.js";
 import { getUserRepository } from "../../loader/index.js";
+// Helper function to match route patterns with parameters
+const matchRoute = (pattern, path) => {
+    // Convert route pattern to regex (e.g., "/user/:id" -> /^\/user\/[^\/]+$/)
+    const regexPattern = pattern
+        .replace(/:[^/]+/g, '[^/]+') // Replace :param with regex
+        .replace(/\//g, '\\/'); // Escape slashes
+    const regex = new RegExp(`^${regexPattern}$`);
+    return regex.test(path);
+};
 export const httpRequestMiddleware = async (req, res, next) => {
     try {
         // Check if route exists
         const routerRoutes = RouterHelper.listRoutes();
-        const routeWithMethod = routerRoutes.find((route) => route.path === req.originalUrl && route.httpMethod === req.method);
-        const routeExists = routerRoutes.find((route) => route.path === req.originalUrl);
+        const routeWithMethod = routerRoutes.find((route) => matchRoute(route.path, req.originalUrl) && route.httpMethod === req.method);
+        const routeExists = routerRoutes.find((route) => matchRoute(route.path, req.originalUrl));
         // Handle route not found or method not allowed
         if (!routeWithMethod) {
             if (routeExists) {
