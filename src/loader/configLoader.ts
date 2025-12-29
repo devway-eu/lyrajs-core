@@ -1,5 +1,5 @@
 import { readdir, readFile, writeFile, unlink } from 'fs/promises'
-import { resolve, extname, join } from 'path'
+import { resolve } from 'path'
 import ts from 'typescript'
 import { pathToFileURL } from 'url'
 

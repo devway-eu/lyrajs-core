@@ -14,7 +14,7 @@ export class MigrateMigrationCommand {
                 return parseInt(migration.replace("migration_", "").replace(".sql", ""));
             });
             const mostRecetMigration = `migration_${Math.max(...timestampMigrations)}.sql`;
-            const migrationFullSql = fs.readFileSync(path.join(__dirname, "..", "..", "..", "migrations", mostRecetMigration), "utf8");
+            const migrationFullSql = fs.readFileSync(path.join(process.cwd(), "migrations", mostRecetMigration), "utf8");
             const migrationSqlQueries = migrationFullSql.split(";\n");
             migrationSqlQueries.pop();
             for (const query of migrationSqlQueries) {
@@ -25,7 +25,7 @@ export class MigrateMigrationCommand {
         process.exit(0);
     }
     async listMigrationsFiles() {
-        const migrationDirectory = path.join(__dirname, "..", "..", "..", "migrations");
+        const migrationDirectory = path.join(process.cwd(), "migrations");
         return fs.readdirSync(migrationDirectory);
     }
 }

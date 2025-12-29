@@ -5,13 +5,12 @@ import * as process from "node:process";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { DatabaseConfig } from "../../config/index.js";
-import { __lyraRootDir } from "../../index.js";
 const dbConfig = new DatabaseConfig().getConfig();
 export class MigrationGeneratorHelper {
     constructor() { }
     async getEntities() {
         const entities = [];
-        const entityFolder = resolve(__lyraRootDir, ".lyra-cache", "entity");
+        const entityFolder = resolve(process.cwd(), "src", "entity");
         const files = fs.readdirSync(entityFolder).filter((f) => f.endsWith(".ts") || f.endsWith(".js"));
         for (const file of files) {
             const modulePath = path.join(entityFolder, file);

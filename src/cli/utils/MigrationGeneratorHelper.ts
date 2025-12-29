@@ -10,7 +10,6 @@ import { DatabaseConfig } from "@/core/config"
 import { Entity } from "@/core/orm/Entity"
 import { ColumnType } from "@/core/orm/types"
 import { StdFunction } from "@/core/types/StandardTypes"
-import {__lyraRootDir} from "@/core/index";
 
 const dbConfig = new DatabaseConfig().getConfig()
 
@@ -20,7 +19,7 @@ export class MigrationGeneratorHelper<T extends object> {
   private async getEntities() {
     const entities: Array<Entity<T> | (new () => T)> = []
 
-    const entityFolder = resolve(__lyraRootDir, ".lyra-cache", "entity")
+    const entityFolder = resolve(process.cwd(), "src", "entity")
     const files = fs.readdirSync(entityFolder).filter((f) => f.endsWith(".ts") || f.endsWith(".js"))
 
     for (const file of files) {

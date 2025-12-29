@@ -19,7 +19,7 @@ export class MigrateMigrationCommand {
       const mostRecetMigration = `migration_${Math.max(...timestampMigrations)}.sql`
 
       const migrationFullSql = fs.readFileSync(
-        path.join(__dirname, "..", "..", "..", "migrations", mostRecetMigration),
+        path.join(process.cwd(), "migrations", mostRecetMigration),
         "utf8"
       )
 
@@ -36,7 +36,7 @@ export class MigrateMigrationCommand {
   }
 
   private async listMigrationsFiles() {
-    const migrationDirectory = path.join(__dirname, "..", "..", "..", "migrations")
+    const migrationDirectory = path.join(process.cwd(), "migrations")
 
     return fs.readdirSync(migrationDirectory)
   }
