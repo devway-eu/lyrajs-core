@@ -55,7 +55,29 @@ class UserModuleLoader {
                     exportName = fileName.charAt(0).toLowerCase() + fileName.slice(1)
                 }
 
-                return module[exportName] || undefined
+                // Try to get the export in multiple ways
+                // 1. Try the expected export name (e.g., 'userRepository')
+                if (module[exportName]) {
+                    return module[exportName]
+                }
+
+                // 2. Try PascalCase version (e.g., 'UserRepository')
+                if (module[fileName]) {
+                    return module[fileName]
+                }
+
+                // 3. Try default export
+                if (module.default) {
+                    return module.default
+                }
+
+                // 4. Return first non-default export
+                const exports = Object.keys(module).filter(key => key !== 'default' && key !== '__esModule')
+                if (exports.length > 0) {
+                    return module[exports[0]]
+                }
+
+                return undefined
             } catch (error) {
                 // File doesn't exist, import failed, or timeout - try next extension
                 continue
