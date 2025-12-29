@@ -34,7 +34,9 @@ class UserModuleLoader {
                 await fs.access(fullPath)
 
                 // File exists, try to import it
-                const module = await import(`file://${fullPath}`)
+                // Convert Windows path to proper file:// URL format
+                const fileUrl = new URL(`file:///${fullPath.replace(/\\/g, '/')}`).href
+                const module = await import(fileUrl)
                 // Extract just the filename without path and extension
                 const fileName = path.basename(modulePath)
                 return module[fileName] || undefined
