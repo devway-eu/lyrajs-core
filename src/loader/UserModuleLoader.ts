@@ -36,13 +36,13 @@ class UserModuleLoader {
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000))
                 ])
 
-                // File exists, try to import it with timeout
+                // File exists, try to import it (increased timeout for tsx compilation)
                 // Convert Windows path to proper file:// URL format
                 const fileUrl = new URL(`file:///${fullPath.replace(/\\/g, '/')}`).href
 
                 const module = await Promise.race([
                     import(fileUrl),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Import timeout')), 2000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Import timeout')), 10000))
                 ])
 
                 // Extract just the filename without path and extension
