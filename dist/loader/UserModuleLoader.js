@@ -8,13 +8,13 @@ class UserModuleLoader {
         this.srcRoot = path.resolve(this.projectRoot, 'src');
     }
     async loadProjectEntity(entityName) {
-        return this.loadUserModule(`entity/${entityName}.ts`);
+        return this.loadUserModule(`entity/${entityName}.js`);
     }
     async loadProjectRepository(repositoryName) {
-        return this.loadUserModule(`repository/${repositoryName}.ts`);
+        return this.loadUserModule(`repository/${repositoryName}.js`);
     }
     async loadProjectFixtures() {
-        return this.loadUserModule(`fixtures/AppFixtures.ts`);
+        return this.loadUserModule(`fixtures/AppFixtures.js`);
     }
     async loadUserModule(modulePath) {
         const fullPath = path.resolve(this.srcRoot, modulePath);

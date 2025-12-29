@@ -11,15 +11,15 @@ class UserModuleLoader {
     }
 
     async loadProjectEntity(entityName: string) {
-        return this.loadUserModule(`entity/${entityName}.ts`)
+        return this.loadUserModule(`entity/${entityName}.js`)
     }
 
     async loadProjectRepository(repositoryName: string) {
-        return this.loadUserModule(`repository/${repositoryName}.ts`)
+        return this.loadUserModule(`repository/${repositoryName}.js`)
     }
 
     async loadProjectFixtures() {
-        return this.loadUserModule(`fixtures/AppFixtures.ts`)
+        return this.loadUserModule(`fixtures/AppFixtures.js`)
     }
 
     private async loadUserModule(modulePath: string) {
