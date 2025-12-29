@@ -17,20 +17,28 @@ class UserModuleLoader {
         return this.loadUserModule(`fixtures/AppFixtures`);
     }
     async loadUserModule(modulePath) {
-        // Try .ts first (development), then .js (production)
-        const extensions = ['.ts', '.js'];
+        // Try .js first (production/compiled), then .ts (development with tsx)
+        const extensions = ['.js', '.ts'];
         for (const ext of extensions) {
             const fullPath = path.resolve(this.srcRoot, modulePath + ext);
             try {
+                // Check if file exists first
                 await fs.access(fullPath);
+            }
+            catch {
+                // File doesn't exist, try next extension
+                continue;
+            }
+            // File exists, try to import it
+            try {
                 const module = await import(`file://${fullPath}`);
                 // Extract just the filename without path and extension
                 const fileName = path.basename(modulePath);
                 return module[fileName];
             }
             catch (error) {
-                // Try next extension
-                continue;
+                // Import failed (e.g., syntax error), return undefined
+                return undefined;
             }
         }
         // Neither .ts nor .js found
