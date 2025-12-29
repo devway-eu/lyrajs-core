@@ -30,6 +30,11 @@ export class NotFoundException extends HttpException {
         super(resource ? `${resource} not found` : `Resource not found`, HTTP_STATUS.NOT_FOUND);
     }
 }
+export class MethodNotAllowedException extends HttpException {
+    constructor(message = "Method Not Allowed", errors) {
+        super(message, HTTP_STATUS.METHOD_NOT_ALLOWED, errors);
+    }
+}
 export class InternalServerErrorException extends HttpException {
     constructor(message = "Internal Server Error", errors) {
         super(message, HTTP_STATUS.INTERNAL_SERVER_ERROR, errors);

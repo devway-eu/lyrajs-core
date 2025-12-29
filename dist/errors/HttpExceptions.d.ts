@@ -17,6 +17,9 @@ export declare class ForbiddenException extends HttpException {
 export declare class NotFoundException extends HttpException {
     constructor(resource?: string);
 }
+export declare class MethodNotAllowedException extends HttpException {
+    constructor(message?: string, errors?: Error);
+}
 export declare class InternalServerErrorException extends HttpException {
     constructor(message?: string, errors?: Error);
 }
