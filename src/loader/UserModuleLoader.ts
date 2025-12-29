@@ -30,18 +30,26 @@ class UserModuleLoader {
             const fullPath = path.resolve(this.srcRoot, modulePath + ext)
 
             try {
-                // Check if file exists first
-                await fs.access(fullPath)
+                // Check if file exists first (with timeout)
+                await Promise.race([
+                    fs.access(fullPath),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000))
+                ])
 
-                // File exists, try to import it
+                // File exists, try to import it with timeout
                 // Convert Windows path to proper file:// URL format
                 const fileUrl = new URL(`file:///${fullPath.replace(/\\/g, '/')}`).href
-                const module = await import(fileUrl)
+
+                const module = await Promise.race([
+                    import(fileUrl),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Import timeout')), 2000))
+                ])
+
                 // Extract just the filename without path and extension
                 const fileName = path.basename(modulePath)
                 return module[fileName] || undefined
             } catch (error) {
-                // File doesn't exist or import failed, try next extension
+                // File doesn't exist, import failed, or timeout - try next extension
                 continue
             }
         }
