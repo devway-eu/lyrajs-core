@@ -19,28 +19,28 @@ export const httpRequestMiddleware = async (req, res, next) => {
         }
         // Try to get authenticated user (don't throw error if not authenticated)
         req.user = null;
-        try {
-            // Try to get token from cookies first, then from Authorization header
-            let token = req.cookies?.Token;
-            if (!token) {
-                const authHeader = req.headers.authorization;
-                if (authHeader && authHeader.startsWith('Bearer ')) {
-                    token = authHeader.substring(7);
-                }
+        // Try to get token from cookies first, then from Authorization header
+        let token = req.cookies?.Token;
+        if (!token) {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.substring(7);
             }
-            if (token) {
+        }
+        if (token && userRepository) {
+            try {
                 const decoded = AccessControl.isTokenValid(token);
-                if (userRepository && decoded?.id) {
+                if (decoded?.id) {
                     const user = await userRepository.find(decoded.id);
                     if (user) {
                         req.user = user;
                     }
                 }
             }
-        }
-        catch (error) {
-            // Silently fail - user remains null
-            req.user = null;
+            catch (error) {
+                // Token invalid/expired or user not found - silently continue
+                req.user = null;
+            }
         }
         next();
     }
