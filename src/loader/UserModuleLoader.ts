@@ -11,30 +11,38 @@ class UserModuleLoader {
     }
 
     async loadProjectEntity(entityName: string) {
-        return this.loadUserModule(`entity/${entityName}.js`)
+        return this.loadUserModule(`entity/${entityName}`)
     }
 
     async loadProjectRepository(repositoryName: string) {
-        return this.loadUserModule(`repository/${repositoryName}.js`)
+        return this.loadUserModule(`repository/${repositoryName}`)
     }
 
     async loadProjectFixtures() {
-        return this.loadUserModule(`fixtures/AppFixtures.js`)
+        return this.loadUserModule(`fixtures/AppFixtures`)
     }
 
     private async loadUserModule(modulePath: string) {
-       const fullPath = path.resolve(this.srcRoot, modulePath)
+        // Try .ts first (development), then .js (production)
+        const extensions = ['.ts', '.js']
 
-        try {
-            await fs.access(fullPath)
-            const module = await import(`file://${fullPath}`)
-            // Extract just the filename without path and extension
-            const fileName = path.basename(modulePath)
-            const className = fileName.replace('.ts', '').replace('.js', '')
-            return module[className]
-        } catch (error) {
-            // console.error(`Failed to load user module "${modulePath}" from "${fullPath}": ${error}`)
+        for (const ext of extensions) {
+            const fullPath = path.resolve(this.srcRoot, modulePath + ext)
+
+            try {
+                await fs.access(fullPath)
+                const module = await import(`file://${fullPath}`)
+                // Extract just the filename without path and extension
+                const fileName = path.basename(modulePath)
+                return module[fileName]
+            } catch (error) {
+                // Try next extension
+                continue
+            }
         }
+
+        // Neither .ts nor .js found
+        return undefined
     }
 }
 
