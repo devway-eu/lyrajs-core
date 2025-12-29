@@ -1,4 +1,5 @@
 export { Lyra } from "./configLoader.js";
-export declare const AppFixtures: any;
-export declare const User: any;
-export declare const userRepository: any;
+declare let AppFixtures: any;
+declare let User: any;
+declare let userRepository: any;
+export { AppFixtures, User, userRepository };

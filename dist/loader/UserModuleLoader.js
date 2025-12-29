@@ -24,24 +24,18 @@ class UserModuleLoader {
             try {
                 // Check if file exists first
                 await fs.access(fullPath);
-            }
-            catch {
-                // File doesn't exist, try next extension
-                continue;
-            }
-            // File exists, try to import it
-            try {
+                // File exists, try to import it
                 const module = await import(`file://${fullPath}`);
                 // Extract just the filename without path and extension
                 const fileName = path.basename(modulePath);
-                return module[fileName];
+                return module[fileName] || undefined;
             }
             catch (error) {
-                // Import failed (e.g., syntax error), return undefined
-                return undefined;
+                // File doesn't exist or import failed, try next extension
+                continue;
             }
         }
-        // Neither .ts nor .js found
+        // Neither .ts nor .js found or imports failed
         return undefined;
     }
 }
