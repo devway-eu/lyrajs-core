@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express"
 import { MethodNotAllowedException, NotFoundException } from "@/core/errors"
 import { AccessControl } from "@/core/security"
 import { RouterHelper } from "@/core/security"
-import { userRepository } from "@/core/loader"
+import { getUserRepository } from "@/core/loader"
 
 export const httpRequestMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -35,13 +35,16 @@ export const httpRequestMiddleware = async (req: Request, res: Response, next: N
       }
     }
 
-    if (token && userRepository) {
+    if (token) {
       try {
-        const decoded = AccessControl.isTokenValid(token)
-        if (decoded?.id) {
-          const user = await userRepository.find(decoded.id)
-          if (user) {
-            (req as any).user = user
+        const userRepository = await getUserRepository()
+        if (userRepository) {
+          const decoded = AccessControl.isTokenValid(token)
+          if (decoded?.id) {
+            const user = await userRepository.find(decoded.id)
+            if (user) {
+              (req as any).user = user
+            }
           }
         }
       } catch (error) {

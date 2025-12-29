@@ -1,7 +1,7 @@
 import { SecurityConfig } from "../../config/index.js";
 import { UnauthorizedException } from "../../errors/index.js";
 import { AccessControl } from "../../security/index.js";
-import { userRepository } from "../../loader/index.js";
+import { getUserRepository } from "../../loader/index.js";
 export const accessMiddleware = async (req, res, next) => {
     try {
         const routePath = req.originalUrl;
@@ -22,6 +22,9 @@ export const accessMiddleware = async (req, res, next) => {
             throw new UnauthorizedException("No token provided");
         try {
             const decoded = AccessControl.isTokenValid(token);
+            const userRepository = await getUserRepository();
+            if (!userRepository)
+                throw new UnauthorizedException("Repository not available");
             const user = await userRepository.find(decoded.id);
             if (!user)
                 throw new UnauthorizedException("Invalid token");

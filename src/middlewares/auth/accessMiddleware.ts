@@ -5,7 +5,7 @@ import { UnauthorizedException } from "@/core/errors"
 import { AccessControl } from "@/core/security"
 import { AuthenticatedRequest, ProtectedRouteType } from "@/core/types"
 
-import { userRepository } from "@/core/loader"
+import { getUserRepository } from "@/core/loader"
 export const accessMiddleware = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {
   try {
     const routePath = req.originalUrl
@@ -29,6 +29,9 @@ export const accessMiddleware = async (req: AuthenticatedRequest<Request>, res: 
 
     try {
       const decoded = AccessControl.isTokenValid(token)
+      const userRepository = await getUserRepository()
+
+      if (!userRepository) throw new UnauthorizedException("Repository not available")
 
       const user = await userRepository.find(decoded.id)
 
