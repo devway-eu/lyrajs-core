@@ -25,8 +25,9 @@ export class ControllerGeneratorHelper {
 
     const repository = `${controller.baseEntity?.toLowerCase()}Repository`
 
-    controllerCodeContent += `import { NextFunction, Request, Response } from "express"\n\n`
-    controllerCodeContent += `import { ${controller.baseEntity?.toLowerCase()}Repository } from "@repository/${controller.baseEntity}Repository"\n\n`
+    controllerCodeContent += `import {NextFunction, Request, Response} from "express"\n\n`
+    controllerCodeContent += `import {AuthenticatedRequest} from "@lyra-js/core"\n\n`
+    controllerCodeContent += `import {${controller.baseEntity?.toLowerCase()}Repository} from "@repository/${controller.baseEntity}Repository"\n\n`
     controllerCodeContent += `export class ${controller.name} {\n`
     controllerCodeContent += `  static list = async (req: Request, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
@@ -36,7 +37,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static read = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static read = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      const { id } = req.params\n`
     controllerCodeContent += `      const data = await ${repository}.find(id)\n`
@@ -45,7 +46,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static create = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static create = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      const data = req.body\n`
     controllerCodeContent += `      await ${repository}.save(data)\n`
@@ -54,7 +55,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static update = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static update = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      const data = req.body\n`
     controllerCodeContent += `      const ${controller.baseEntity?.toLowerCase()} = await ${repository}.find(data.id)\n`
@@ -65,7 +66,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static delete = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static delete = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      const { id } = req.params\n`
     controllerCodeContent += `      const ${controller.baseEntity?.toLowerCase()} = await ${repository}.find(id)\n`
@@ -83,37 +84,38 @@ export class ControllerGeneratorHelper {
 
   private static getBlankControllerCode(controller: ControllerObjType) {
     let controllerCodeContent = ``
-    controllerCodeContent += `import { NextFunction, Request, Response } from "express"\n\n`
+    controllerCodeContent += `import {NextFunction, Request, Response} from "express"\n\n`
+    controllerCodeContent += `import {AuthenticatedRequest} from "@lyra-js/core"\n\n`
     controllerCodeContent += `export class ${controller.name} {\n`
-    controllerCodeContent += `  static list = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static list = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static read = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static read = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static create = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static create = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static update = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static update = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
     controllerCodeContent += `      next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
-    controllerCodeContent += `  static delete = async (req: Request, res: Response, next: NextFunction) => {\n`
+    controllerCodeContent += `  static delete = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
@@ -126,7 +128,7 @@ export class ControllerGeneratorHelper {
 
   private static getTotallyBlankControllerCode(controller: ControllerObjType) {
     let controllerCodeContent = ``
-    controllerCodeContent += `import { NextFunction, Request, Response } from "express"\n\n`
+    controllerCodeContent += `import {NextFunction, Request, Response} from "express"\n\n`
     controllerCodeContent += `export class ${controller.name} {\n`
     controllerCodeContent += `  \n`
     controllerCodeContent += `}\n`

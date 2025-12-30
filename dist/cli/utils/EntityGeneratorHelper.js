@@ -102,5 +102,20 @@ export class EntityGeneratorHelper {
         entityCodeContent += `}` + `\n`;
         return entityCodeContent;
     }
+    static addPropertiesToExistingEntity(existingContent, newProperties) {
+        let newPropertiesCode = `\n`;
+        for (const prop of newProperties) {
+            newPropertiesCode += this.propertyWithDecorator(prop);
+        }
+        const constructorRegex = /\s+constructor\(/;
+        const constructorMatch = existingContent.match(constructorRegex);
+        if (!constructorMatch || constructorMatch.index === undefined) {
+            throw new Error("Could not find constructor in entity file");
+        }
+        // Insert new properties before the constructor
+        const beforeConstructor = existingContent.substring(0, constructorMatch.index);
+        const fromConstructor = existingContent.substring(constructorMatch.index);
+        return beforeConstructor + newPropertiesCode + fromConstructor;
+    }
 }
 //# sourceMappingURL=EntityGeneratorHelper.js.map

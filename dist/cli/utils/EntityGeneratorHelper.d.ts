@@ -15,4 +15,5 @@ export declare class EntityGeneratorHelper {
     static propertyString: (property: ColumnType) => string;
     static propertyWithDecorator: (property: ColumnType) => string;
     static getFullEntityCode(entityName: string, properties: ColumnType[]): string;
+    static addPropertiesToExistingEntity(existingContent: string, newProperties: ColumnType[]): string;
 }
