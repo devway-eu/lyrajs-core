@@ -83,4 +83,20 @@ export class AccessControl {
         algorithm: securityConfig.jwt.algorithm
     })
   }
+
+  static hasRoleHigherThan(user: typeof User, role: string): boolean {
+    if (!user || !user.role) return false
+
+    const roleMap = AccessControl.getRoleMap()
+    const userInheritedRoles = roleMap[user.role]
+
+    if (user.role === role) return false
+
+    return userInheritedRoles ? userInheritedRoles.has(role) : false
+  }
+
+  static isOwner(user: typeof User, resourceOwnerId: number | string): boolean {
+    if (!user || !user.id || !resourceOwnerId) return false
+    return String(user.id) === String(resourceOwnerId)
+  }
 }

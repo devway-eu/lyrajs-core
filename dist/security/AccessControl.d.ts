@@ -10,4 +10,6 @@ export declare class AccessControl {
     static checkRefreshTokenValid(refreshToken: string): void;
     static getNewToken(user: typeof User): Promise<string>;
     static getNewRefreshToken(user: typeof User): Promise<string>;
+    static hasRoleHigherThan(user: typeof User, role: string): boolean;
+    static isOwner(user: typeof User, resourceOwnerId: number | string): boolean;
 }
