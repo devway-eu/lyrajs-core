@@ -1,0 +1,952 @@
+import 'reflect-metadata';
+import * as http from "http";
+import * as url from "url";
+import * as fs from "fs";
+import * as path from "path";
+import { errorHandler, httpRequestMiddleware, accessMiddleware } from "../middlewares/index.js";
+import { Config } from "../config/index.js";
+import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger } from '../server/index.js';
+/** Main HTTP server class with routing, middleware, and dependency injection */
+class LyraServer {
+    routes;
+    middlewares;
+    diContainer;
+    basePath;
+    settings;
+    controllersLoaded = false;
+    servicesRegistered = false;
+    constructor() {
+        this.diContainer = new DIContainer();
+        this.routes = {
+            GET: {},
+            POST: {},
+            PUT: {},
+            DELETE: {},
+            PATCH: {}
+        };
+        this.middlewares = [];
+        this.settings = new Map();
+        // Read base path from config
+        try {
+            this.basePath = new Config().get("router.base_path") || '';
+        }
+        catch (error) {
+            this.basePath = '';
+        }
+        // Default settings
+        this.settings.set('trust proxy', false);
+        this.settings.set('request max size', '10mb');
+        // Register global middlewares (run before routing)
+        this.middlewares.push({ path: '', middleware: logger });
+        this.middlewares.push({ path: '', middleware: httpRequestMiddleware });
+        this.middlewares.push({ path: '', middleware: accessMiddleware });
+    }
+    /**
+     * Set application setting
+     * @param {string} key - Setting key
+     * @param {any} value - Setting value
+     * @returns {this} - Server instance for chaining
+     * @example
+     * app.setSetting('trust proxy', true)
+     * app.setSetting('request max size', '50mb')
+     */
+    setSetting(key, value) {
+        this.settings.set(key, value);
+        return this;
+    }
+    /**
+     * Get application setting
+     * @param {string} key - Setting key
+     * @returns {any} - Setting value
+     */
+    getSetting(key) {
+        return this.settings.get(key);
+    }
+    /**
+     * Load controllers asynchronously
+     * @returns {Promise<void>}
+     */
+    async loadControllersAsync() {
+        try {
+            await this.getControllersAsync();
+            this.controllersLoaded = true;
+        }
+        catch (error) {
+        }
+    }
+    /**
+     * Register middleware or router
+     * @param {string | Middleware | IRouter} pathOrHandler - Path, middleware, or router
+     * @param {Middleware | IRouter} [handler] - Optional middleware or router
+     * @returns {this} - Server instance for chaining
+     */
+    use(pathOrHandler, handler) {
+        if (typeof pathOrHandler === 'string') {
+            // Path with handler: use('/path', handler) or use('/path', router)
+            if (handler) {
+                if (this.isRouter(handler)) {
+                    // Router with path - prepend basePath
+                    this.mountRouter(this.basePath + pathOrHandler, handler);
+                }
+                else {
+                    // Path-specific middleware - prepend basePath
+                    this.middlewares.push({ path: this.basePath + pathOrHandler, middleware: handler });
+                }
+            }
+        }
+        else {
+            // No path, just middleware/router: use(middleware) or use(router)
+            if (this.isRouter(pathOrHandler)) {
+                // Router without explicit path - use basePath
+                this.mountRouter(this.basePath, pathOrHandler);
+            }
+            else {
+                // Global middleware - no basePath (matches all)
+                this.middlewares.push({ path: '', middleware: pathOrHandler });
+            }
+        }
+        return this;
+    }
+    // Check if handler is a router
+    isRouter(handler) {
+        return handler && typeof handler.getRoutes === 'function';
+    }
+    // Mount a router with optional path prefix
+    mountRouter(basePath, router) {
+        const routes = router.getRoutes();
+        routes.forEach(route => {
+            const fullPath = basePath + route.path;
+            route.handlers.forEach(handler => {
+                if (this.isRouter(handler)) {
+                    // Nested router - recursively mount it
+                    this.mountRouter(fullPath, handler);
+                }
+                else {
+                    // Regular handler
+                    if (route.method === 'USE') {
+                        // Middleware - add with the correct path prefix
+                        // If route.path is empty, use basePath, otherwise combine them
+                        const middlewarePath = route.path ? fullPath : basePath;
+                        this.middlewares.push({ path: middlewarePath, middleware: handler });
+                    }
+                    else {
+                        // Route handler
+                        this.addRoute(route.method, fullPath, [handler]);
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Register a controller class with decorators
+     * @param {Function} controller - Controller class to register
+     * @param {string} [basePath=''] - Base path prefix
+     * @returns {this} - Server instance for chaining
+     */
+    registerController(controller, basePath = '') {
+        const prefix = getRoutePrefix(controller);
+        const routes = getRoutes(controller);
+        // Get class-level middlewares if any
+        const classMiddlewares = Reflect.getMetadata('routeClassMiddlewares', controller) || [];
+        // Check if controller extends Controller base class (for DI support)
+        const extendsController = this.diContainer.extendsClass(controller, Controller);
+        let controllerInstance = null;
+        if (extendsController) {
+            // Create controller instance with DI
+            controllerInstance = new controller();
+            // Inject services and repositories
+            this.diContainer.injectIntoController(controllerInstance);
+        }
+        routes.forEach(route => {
+            const fullPath = this.basePath + basePath + prefix + route.path;
+            const methodName = route.methodName;
+            let handler;
+            if (controllerInstance) {
+                // Instance method (DI-enabled controller)
+                const originalHandler = controllerInstance[methodName];
+                if (!originalHandler || typeof originalHandler !== 'function') {
+                    throw new Error(`Method ${methodName} not found on controller ${controller.name}.`);
+                }
+                // Wrap handler with parameter resolution
+                handler = this.wrapHandlerWithParameterResolution(originalHandler, controllerInstance, methodName);
+            }
+            else {
+                // Static method (traditional controller)
+                handler = controller[methodName];
+                if (!handler || typeof handler !== 'function') {
+                    throw new Error(`Method ${methodName} not found on controller ${controller.name}. ` +
+                        `Make sure the method is static.`);
+                }
+            }
+            // Combine class middlewares, route middlewares, and the handler
+            const handlers = [
+                ...classMiddlewares,
+                ...(route.middlewares || []),
+                handler
+            ];
+            // Register the route based on HTTP method
+            this.addRoute(route.method, fullPath, handlers);
+        });
+        return this;
+    }
+    // Async version - Automatically discover and register controllers from a directory
+    async getControllersAsync(controllersPath = 'src/controllers') {
+        // Resolve the absolute path
+        const absolutePath = path.resolve(process.cwd(), controllersPath);
+        if (!fs.existsSync(absolutePath)) {
+            return;
+        }
+        // Read all files in the directory
+        const files = fs.readdirSync(absolutePath);
+        for (const file of files) {
+            // Only process .ts and .js files
+            if (file.endsWith('.ts') || file.endsWith('.js')) {
+                const filePath = path.join(absolutePath, file);
+                try {
+                    // Import the controller file using dynamic import for ES modules
+                    const fileUrl = `file:///${filePath.replace(/\\/g, '/')}`;
+                    const module = await import(fileUrl);
+                    // Find all exported classes in the module
+                    for (const key of Object.keys(module)) {
+                        const exportedItem = module[key];
+                        // Check if it's a class/function (potential controller)
+                        if (typeof exportedItem === 'function') {
+                            // Check if it has route metadata (decorated controller)
+                            const routes = getRoutes(exportedItem);
+                            if (routes && routes.length > 0) {
+                                this.registerController(exportedItem);
+                            }
+                        }
+                    }
+                }
+                catch (error) {
+                }
+            }
+        }
+    }
+    // Synchronous version (kept for backward compatibility)
+    getControllers(controllersPath = 'src/controllers') {
+        return this;
+    }
+    // ============================================
+    // Dependency Injection Methods
+    // ============================================
+    /**
+     * Register a service or repository - Works with single items or arrays
+     *
+     * For a single class:
+     * @example
+     * app.register(UserService);
+     *
+     * For multiple classes (bulk registration):
+     * @example
+     * app.register([UserService, EmailService, OrderService]);
+     * app.register([UserRepository, OrderRepository]);
+     *
+     * For instances (third-party services, auto-detects name from constructor):
+     * @example
+     * const stripe = new Stripe(process.env.STRIPE_KEY);
+     * app.register(stripe);  // Auto-registered as 'stripe'
+     *
+     * // Or provide custom name:
+     * app.register(stripe, 'stripeService');
+     *
+     * // Then access in controllers/services:
+     * this.stripe.charges.create(...)
+     */
+    register(classOrInstanceOrArray, name, type) {
+        // Check if it's an array - bulk registration
+        if (Array.isArray(classOrInstanceOrArray)) {
+            for (const item of classOrInstanceOrArray) {
+                if (typeof item === 'function' && item.prototype) {
+                    // It's a class - register it
+                    this.diContainer.register(item);
+                }
+                else {
+                    throw new Error('Array registration only supports classes. Use individual registration for instances.');
+                }
+            }
+            return this;
+        }
+        // Single item registration
+        // Check if it's a class (constructor function) or an instance
+        if (typeof classOrInstanceOrArray === 'function' && classOrInstanceOrArray.prototype) {
+            // It's a class - register it normally
+            this.diContainer.register(classOrInstanceOrArray);
+        }
+        else {
+            // It's an instance - auto-detect name from constructor if not provided
+            const propertyName = name || this.getPropertyNameFromInstance(classOrInstanceOrArray);
+            this.diContainer.registerInstance(propertyName, classOrInstanceOrArray, type || 'service');
+        }
+        return this;
+    }
+    /**
+     * Extract property name from instance constructor
+     * Stripe instance -> 'stripe', Redis instance -> 'redis'
+     */
+    getPropertyNameFromInstance(instance) {
+        const constructorName = instance.constructor?.name;
+        if (!constructorName || constructorName === 'Object') {
+            throw new Error('Cannot auto-detect property name for instance. ' +
+                'Please provide a name parameter: app.register(instance, "propertyName")');
+        }
+        // Convert to camelCase: Stripe -> stripe, Redis -> redis
+        return constructorName.charAt(0).toLowerCase() + constructorName.slice(1);
+    }
+    /**
+     * Auto-discover and register services and repositories from directories
+     * @param {object} [options] - Registration options
+     * @param {string} [options.services] - Services directory path (default: 'src/services')
+     * @param {string} [options.repositories] - Repositories directory path (default: 'src/repositories')
+     * @returns {Promise<this>} - Server instance for chaining
+     * @example
+     * await app.autoRegister();
+     * await app.autoRegister({ services: 'src/services', repositories: 'src/repositories' });
+     */
+    async autoRegister(options) {
+        const servicesPath = options?.services || 'src/services';
+        const repositoriesPath = options?.repositories || 'src/repositories';
+        // Auto-discover and register services
+        await this.autoDiscoverInjectables(servicesPath, 'service');
+        // Auto-discover and register repositories
+        await this.autoDiscoverInjectables(repositoriesPath, 'repository');
+        // Inject dependencies into all registered services and repositories
+        this.diContainer.injectAll();
+        return this;
+    }
+    /**
+     * Internal method to discover and register injectables from a directory
+     * Convention-based: All classes in src/services are services, all in src/repositories are repositories
+     * Decorators are optional but can be used for explicit typing
+     */
+    async autoDiscoverInjectables(dirPath, expectedType) {
+        const absolutePath = path.resolve(process.cwd(), dirPath);
+        // Check if directory exists
+        if (!fs.existsSync(absolutePath)) {
+            return;
+        }
+        // Read all files in the directory recursively
+        const files = this.getAllFiles(absolutePath, ['.ts', '.js']);
+        for (const file of files) {
+            try {
+                // Import the file using dynamic import for ES modules
+                const fileUrl = `file:///${file.replace(/\\/g, '/')}`;
+                const module = await import(fileUrl);
+                // Find all exported classes in the module
+                for (const key of Object.keys(module)) {
+                    const exportedItem = module[key];
+                    // Check if it's a class/function (potential injectable)
+                    if (typeof exportedItem === 'function') {
+                        // Check if it has explicit injectable type metadata (from decorators)
+                        const injectableType = Reflect.getMetadata('injectableType', exportedItem);
+                        // Register if:
+                        // 1. It has explicit decorator matching the expected type, OR
+                        // 2. No decorator but it's a class (convention-based)
+                        if (injectableType === expectedType || !injectableType) {
+                            // For convention-based registration, set the metadata
+                            if (!injectableType) {
+                                Reflect.defineMetadata('injectable', true, exportedItem);
+                                Reflect.defineMetadata('injectableType', expectedType, exportedItem);
+                            }
+                            this.diContainer.register(exportedItem);
+                        }
+                    }
+                }
+            }
+            catch (error) {
+                // Silently skip files that can't be imported
+            }
+        }
+    }
+    /**
+     * Recursively get all files with specific extensions from a directory
+     */
+    getAllFiles(dirPath, extensions) {
+        const files = [];
+        if (!fs.existsSync(dirPath)) {
+            return files;
+        }
+        const items = fs.readdirSync(dirPath);
+        for (const item of items) {
+            const fullPath = path.join(dirPath, item);
+            const stat = fs.statSync(fullPath);
+            if (stat.isDirectory()) {
+                // Recursively get files from subdirectories
+                files.push(...this.getAllFiles(fullPath, extensions));
+            }
+            else if (stat.isFile()) {
+                // Check if file has one of the allowed extensions
+                const hasValidExtension = extensions.some(ext => item.endsWith(ext));
+                if (hasValidExtension) {
+                    files.push(fullPath);
+                }
+            }
+        }
+        return files;
+    }
+    // ============================================
+    // Route registration methods
+    // ============================================
+    /**
+     * Register GET route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    get(path, ...handlers) {
+        this.addRoute('GET', path, handlers);
+        return this;
+    }
+    /**
+     * Register POST route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    post(path, ...handlers) {
+        this.addRoute('POST', path, handlers);
+        return this;
+    }
+    /**
+     * Register PUT route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    put(path, ...handlers) {
+        this.addRoute('PUT', path, handlers);
+        return this;
+    }
+    /**
+     * Register DELETE route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    delete(path, ...handlers) {
+        this.addRoute('DELETE', path, handlers);
+        return this;
+    }
+    /**
+     * Register PATCH route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    patch(path, ...handlers) {
+        this.addRoute('PATCH', path, handlers);
+        return this;
+    }
+    addRoute(method, path, handlers) {
+        const pattern = this.pathToRegex(path);
+        const paramNames = this.extractParamNames(path);
+        this.routes[method][path] = {
+            pattern,
+            paramNames,
+            handlers
+        };
+    }
+    // Convert route path to regex (e.g., /users/:id -> regex)
+    pathToRegex(path) {
+        const pattern = path
+            .replace(/\//g, '\\/')
+            .replace(/:(\w+)/g, '([^/]+)');
+        return new RegExp(`^${pattern}$`);
+    }
+    // Extract parameter names from path
+    extractParamNames(path) {
+        const matches = path.match(/:(\w+)/g);
+        return matches ? matches.map(m => m.slice(1)) : [];
+    }
+    // Match incoming request to route
+    matchRoute(method, pathname) {
+        const methodRoutes = this.routes[method];
+        for (const [path, route] of Object.entries(methodRoutes)) {
+            const match = pathname.match(route.pattern);
+            if (match) {
+                const params = {};
+                route.paramNames.forEach((name, index) => {
+                    params[name] = match[index + 1];
+                });
+                return { handlers: route.handlers, params };
+            }
+        }
+        return null;
+    }
+    // Parse size string (e.g., "10mb", "1kb") to bytes
+    parseSizeToBytes(size) {
+        const units = {
+            b: 1,
+            kb: 1024,
+            mb: 1024 * 1024,
+            gb: 1024 * 1024 * 1024
+        };
+        const match = size.toLowerCase().match(/^(\d+(?:\.\d+)?)\s*([a-z]+)$/);
+        if (!match)
+            return 10 * 1024 * 1024; // Default 10MB
+        const value = parseFloat(match[1]);
+        const unit = match[2];
+        return value * (units[unit] || 1);
+    }
+    // Parse request body
+    async parseBody(req) {
+        return new Promise((resolve, reject) => {
+            let body = '';
+            let receivedBytes = 0;
+            const maxSize = this.parseSizeToBytes(this.getSetting('request max size') || '10mb');
+            req.on('data', chunk => {
+                receivedBytes += chunk.length;
+                // Check if size limit exceeded
+                if (receivedBytes > maxSize) {
+                    req.removeAllListeners();
+                    reject(new Error(`Request body too large. Maximum size is ${this.getSetting('request max size')}`));
+                    return;
+                }
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    const contentType = req.headers['content-type'] || '';
+                    if (contentType.includes('application/json')) {
+                        resolve(JSON.parse(body));
+                    }
+                    else if (contentType.includes('application/x-www-form-urlencoded')) {
+                        const parsed = {};
+                        body.split('&').forEach(pair => {
+                            const [key, value] = pair.split('=');
+                            parsed[decodeURIComponent(key)] = decodeURIComponent(value);
+                        });
+                        resolve(parsed);
+                    }
+                    else {
+                        resolve(body);
+                    }
+                }
+                catch (error) {
+                    reject(error);
+                }
+            });
+            req.on('error', reject);
+        });
+    }
+    // Parse cookies from request headers
+    parseCookies(req) {
+        const cookieHeader = req.headers.cookie;
+        const cookies = {};
+        if (!cookieHeader) {
+            return cookies;
+        }
+        // Parse cookie header: "name1=value1; name2=value2"
+        cookieHeader.split(';').forEach(cookie => {
+            const parts = cookie.trim().split('=');
+            if (parts.length === 2) {
+                const name = decodeURIComponent(parts[0]);
+                const value = decodeURIComponent(parts[1]);
+                cookies[name] = value;
+            }
+        });
+        return cookies;
+    }
+    // Enhanced request object
+    createRequest(req, params, query) {
+        req.params = params;
+        req.query = query;
+        return req;
+    }
+    // Enhanced response object
+    createResponse(res) {
+        // JSON response
+        res.json = (data) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+        };
+        // Send response
+        res.send = (data) => {
+            if (typeof data === 'object') {
+                res.json(data);
+            }
+            else {
+                res.setHeader('Content-Type', 'text/html');
+                res.end(String(data));
+            }
+        };
+        // Set status code
+        res.status = (code) => {
+            res.statusCode = code;
+            return res;
+        };
+        // Redirect
+        res.redirect = (url) => {
+            res.statusCode = 302;
+            res.setHeader('Location', url);
+            res.end();
+        };
+        // Set cookie
+        res.cookie = (name, value, options) => {
+            let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+            if (options) {
+                if (options.maxAge) {
+                    cookieString += `; Max-Age=${options.maxAge}`;
+                }
+                if (options.expires) {
+                    cookieString += `; Expires=${options.expires.toUTCString()}`;
+                }
+                if (options.path) {
+                    cookieString += `; Path=${options.path}`;
+                }
+                if (options.domain) {
+                    cookieString += `; Domain=${options.domain}`;
+                }
+                if (options.secure) {
+                    cookieString += `; Secure`;
+                }
+                if (options.httpOnly) {
+                    cookieString += `; HttpOnly`;
+                }
+                if (options.sameSite) {
+                    cookieString += `; SameSite=${options.sameSite}`;
+                }
+            }
+            // Get existing Set-Cookie headers
+            const existingCookies = res.getHeader('Set-Cookie');
+            if (existingCookies) {
+                // Append to existing cookies
+                if (Array.isArray(existingCookies)) {
+                    res.setHeader('Set-Cookie', [...existingCookies, cookieString]);
+                }
+                else {
+                    res.setHeader('Set-Cookie', [existingCookies, cookieString]);
+                }
+            }
+            else {
+                res.setHeader('Set-Cookie', cookieString);
+            }
+            return res;
+        };
+        // Clear cookie
+        res.clearCookie = (name, options) => {
+            // To clear a cookie, set it with an expiration date in the past
+            const clearOptions = {
+                ...options,
+                expires: new Date(0), // Set to epoch time (Jan 1, 1970)
+                maxAge: 0
+            };
+            return res.cookie(name, '', clearOptions);
+        };
+        return res;
+    }
+    // Check if a pathname matches a middleware path
+    matchMiddlewarePath(middlewarePath, requestPath) {
+        // Empty path means global middleware - matches everything
+        if (middlewarePath === '') {
+            return true;
+        }
+        // Exact match
+        if (middlewarePath === requestPath) {
+            return true;
+        }
+        // Check if request path starts with middleware path
+        // e.g., middleware path '/api' should match '/api', '/api/', '/api/users', etc.
+        const normalizedMiddlewarePath = middlewarePath.endsWith('/') ? middlewarePath : middlewarePath + '/';
+        const normalizedRequestPath = requestPath.endsWith('/') ? requestPath : requestPath + '/';
+        return normalizedRequestPath.startsWith(normalizedMiddlewarePath) || requestPath === middlewarePath;
+    }
+    /**
+     * Wrap a handler with automatic parameter resolution
+     * Returns a new handler that resolves parameters before calling the original
+     */
+    wrapHandlerWithParameterResolution(originalHandler, controllerInstance, methodName) {
+        const self = this;
+        return async function wrappedHandler(req, res, next) {
+            try {
+                // Resolve parameters using metadata
+                const resolvedParams = await self.resolveParameters(methodName, // Use methodName instead of handler
+                controllerInstance, req, res, next);
+                // Call original handler with resolved parameters
+                return await originalHandler.apply(controllerInstance, resolvedParams);
+            }
+            catch (error) {
+                // Pass errors to next
+                if (next) {
+                    next(error);
+                }
+                else {
+                    throw error;
+                }
+            }
+        };
+    }
+    /**
+     * Extract parameter names from a function signature
+     * Works with compiled TypeScript code
+     */
+    getParameterNames(method) {
+        const fnStr = method.toString();
+        const match = fnStr.match(/\(([^)]*)\)/);
+        if (!match)
+            return [];
+        return match[1]
+            .split(',')
+            .map(param => {
+            // Extract just the parameter name, ignoring type annotations and default values
+            const trimmed = param.trim();
+            if (!trimmed)
+                return '';
+            // Match the parameter name before : or = or whitespace
+            const nameMatch = trimmed.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)/);
+            return nameMatch ? nameMatch[1] : '';
+        })
+            .filter(Boolean);
+    }
+    /**
+     * Resolve route handler parameters automatically
+     * Supports both @Param decorators and route-level resolve configuration
+     *
+     * @example Using route-level resolve (recommended for compiled code):
+     * @Get({ path: '/:user', resolve: { user: User } })
+     * async getUser(req, res, next, user) { ... }
+     *
+     * @example Using @Param decorator (legacy):
+     * @Get({ path: '/:userId' })
+     * async getUser(req, res, @Param('userId', User) user) { ... }
+     */
+    async resolveParameters(methodName, target, req, res, next) {
+        // Start with req, res, next
+        const resolvedParams = [req, res, next];
+        // Get route metadata for this method
+        const constructor = target.constructor;
+        const routes = getRoutes(constructor);
+        const routeMetadata = routes.find(r => r.methodName === methodName);
+        // Approach 1: Use route-level resolve configuration (new approach)
+        if (routeMetadata?.resolve && Object.keys(routeMetadata.resolve).length > 0) {
+            // Get parameter names from the method
+            const method = target[methodName];
+            const paramNames = this.getParameterNames(method);
+            // Resolve each entity specified in the resolve config
+            for (const [routeParamName, EntityType] of Object.entries(routeMetadata.resolve)) {
+                // Find which parameter position this should go to
+                const paramIndex = paramNames.indexOf(routeParamName);
+                if (paramIndex >= 0) {
+                    // Get the route parameter value
+                    const paramValue = req.params?.[routeParamName];
+                    if (paramValue) {
+                        // Find repository for this entity type
+                        const repository = this.findRepositoryForEntity(target, EntityType);
+                        if (repository) {
+                            // Resolve entity using repository.find()
+                            const entity = await repository.find(paramValue);
+                            // Ensure array is large enough
+                            while (resolvedParams.length <= paramIndex) {
+                                resolvedParams.push(undefined);
+                            }
+                            resolvedParams[paramIndex] = entity;
+                        }
+                    }
+                }
+            }
+            return resolvedParams;
+        }
+        // Approach 2: Fall back to @Param decorator metadata (legacy)
+        const proto = Object.getPrototypeOf(target);
+        const paramMetadata = getParamMetadata(proto, methodName);
+        if (paramMetadata.length === 0) {
+            return resolvedParams;
+        }
+        // Sort by parameter index to maintain order
+        paramMetadata.sort((a, b) => a.parameterIndex - b.parameterIndex);
+        // Resolve each decorated parameter
+        for (const metadata of paramMetadata) {
+            const { routeParamName, entityType, parameterIndex } = metadata;
+            // Fill in any gaps with undefined (for req, res, next, etc.)
+            while (resolvedParams.length < parameterIndex) {
+                resolvedParams.push(undefined);
+            }
+            // Get the route parameter value
+            const paramValue = req.params?.[routeParamName];
+            if (paramValue) {
+                // Find repository for this entity type
+                const repository = this.findRepositoryForEntity(target, entityType);
+                if (repository) {
+                    // Resolve entity using repository.find()
+                    const entity = await repository.find(paramValue);
+                    resolvedParams[parameterIndex] = entity;
+                }
+                else {
+                    resolvedParams[parameterIndex] = undefined;
+                }
+            }
+            else {
+                resolvedParams[parameterIndex] = undefined;
+            }
+        }
+        return resolvedParams;
+    }
+    /**
+     * Find repository for a given entity type
+     * User type → looks for userRepository
+     */
+    findRepositoryForEntity(target, entityType) {
+        if (!entityType || !entityType.name) {
+            return null;
+        }
+        const entityName = entityType.name; // e.g., "User"
+        const repositoryPropertyName = entityName.charAt(0).toLowerCase() + entityName.slice(1) + 'Repository'; // "userRepository"
+        // Check if repository exists as a direct property on the controller
+        const repository = target[repositoryPropertyName];
+        return repository || null;
+    }
+    // Execute middleware chain with path matching
+    async executeMiddlewares(req, res, pathname) {
+        // Filter middlewares that match the current path
+        const matchingMiddlewares = this.middlewares.filter(mw => this.matchMiddlewarePath(mw.path, pathname));
+        // Execute each matching middleware in sequence
+        for (const mw of matchingMiddlewares) {
+            await new Promise((resolve, reject) => {
+                try {
+                    let nextCalled = false;
+                    const next = (err) => {
+                        if (nextCalled)
+                            return;
+                        nextCalled = true;
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve();
+                        }
+                    };
+                    const result = mw.middleware(req, res, next);
+                    // If middleware returns a promise, wait for it
+                    if (result instanceof Promise) {
+                        result
+                            .then(() => {
+                            // If next wasn't called but response was sent, resolve
+                            if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                                resolve();
+                            }
+                        })
+                            .catch(reject);
+                    }
+                    else {
+                        // For synchronous middlewares, check if response was sent
+                        setImmediate(() => {
+                            if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                                resolve();
+                            }
+                        });
+                    }
+                }
+                catch (error) {
+                    reject(error);
+                }
+            });
+        }
+    }
+    // Main request handler
+    async handleRequest(req, res, next) {
+        try {
+            const parsedUrl = url.parse(req.url, true);
+            const pathname = parsedUrl.pathname;
+            const query = parsedUrl.query;
+            // Enhance request and response early
+            req = this.createRequest(req, {}, query);
+            res = this.createResponse(res);
+            // Parse cookies
+            req.cookies = this.parseCookies(req);
+            req.body = {};
+            // Parse body for POST/PUT/PATCH
+            if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+                req.body = await this.parseBody(req);
+            }
+            // Execute matching middlewares (global and path-specific)
+            await this.executeMiddlewares(req, res, pathname);
+            // Match route
+            const route = this.matchRoute(req.method, pathname);
+            if (!route) {
+                res.statusCode = 404;
+                res.end('Not Found');
+                return;
+            }
+            // Update request with route params
+            req.params = route.params;
+            // Execute route handlers
+            for (const handler of route.handlers) {
+                await new Promise((resolve, reject) => {
+                    try {
+                        let nextCalled = false;
+                        const next = (err) => {
+                            if (nextCalled)
+                                return;
+                            nextCalled = true;
+                            if (err)
+                                reject(err);
+                            else
+                                resolve();
+                        };
+                        const result = handler(req, res, next);
+                        // If handler returns a promise, wait for it
+                        if (result instanceof Promise) {
+                            result
+                                .then(() => {
+                                // If next wasn't called but response was sent, resolve
+                                if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                                    resolve();
+                                }
+                            })
+                                .catch(reject);
+                        }
+                        else {
+                            // For synchronous handlers, check if response was sent
+                            setImmediate(() => {
+                                if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                                    resolve();
+                                }
+                            });
+                        }
+                    }
+                    catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+        }
+        catch (error) {
+            errorHandler(error, req, res, next);
+        }
+    }
+    // Start the server
+    /**
+     * Start HTTP server on specified port
+     * @param {number|string} port - Port number to listen on
+     * @param {() => void} [callback] - Optional callback when server starts
+     * @returns {Promise<http.Server>} - HTTP server instance
+     */
+    async listen(port, callback) {
+        // Step 1: Auto-register services and repositories
+        if (!this.servicesRegistered) {
+            await this.autoRegister();
+            this.servicesRegistered = true;
+        }
+        // Step 2: Load controllers (AFTER services are registered)
+        if (!this.controllersLoaded) {
+            await this.loadControllersAsync();
+            this.controllersLoaded = true;
+        }
+        // Step 3: Start the HTTP server
+        const server = http.createServer((req, res) => {
+            this.handleRequest(req, res);
+        });
+        return new Promise((resolve) => {
+            server.listen(port, () => {
+                if (callback)
+                    callback();
+                resolve(server);
+            });
+        });
+    }
+}
+export function createServer() {
+    return new LyraServer();
+}
+//# sourceMappingURL=LyraServer.js.map

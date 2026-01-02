@@ -4,7 +4,7 @@ import { AccessControl } from "../../security/index.js";
 import { getUserRepository } from "../../loader/index.js";
 export const accessMiddleware = async (req, res, next) => {
     try {
-        const routePath = req.originalUrl;
+        const routePath = req.url || '/';
         const securityConfig = new SecurityConfig().getConfig();
         const roleHierarchy = securityConfig.role_hierarchy;
         if (!AccessControl.isRouteProtected(routePath)) {

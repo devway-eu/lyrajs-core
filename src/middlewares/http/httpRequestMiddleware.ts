@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express"
+import { NextFunction, Request, Response } from "@/core/server"
 
 import { MethodNotAllowedException, NotFoundException } from "@/core/errors"
 import { AccessControl } from "@/core/security"
@@ -19,10 +19,11 @@ export const httpRequestMiddleware = async (req: Request, res: Response, next: N
   try {
     // Check if route exists
     const routerRoutes = RouterHelper.listRoutes()
+    const requestPath = req.url || '/'
     const routeWithMethod = routerRoutes.find(
-      (route) => matchRoute(route.path, req.originalUrl) && route.httpMethod === req.method
+      (route) => matchRoute(route.path, requestPath) && route.httpMethod === req.method
     )
-    const routeExists = routerRoutes.find((route) => matchRoute(route.path, req.originalUrl))
+    const routeExists = routerRoutes.find((route) => matchRoute(route.path, requestPath))
 
     // Handle route not found or method not allowed
     if (!routeWithMethod) {

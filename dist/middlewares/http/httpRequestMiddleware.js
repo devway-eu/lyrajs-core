@@ -15,8 +15,9 @@ export const httpRequestMiddleware = async (req, res, next) => {
     try {
         // Check if route exists
         const routerRoutes = RouterHelper.listRoutes();
-        const routeWithMethod = routerRoutes.find((route) => matchRoute(route.path, req.originalUrl) && route.httpMethod === req.method);
-        const routeExists = routerRoutes.find((route) => matchRoute(route.path, req.originalUrl));
+        const requestPath = req.url || '/';
+        const routeWithMethod = routerRoutes.find((route) => matchRoute(route.path, requestPath) && route.httpMethod === req.method);
+        const routeExists = routerRoutes.find((route) => matchRoute(route.path, requestPath));
         // Handle route not found or method not allowed
         if (!routeWithMethod) {
             if (routeExists) {

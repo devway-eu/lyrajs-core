@@ -13,9 +13,9 @@ const getErrorMessage = (error) => {
 const logError = (error, req) => {
     const timestamp = new Date().toISOString();
     const method = req.method;
-    const path = req.path;
-    const userAgent = req.get("User-Agent") || "unknown";
-    const ip = req.ip || req.socket.remoteAddress || "unknown";
+    const path = req.url || "unknown";
+    const userAgent = req.headers["user-agent"] || "unknown";
+    const ip = req.socket.remoteAddress || "unknown";
     LyraConsole.error("ERROR", `[${timestamp}] ${method} ${path} - ${error.status} - ${error.message}`, `User-Agent: ${userAgent}`, `IP: ${ip}`);
     if (!isProduction() && error.stack) {
         LyraConsole.error("ERROR", `Stack: ${error.stack}`);
@@ -28,7 +28,7 @@ export const errorHandler = (error, req, res, _next) => {
     const errorResponse = {
         status,
         message: getErrorMessage(httpError),
-        path: req.path,
+        path: req.url || "unknown",
         timestamp: new Date().toISOString()
     };
     const requestId = req.headers["x-request-id"];

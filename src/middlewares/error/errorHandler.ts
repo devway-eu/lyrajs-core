@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express"
+import { NextFunction, Request, Response } from "@/core/server"
 
 import { Config } from "@/core/config"
 import { LyraConsole } from "@/core/console/LyraConsole"
@@ -20,9 +20,9 @@ const getErrorMessage = (error: HttpException): string => {
 const logError = (error: HttpException, req: Request): void => {
   const timestamp = new Date().toISOString()
   const method = req.method
-  const path = req.path
-  const userAgent = req.get("User-Agent") || "unknown"
-  const ip = req.ip || req.socket.remoteAddress || "unknown"
+  const path = req.url || "unknown"
+  const userAgent = req.headers["user-agent"] || "unknown"
+  const ip = req.socket.remoteAddress || "unknown"
 
   LyraConsole.error(
     "ERROR",
@@ -36,7 +36,7 @@ const logError = (error: HttpException, req: Request): void => {
   }
 }
 
-export const errorHandler = (error: HttpExceptionType, req: Request, res: Response, _next: NextFunction): void => {
+export const errorHandler = (error: HttpExceptionType, req: Request, res: Response, _next?: NextFunction): void => {
   const httpError = error as HttpException
   const status = httpError.status || 500
 
@@ -45,7 +45,7 @@ export const errorHandler = (error: HttpExceptionType, req: Request, res: Respon
   const errorResponse: ErrorResponse = {
     status,
     message: getErrorMessage(httpError),
-    path: req.path,
+    path: req.url || "unknown",
     timestamp: new Date().toISOString()
   }
 

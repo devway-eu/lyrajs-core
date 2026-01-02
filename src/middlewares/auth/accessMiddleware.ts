@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express"
+import { NextFunction, Request, Response } from "@/core/server"
 
 import { SecurityConfig } from "@/core/config"
 import { UnauthorizedException } from "@/core/errors"
@@ -8,7 +8,7 @@ import { AuthenticatedRequest, ProtectedRouteType } from "@/core/types"
 import { getUserRepository } from "@/core/loader"
 export const accessMiddleware = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {
   try {
-    const routePath = req.originalUrl
+    const routePath = req.url || '/'
     const securityConfig = new SecurityConfig().getConfig()
     const roleHierarchy = securityConfig.role_hierarchy
 

@@ -27,6 +27,8 @@ export * from "./middlewares/index.js";
 export * from "./orm/index.js";
 // Security
 export * from "./security/index.js";
+// Server
+export * from "./server/index.js";
 // Types
 export * from "./types/index.js";
 // Validator
