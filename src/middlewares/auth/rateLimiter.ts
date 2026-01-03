@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit'
+import { rateLimit } from '@/core/server'
 import { SecurityConfig } from "@/core/config"
 
 const securityConfig = new SecurityConfig().getConfig()

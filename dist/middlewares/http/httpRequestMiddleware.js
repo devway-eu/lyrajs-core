@@ -1,6 +1,4 @@
-import { MethodNotAllowedException, NotFoundException } from "../../errors/index.js";
 import { AccessControl } from "../../security/index.js";
-import { RouterHelper } from "../../security/index.js";
 import { getUserRepository } from "../../loader/index.js";
 // Helper function to match route patterns with parameters
 const matchRoute = (pattern, path) => {
@@ -13,20 +11,6 @@ const matchRoute = (pattern, path) => {
 };
 export const httpRequestMiddleware = async (req, res, next) => {
     try {
-        // Check if route exists
-        const routerRoutes = RouterHelper.listRoutes();
-        const requestPath = req.url || '/';
-        const routeWithMethod = routerRoutes.find((route) => matchRoute(route.path, requestPath) && route.httpMethod === req.method);
-        const routeExists = routerRoutes.find((route) => matchRoute(route.path, requestPath));
-        // Handle route not found or method not allowed
-        if (!routeWithMethod) {
-            if (routeExists) {
-                throw new MethodNotAllowedException(`Method ${req.method} not allowed for this route`);
-            }
-            else {
-                throw new NotFoundException("Route");
-            }
-        }
         // Try to get authenticated user (don't throw error if not authenticated)
         req.user = null;
         // Try to get token from cookies first, then from Authorization header

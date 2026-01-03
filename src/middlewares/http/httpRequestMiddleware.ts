@@ -17,23 +17,6 @@ const matchRoute = (pattern: string, path: string): boolean => {
 
 export const httpRequestMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Check if route exists
-    const routerRoutes = RouterHelper.listRoutes()
-    const requestPath = req.url || '/'
-    const routeWithMethod = routerRoutes.find(
-      (route) => matchRoute(route.path, requestPath) && route.httpMethod === req.method
-    )
-    const routeExists = routerRoutes.find((route) => matchRoute(route.path, requestPath))
-
-    // Handle route not found or method not allowed
-    if (!routeWithMethod) {
-      if (routeExists) {
-        throw new MethodNotAllowedException(`Method ${req.method} not allowed for this route`)
-      } else {
-        throw new NotFoundException("Route")
-      }
-    }
-
     // Try to get authenticated user (don't throw error if not authenticated)
     (req as any).user = null
 

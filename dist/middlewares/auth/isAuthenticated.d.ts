@@ -1,3 +1,2 @@
-import { NextFunction, Request, Response } from "express";
-import { AuthenticatedRequest } from "../../types/index.js";
-export declare const isAuthenticated: (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;
+import { NextFunction, Request, Response } from "../../server/index.js";
+export declare const isAuthenticated: (req: Request, res: Response, next: NextFunction) => void;

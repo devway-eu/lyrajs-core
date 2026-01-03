@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
+import { User } from '../loader/index.js';
 /** Supported HTTP methods */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 /** Route methods including middleware */
@@ -22,12 +23,13 @@ export interface Request extends IncomingMessage {
     url: string;
     method: string;
     headers: IncomingMessage['headers'];
-    params?: RouteParams;
-    query?: ParsedQuery;
-    body?: any;
-    cookies?: {
+    params: RouteParams;
+    query: ParsedQuery;
+    body: any;
+    cookies: {
         [key: string]: string;
     };
+    user?: typeof User | Partial<typeof User> | null;
 }
 /** Enhanced HTTP Response with helper methods */
 export interface Response extends ServerResponse {
@@ -93,7 +95,7 @@ export interface CookieOptions {
  * @param {NextFunction} next - Next middleware function
  * @returns {void | Promise<void>}
  */
-export type Middleware = (req: Request, res: Response, next: NextFunction) => void | Promise<void>;
+export type Middleware = (req: Request | any, res: Response, next: NextFunction) => void | Promise<void>;
 /**
  * Route handler function signature
  * @param {Request} req - HTTP request object

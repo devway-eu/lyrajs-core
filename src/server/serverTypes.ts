@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
+import { User } from '@/core/loader';
 
 /** Supported HTTP methods */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -28,10 +29,11 @@ export interface Request extends IncomingMessage {
     url: string;
     method: string;
     headers: IncomingMessage['headers'];
-    params?: RouteParams;
-    query?: ParsedQuery;
-    body?: any;
-    cookies?: { [key: string]: string };
+    params: RouteParams;
+    query: ParsedQuery;
+    body: any;
+    cookies: { [key: string]: string };
+    user?: typeof User | Partial<typeof User> | null;
 }
 
 /** Enhanced HTTP Response with helper methods */
@@ -101,7 +103,7 @@ export interface CookieOptions {
  * @returns {void | Promise<void>}
  */
 export type Middleware = (
-    req: Request,
+    req: Request | any,
     res: Response,
     next: NextFunction
 ) => void | Promise<void>;

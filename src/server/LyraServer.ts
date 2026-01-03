@@ -101,6 +101,7 @@ class LyraServer {
             await this.getControllersAsync();
             this.controllersLoaded = true;
         } catch (error) {
+            console.error('Error loading controllers:', error);
         }
     }
 
@@ -143,6 +144,7 @@ class LyraServer {
     // Mount a router with optional path prefix
     private mountRouter(basePath: string, router: IRouter): void {
         const routes = router.getRoutes();
+        console.log(`[LyraServer] Mounting router with basePath: ${basePath}, routes:`, routes.length);
 
         routes.forEach(route => {
             const fullPath = basePath + route.path;
@@ -161,6 +163,7 @@ class LyraServer {
                     } else {
                         // Route handler
                         this.addRoute(route.method as HttpMethod, fullPath, [handler as RouteHandler]);
+                        console.log(`[LyraServer] Mounted router route: ${route.method} ${fullPath}`);
                     }
                 }
             });
@@ -236,13 +239,14 @@ class LyraServer {
 
             // Register the route based on HTTP method
             this.addRoute(route.method, fullPath, handlers);
+            console.log(`[LyraServer] Registered route: ${route.method} ${fullPath}`);
         });
 
         return this;
     }
 
     // Async version - Automatically discover and register controllers from a directory
-    async getControllersAsync(controllersPath: string = 'src/controllers'): Promise<void> {
+    async getControllersAsync(controllersPath: string = 'src/controller'): Promise<void> {
         // Resolve the absolute path
         const absolutePath = path.resolve(process.cwd(), controllersPath);
 
@@ -278,13 +282,14 @@ class LyraServer {
                         }
                     }
                 } catch (error) {
+                    console.error(`Error loading controller from ${file}:`, error);
                 }
             }
         }
     }
 
     // Synchronous version (kept for backward compatibility)
-    getControllers(controllersPath: string = 'src/controllers'): this {
+    getControllers(controllersPath: string = 'src/controller'): this {
         return this;
     }
 
@@ -377,7 +382,7 @@ class LyraServer {
         repositories?: string;
     }): Promise<this> {
         const servicesPath = options?.services || 'src/services';
-        const repositoriesPath = options?.repositories || 'src/repositories';
+        const repositoriesPath = options?.repositories || 'src/repository';
 
         // Auto-discover and register services
         await this.autoDiscoverInjectables(servicesPath, 'service');

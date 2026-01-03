@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import { rateLimit } from '../../server/index.js';
 import { SecurityConfig } from "../../config/index.js";
 const securityConfig = new SecurityConfig().getConfig();
 export const rateLimiter = rateLimit({

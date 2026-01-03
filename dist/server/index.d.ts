@@ -4,6 +4,7 @@ export * from './Container.js';
 export * from './Controller.js';
 export * from './DIContainer.js';
 export * from './LyraServer.js';
+export * from './rateLimit.js';
 export * from './Router.js';
 export * from './Service.js';
 export * from './serverTypes.js';

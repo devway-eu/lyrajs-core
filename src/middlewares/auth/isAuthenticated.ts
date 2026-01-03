@@ -1,8 +1,6 @@
-import { NextFunction, Request, Response } from "express"
+import { NextFunction, Request, Response } from "@/core/server"
 
-import { AuthenticatedRequest } from "@/core/types"
-
-export const isAuthenticated = (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
     return res.status(401).json({ message: "Unauthorized" })
   }

@@ -3,10 +3,10 @@ import { NextFunction, Request, Response } from "@/core/server"
 import { SecurityConfig } from "@/core/config"
 import { UnauthorizedException } from "@/core/errors"
 import { AccessControl } from "@/core/security"
-import { AuthenticatedRequest, ProtectedRouteType } from "@/core/types"
+import { ProtectedRouteType } from "@/core/types"
 
 import { getUserRepository } from "@/core/loader"
-export const accessMiddleware = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {
+export const accessMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const routePath = req.url || '/'
     const securityConfig = new SecurityConfig().getConfig()
