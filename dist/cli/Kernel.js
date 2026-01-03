@@ -22,7 +22,7 @@ export class Kernel {
             if (!commandName) {
                 const helpCommand = new HelpCommand();
                 await helpCommand.execute();
-                return;
+                process.exit(0);
             }
             const CommandClass = this.commands[commandName];
             if (!CommandClass) {
@@ -30,6 +30,7 @@ export class Kernel {
             }
             const commandInstance = new CommandClass();
             await commandInstance.execute(args);
+            process.exit(0);
         }
         catch (error) {
             LyraConsole.error(error.message);

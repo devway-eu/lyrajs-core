@@ -3,17 +3,34 @@ import path from "path"
 
 import { Config } from "@/core/config"
 import { RouteInfo } from "@/core/types"
+import { getRoutePrefix, getRoutes, RouteMetadata } from "@/core/server/decorators/RouteDecorator"
 
 export class RouterHelper {
-  static listRoutes(): RouteInfo[] {
-    const routerBasePath = new Config().get("router.base_path")
-    const routesFolderPath = path.join(process.cwd(), "src", "router", "routes")
-    const routesFiles: string[] = []
+  static async listRoutes(): Promise<RouteInfo[]> {
     const routes: RouteInfo[] = []
 
-    fs.readdirSync(routesFolderPath).forEach((file) => {
-      routesFiles.push(file)
-    })
+    // Get traditional routes from router folder
+    const traditionalRoutes = this.listTraditionalRoutes()
+    routes.push(...traditionalRoutes)
+
+    // Get decorator-based routes from controllers
+    const decoratorRoutes = await this.listDecoratorRoutes()
+    routes.push(...decoratorRoutes)
+
+    return routes
+  }
+
+  private static listTraditionalRoutes(): RouteInfo[] {
+    const routerBasePath = new Config().get("router.base_path")
+    const routesFolderPath = path.join(process.cwd(), "src", "router", "routes")
+    const routes: RouteInfo[] = []
+
+    // Check if routes folder exists
+    if (!fs.existsSync(routesFolderPath)) {
+      return routes
+    }
+
+    const routesFiles = fs.readdirSync(routesFolderPath)
 
     for (const file of routesFiles) {
       const routesFilePath = path.join(process.cwd(), "src", "router", "routes", file)
@@ -28,6 +45,58 @@ export class RouterHelper {
           controller,
           path: `${routerBasePath}/${routesBasePath}${path}`
         })
+      }
+    }
+
+    return routes
+  }
+
+  private static async listDecoratorRoutes(): Promise<RouteInfo[]> {
+    const routes: RouteInfo[] = []
+    const controllersPath = path.join(process.cwd(), "src", "controller")
+    const routerBasePath = new Config().get("router.base_path")
+
+    // Check if controller folder exists
+    if (!fs.existsSync(controllersPath)) {
+      return routes
+    }
+
+    const files = fs.readdirSync(controllersPath)
+
+    for (const file of files) {
+      if (file.endsWith('.ts') || file.endsWith('.js')) {
+        const filePath = path.join(controllersPath, file)
+        try {
+          // Use dynamic import to avoid circular dependency issues
+          const absolutePath = path.resolve(filePath)
+          const fileUrl = `file:///${absolutePath.replace(/\\/g, '/')}`
+          const module = await import(fileUrl)
+
+          // Check all exports for decorated controllers
+          for (const key of Object.keys(module)) {
+            const exportedItem = module[key]
+            if (typeof exportedItem === 'function') {
+              const controllerRoutes = getRoutes(exportedItem)
+              if (controllerRoutes && controllerRoutes.length > 0) {
+                const prefix = getRoutePrefix(exportedItem)
+                const controllerName = exportedItem.name
+
+                // Add each route from this controller
+                controllerRoutes.forEach((route: RouteMetadata) => {
+                  const fullPath = routerBasePath + prefix + route.path
+                  routes.push({
+                    httpMethod: route.method,
+                    controller: `${controllerName}.${route.methodName}`,
+                    path: fullPath
+                  })
+                })
+              }
+            }
+          }
+        } catch (error) {
+          // Silently skip files that can't be loaded
+          // (might be interfaces, types, or have missing dependencies)
+        }
       }
     }
 

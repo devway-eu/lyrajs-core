@@ -2,7 +2,7 @@ import { LyraConsole } from "../../orm/index.js";
 import { RouterHelper } from "../../security/index.js";
 export class ShowRoutesCommand {
     async execute() {
-        const routes = RouterHelper.listRoutes();
+        const routes = await RouterHelper.listRoutes();
         const routesInfos = ["ROUTES"];
         const methodColumnWidth = Math.max(...routes.map((r) => r.httpMethod.length));
         const pathColumnWidth = Math.max(...routes.map((r) => r.path.length));

@@ -3,7 +3,7 @@ import { RouterHelper } from "@/core/security"
 
 export class ShowRoutesCommand {
   async execute() {
-    const routes = RouterHelper.listRoutes()
+    const routes = await RouterHelper.listRoutes()
     const routesInfos: string[] = ["ROUTES"]
 
     const methodColumnWidth = Math.max(...routes.map((r) => r.httpMethod.length))

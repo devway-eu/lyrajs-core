@@ -45,7 +45,7 @@ export class Kernel {
       if (!commandName) {
         const helpCommand = new HelpCommand()
         await helpCommand.execute()
-        return
+        process.exit(0)
       }
 
       const CommandClass = this.commands[commandName]
@@ -55,6 +55,7 @@ export class Kernel {
 
       const commandInstance = new CommandClass()
       await commandInstance.execute(args)
+      process.exit(0)
     } catch (error: any) {
       LyraConsole.error(error.message)
       process.exit(1)
