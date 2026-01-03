@@ -1,6 +1,16 @@
 import { LyraConsole } from "../../console/LyraConsole"
 
+/**
+ * HelpCommand class
+ * Displays available CLI commands and their descriptions
+ * Shows the LyraJS ASCII art banner and command list
+ */
 export class HelpCommand {
+  /**
+   * Executes the help command
+   * Prints all available commands with their descriptions
+   * @returns {Promise<void>}
+   */
   async execute() {
     LyraConsole.info(
       "                       _             \n" +

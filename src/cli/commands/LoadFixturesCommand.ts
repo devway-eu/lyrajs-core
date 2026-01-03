@@ -5,7 +5,17 @@ import path from "path"
 import { db, Entity, LyraConsole } from "@/core/orm"
 import { AppFixtures } from "@/core/loader"
 
+/**
+ * LoadFixturesCommand class
+ * Loads fixture data into the database
+ * Empties all tables before loading fixtures to ensure clean state
+ */
 export class LoadFixturesCommand<T extends object> {
+  /**
+   * Executes the load fixtures command
+   * Truncates all entity tables and loads fixture data
+   * @returns {Promise<void>}
+   */
   async execute() {
     await this.emptyDatabase()
     const fixtures = new AppFixtures()
@@ -15,6 +25,11 @@ export class LoadFixturesCommand<T extends object> {
     process.exit(0)
   }
 
+  /**
+   * Empties all entity tables in the database
+   * Disables foreign key checks, truncates tables, then re-enables checks
+   * @returns {Promise<void>}
+   */
   private async emptyDatabase() {
     const entities = await this.getEntities()
     await db.query(`SET FOREIGN_KEY_CHECKS = 0`)
@@ -25,6 +40,10 @@ export class LoadFixturesCommand<T extends object> {
     await db.query(`SET FOREIGN_KEY_CHECKS = 1`)
   }
 
+  /**
+   * Retrieves all entity instances from the entity folder
+   * @returns {Promise<Entity<T>[]>} - Array of entity instances
+   */
   private async getEntities() {
     const entities: Entity<T>[] = []
 

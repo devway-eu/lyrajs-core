@@ -6,7 +6,18 @@ import { ControllerGeneratorHelper, ControllerObjType } from "@/core/cli/utils"
 import { ConsoleInputValidator } from "@/core/cli/utils/ConsoleInputValidator"
 import { LyraConsole } from "@/core/console/LyraConsole"
 
+/**
+ * GenerateControllerCommand class
+ * Generates controller files based on user preferences
+ * Supports entity-based controllers, blank controllers with methods, or totally blank controllers
+ * Can generate controllers with or without route decorators
+ */
 export class GenerateControllerCommand {
+  /**
+   * Executes the generate controller command
+   * Prompts for controller type and configuration, then generates the controller file
+   * @returns {Promise<void>}
+   */
   async execute() {
     const controller: ControllerObjType = {
       name: "",

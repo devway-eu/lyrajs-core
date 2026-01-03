@@ -1,3 +1,8 @@
+/**
+ * ConsoleInputValidator class
+ * Validates user input for CLI commands
+ * Ensures naming conventions and format requirements are met
+ */
 export class ConsoleInputValidator {
   static patterns = {
     entityName: /^[A-Z][a-z]*(?:[A-Z][a-z]*)*$/,
@@ -6,6 +11,11 @@ export class ConsoleInputValidator {
     routePathEnd: /^\/[a-zA-Z0-9\/_:-]*$/
   }
 
+  /**
+   * Validates entity name input
+   * @param {string} input - Entity name to validate
+   * @returns {boolean | string} - True if valid, error message if invalid
+   */
   public static isEntityNameValid(input: string): boolean | string {
     if (!input) return "Entity name is required"
     if (!this.patterns.entityName.test(input)) {
@@ -14,6 +24,11 @@ export class ConsoleInputValidator {
     return true
   }
 
+  /**
+   * Validates property name input
+   * @param {string} input - Property name to validate
+   * @returns {boolean | string} - True if valid, error message if invalid
+   */
   public static isPropertyNameValid(input: string): boolean | string {
     if (!input) return "Property name is required"
     if (!this.patterns.propertyName.test(input)) {
@@ -22,6 +37,11 @@ export class ConsoleInputValidator {
     return true
   }
 
+  /**
+   * Validates controller name input
+   * @param {string} input - Controller name to validate
+   * @returns {boolean | string} - True if valid, error message if invalid
+   */
   public static isControllerNameValid(input: string): boolean | string {
     if (!input) return "Controller name is required"
     if (!this.patterns.controllerName.test(input)) {
@@ -30,6 +50,11 @@ export class ConsoleInputValidator {
     return true
   }
 
+  /**
+   * Validates varchar length input
+   * @param {string} input - Varchar length to validate
+   * @returns {boolean | string} - True if valid, error message if invalid
+   */
   public static isVarcharLengthValid(input: string): boolean | string {
     if (!input) return "Varchar length is required"
     if (Number(input) % 1 !== 0) return "Varchar length must be an integer"
@@ -37,6 +62,11 @@ export class ConsoleInputValidator {
     return true
   }
 
+  /**
+   * Validates route path end input
+   * @param {string} input - Route path end to validate
+   * @returns {boolean | string} - True if valid, error message if invalid
+   */
   public static isRoutePathEndValid(input: string): boolean | string {
     if (!input) return "Route path is required"
     if (!this.patterns.routePathEnd.test(input)) {

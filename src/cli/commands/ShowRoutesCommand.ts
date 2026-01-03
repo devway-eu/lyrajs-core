@@ -1,7 +1,17 @@
 import { LyraConsole } from "@/core/orm"
 import { RouterHelper } from "@/core/security"
 
+/**
+ * ShowRoutesCommand class
+ * Displays all registered API routes in a formatted table
+ * Shows HTTP methods, paths, and controller handlers
+ */
 export class ShowRoutesCommand {
+  /**
+   * Executes the show routes command
+   * Retrieves and displays all routes in a formatted table
+   * @returns {Promise<void>}
+   */
   async execute() {
     const routes = await RouterHelper.listRoutes()
     const routesInfos: string[] = ["ROUTES"]

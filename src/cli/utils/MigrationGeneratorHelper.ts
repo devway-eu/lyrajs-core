@@ -13,9 +13,18 @@ import { StdFunction } from "@/core/types/StandardTypes"
 
 const dbConfig = new DatabaseConfig().getConfig()
 
+/**
+ * MigrationGeneratorHelper class
+ * Generates SQL migration files from entity metadata
+ * Creates CREATE TABLE and ALTER TABLE statements based on entity decorators
+ */
 export class MigrationGeneratorHelper<T extends object> {
   constructor() {}
 
+  /**
+   * Retrieves all entity instances from the entity folder
+   * @returns {Promise<Array<Entity<T> | (new () => T)>>} - Array of entity instances
+   */
   private async getEntities() {
     const entities: Array<Entity<T> | (new () => T)> = []
 
@@ -40,6 +49,11 @@ export class MigrationGeneratorHelper<T extends object> {
     return entities
   }
 
+  /**
+   * Builds SQL CREATE TABLE and ALTER TABLE queries from entity metadata
+   * Processes all entities and generates complete migration SQL
+   * @returns {Promise<string[]>} - Array of SQL query strings
+   */
   async buildCreateTableQueries() {
     const entities = await this.getEntities()
 
@@ -134,6 +148,11 @@ export class MigrationGeneratorHelper<T extends object> {
     return queries // return queries
   }
 
+  /**
+   * Generates a timestamped migration file with SQL queries
+   * @param {string[]} queries - Array of SQL queries to write
+   * @returns {void}
+   */
   generateMigrationFile(queries: string[]) {
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)

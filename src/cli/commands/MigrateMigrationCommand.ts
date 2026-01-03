@@ -9,7 +9,17 @@ import { db, LyraConsole } from "@/core/orm"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+/**
+ * MigrateMigrationCommand class
+ * Applies the most recent migration file to the database
+ * Executes SQL queries from the latest migration file
+ */
 export class MigrateMigrationCommand {
+  /**
+   * Executes the migrate migration command
+   * Finds and applies the most recent migration file
+   * @returns {Promise<void>}
+   */
   async execute() {
     const migrations = await this.listMigrationsFiles()
     if (migrations && migrations.length) {
@@ -35,6 +45,10 @@ export class MigrateMigrationCommand {
     process.exit(0)
   }
 
+  /**
+   * Lists all migration files in the migrations directory
+   * @returns {Promise<string[]>} - Array of migration file names
+   */
   private async listMigrationsFiles() {
     const migrationDirectory = path.join(process.cwd(), "migrations")
 

@@ -1,5 +1,10 @@
 import { ColumnType } from "@/core/orm"
 
+/**
+ * EntityGeneratorHelper class
+ * Generates entity class code from property definitions
+ * Creates entity files with decorators and TypeScript type annotations
+ */
 export class EntityGeneratorHelper {
   static starts = {
     table: "@Table(",
@@ -10,14 +15,27 @@ export class EntityGeneratorHelper {
     column: " })"
   }
 
+  /**
+   * Generates import statements for entity file
+   * @returns {string} - Import statements code
+   */
   static importsString = () => {
     return `import { Column, Entity, Table } from "@lyra-js/core"\n\n`
   }
 
+  /**
+   * Generates @Table decorator
+   * @returns {string} - Table decorator code
+   */
   static tableDecorator = () => {
     return this.starts.table + this.ends.table + "\n"
   }
 
+  /**
+   * Generates constructor code for entity class
+   * @param {string} entityName - Name of the entity
+   * @returns {string} - Constructor code
+   */
   static constructorString = (entityName: string) => {
     return (
       `  constructor(${entityName.toLowerCase()}?: Partial<${entityName}> | ${entityName}) {` +
@@ -29,6 +47,11 @@ export class EntityGeneratorHelper {
     )
   }
 
+  /**
+   * Generates @Column decorator for a property
+   * @param {ColumnType} property - Property definition
+   * @returns {string} - Column decorator code
+   */
   static columnDecorator = (property: ColumnType) => {
     let decoratorString = "  " + this.starts.column
     decoratorString += `type: "${property.type === "relation" ? "bigint" : property.type}"`
@@ -43,6 +66,11 @@ export class EntityGeneratorHelper {
     return decoratorString
   }
 
+  /**
+   * Generates property declaration with TypeScript type
+   * @param {ColumnType} property - Property definition
+   * @returns {string} - Property declaration code
+   */
   static propertyString = (property: ColumnType) => {
     let propertyString = "  " + property.name + ": "
     switch (property.type.toLowerCase()) {
@@ -89,10 +117,24 @@ export class EntityGeneratorHelper {
     return propertyString
   }
 
+  /**
+   * Generates property with decorator and declaration
+   * @param {ColumnType} property - Property definition
+   * @returns {string} - Complete property code
+   */
   static propertyWithDecorator = (property: ColumnType) => {
     return this.columnDecorator(property) + "\n" + this.propertyString(property) + "\n"
   }
 
+  /**
+   * Generates complete entity file code
+   * @param {string} entityName - Name of the entity
+   * @param {ColumnType[]} properties - Array of entity properties
+   * @returns {string} - Complete entity code
+   * @example
+   * // Generate entity for User
+   * const code = EntityGeneratorHelper.getFullEntityCode('User', properties)
+   */
   static getFullEntityCode(entityName: string, properties: ColumnType[]) {
     let entityCodeContent = ``
 
@@ -122,6 +164,12 @@ export class EntityGeneratorHelper {
     return entityCodeContent
   }
 
+  /**
+   * Adds new properties to existing entity file content
+   * @param {string} existingContent - Current entity file content
+   * @param {ColumnType[]} newProperties - Array of new properties to add
+   * @returns {string} - Updated entity file content
+   */
   static addPropertiesToExistingEntity(existingContent: string, newProperties: ColumnType[]): string {
     let newPropertiesCode = `\n`
     for (const prop of newProperties) {

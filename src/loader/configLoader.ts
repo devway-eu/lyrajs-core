@@ -3,7 +3,20 @@ import { resolve } from 'path'
 import ts from 'typescript'
 import { pathToFileURL } from 'url'
 
+/**
+ * LyraConfig class
+ * Handles dynamic loading and compilation of TypeScript modules
+ * Provides access to entities, repositories, controllers, migrations, and fixtures
+ */
 class LyraConfig {
+    /**
+     * Retrieves the complete application configuration
+     * Compiles and loads all TypeScript modules from project directories
+     * @returns {Promise<object>} - Configuration object containing entities, repositories, controllers, migrations, and fixtures
+     * @example
+     * const config = await Lyra.config()
+     * console.log(config.entities) // Array of compiled entity modules
+     */
     async config() {
         return {
             entities: await this.getCompiledExports('src/entity'),
@@ -14,6 +27,14 @@ class LyraConfig {
         }
     }
 
+    /**
+     * Retrieves file paths from a directory
+     * Filters for TypeScript and SQL files only
+     * @param {string} dir - Directory path relative to project root
+     * @returns {Promise<string[]>} - Array of absolute file paths
+     * @example
+     * const files = await Lyra.getFilesFromDir('migrations')
+     */
     async getFilesFromDir(dir: string) {
         const absDir = resolve(process.cwd(), dir)
         const files = await readdir(absDir)
@@ -22,6 +43,14 @@ class LyraConfig {
             .map(file => resolve(absDir, file))
     }
 
+    /**
+     * Compiles TypeScript files and imports their exports
+     * Transpiles each TypeScript file, imports it, and cleans up compiled JavaScript
+     * @param {string} dir - Directory containing TypeScript files
+     * @returns {Promise<any[]>} - Array of imported module exports (default or named)
+     * @example
+     * const entities = await Lyra.getCompiledExports('src/entity')
+     */
     async getCompiledExports(dir: string) {
         const tsFiles = (await this.getFilesFromDir(dir)).filter(f =>
             f.endsWith('.ts')
@@ -40,6 +69,13 @@ class LyraConfig {
         return results
     }
 
+    /**
+     * Compiles a single TypeScript file to JavaScript
+     * Uses TypeScript compiler API to transpile with ES2022 target
+     * @param {string} tsFilePath - Absolute path to TypeScript file
+     * @returns {Promise<string>} - Path to compiled JavaScript file
+     * @private
+     */
     async compileTsFile(tsFilePath: string) {
         const content = await readFile(tsFilePath, 'utf-8')
 
@@ -59,6 +95,14 @@ class LyraConfig {
         return jsFilePath
     }
 
+    /**
+     * Loads and compiles the lyra.config.js file
+     * Dynamically imports the configuration and cleans up temporary files
+     * @returns {Promise<any>} - Lyra configuration object
+     * @throws {Error} - If lyra.config.js file not found or compilation fails
+     * @example
+     * const config = await Lyra.getConfig()
+     */
     async getConfig() {
         const tsPath = resolve(process.cwd(), 'lyra.config.js')
         const jsPath = tsPath.replace(/\.ts$/, '.compiled.js')
@@ -89,4 +133,11 @@ class LyraConfig {
     }
 }
 
+/**
+ * Singleton instance of LyraConfig
+ * Provides centralized access to configuration loading and module compilation
+ * @example
+ * import { Lyra } from '@lyra-js/core'
+ * const config = await Lyra.config()
+ */
 export const Lyra = new LyraConfig()
