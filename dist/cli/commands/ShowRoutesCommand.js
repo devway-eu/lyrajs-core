@@ -1,6 +1,16 @@
 import { LyraConsole } from "../../orm/index.js";
 import { RouterHelper } from "../../security/index.js";
+/**
+ * ShowRoutesCommand class
+ * Displays all registered API routes in a formatted table
+ * Shows HTTP methods, paths, and controller handlers
+ */
 export class ShowRoutesCommand {
+    /**
+     * Executes the show routes command
+     * Retrieves and displays all routes in a formatted table
+     * @returns {Promise<void>}
+     */
     async execute() {
         const routes = await RouterHelper.listRoutes();
         const routesInfos = ["ROUTES"];

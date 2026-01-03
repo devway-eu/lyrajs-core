@@ -1,6 +1,11 @@
 import { ShowRoutesCommand } from "../cli/commands/ShowRoutesCommand.js";
 import { LyraConsole } from "../console/LyraConsole.js";
 import { CreateDatabaseCommand, CreateRoutesCommand, GenerateControllerCommand, GenerateEntityCommand, GenerateMigrationCommand, HelpCommand, LoadFixturesCommand, MigrateMigrationCommand, ShowControllersCommand, ShowEntitiesCommand, ShowMigrationsCommand, ShowRepositoriesCommand } from "./commands/index.js";
+/**
+ * CLI Kernel class
+ * Handles command parsing, routing, and execution
+ * Manages the lifecycle of CLI commands and provides error handling
+ */
 export class Kernel {
     static commands = {
         "create:database": CreateDatabaseCommand,
@@ -16,6 +21,19 @@ export class Kernel {
         "show:repositories": ShowRepositoriesCommand,
         "show:routes": ShowRoutesCommand
     };
+    /**
+     * Executes a CLI command based on command-line arguments
+     * Parses the command name and delegates to the appropriate command class
+     * Displays help if no command is provided
+     * @param {string[]} argv - Command-line arguments from process.argv
+     * @returns {Promise<void>}
+     * @example
+     * // Run the help command
+     * await Kernel.run(['node', 'cli.js'])
+     * @example
+     * // Run the make:entity command
+     * await Kernel.run(['node', 'cli.js', 'make:entity'])
+     */
     static async run(argv) {
         try {
             const [, , commandName, ...args] = argv;

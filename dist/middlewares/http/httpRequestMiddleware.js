@@ -1,6 +1,16 @@
 import { AccessControl } from "../../security/index.js";
 import { getUserRepository } from "../../loader/index.js";
-// Helper function to match route patterns with parameters
+/**
+ * Helper function to match route patterns with parameters
+ * Converts Express-style route patterns to regex for matching
+ * @param {string} pattern - Route pattern (e.g., "/user/:id")
+ * @param {string} path - Actual request path (e.g., "/user/123")
+ * @returns {boolean} - True if path matches pattern
+ * @private
+ * @example
+ * matchRoute('/user/:id', '/user/123') // true
+ * matchRoute('/user/:id', '/posts/123') // false
+ */
 const matchRoute = (pattern, path) => {
     // Convert route pattern to regex (e.g., "/user/:id" -> /^\/user\/[^\/]+$/)
     const regexPattern = pattern
@@ -9,6 +19,19 @@ const matchRoute = (pattern, path) => {
     const regex = new RegExp(`^${regexPattern}$`);
     return regex.test(path);
 };
+/**
+ * HTTP request middleware
+ * Authenticates users by extracting and validating JWT tokens
+ * Supports both cookie-based (Token) and header-based (Authorization: Bearer) authentication
+ * Sets req.user if valid token found, otherwise sets to null
+ * Does not reject unauthenticated requests (use isAuthenticated middleware for that)
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ * @example
+ * import { httpRequestMiddleware } from '@lyra-js/core'
+ * app.use(httpRequestMiddleware) // Should be early in middleware chain
+ */
 export const httpRequestMiddleware = async (req, res, next) => {
     try {
         // Try to get authenticated user (don't throw error if not authenticated)

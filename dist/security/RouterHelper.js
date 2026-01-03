@@ -2,7 +2,22 @@ import fs from "fs";
 import path from "path";
 import { Config } from "../config/index.js";
 import { getRoutePrefix, getRoutes } from "../server/decorators/RouteDecorator.js";
+/**
+ * RouterHelper class
+ * Utilities for route discovery and management
+ * Supports both traditional router folder routes and decorator-based controller routes
+ */
 export class RouterHelper {
+    /**
+     * Lists all application routes from both traditional and decorator sources
+     * Combines routes from router/routes folder and @Route decorated controllers
+     * @returns {Promise<RouteInfo[]>} - Array of route information objects
+     * @example
+     * const routes = await RouterHelper.listRoutes()
+     * routes.forEach(route => {
+     *   console.log(`${route.httpMethod} ${route.path} -> ${route.controller}`)
+     * })
+     */
     static async listRoutes() {
         const routes = [];
         // Get traditional routes from router folder
@@ -13,6 +28,12 @@ export class RouterHelper {
         routes.push(...decoratorRoutes);
         return routes;
     }
+    /**
+     * Lists routes from traditional router/routes folder
+     * Parses TypeScript route files using regex to extract route definitions
+     * @returns {RouteInfo[]} - Array of traditional route information
+     * @private
+     */
     static listTraditionalRoutes() {
         const routerBasePath = new Config().get("router.base_path");
         const routesFolderPath = path.join(process.cwd(), "src", "router", "routes");
@@ -38,6 +59,13 @@ export class RouterHelper {
         }
         return routes;
     }
+    /**
+     * Lists routes from decorator-based controllers
+     * Scans controller folder and extracts @Route decorator metadata
+     * Uses dynamic import to avoid circular dependencies
+     * @returns {Promise<RouteInfo[]>} - Array of decorator route information
+     * @private
+     */
     static async listDecoratorRoutes() {
         const routes = [];
         const controllersPath = path.join(process.cwd(), "src", "controller");
@@ -84,6 +112,13 @@ export class RouterHelper {
         }
         return routes;
     }
+    /**
+     * Extracts route details from route file content using regex
+     * Parses Express-style route definitions (.get(), .post(), etc.)
+     * @param {string} routesFileContent - Content of route file
+     * @returns {Array<string[]>} - Array of [method, path, controller] tuples
+     * @private
+     */
     static extractDetailsFromRoutes(routesFileContent) {
         const regex = /\.([a-zA-Z]+)\(\s*"(.*?)"\s*,\s*([^)]+)\s*\)/g;
         const matches = [...routesFileContent.matchAll(regex)];
@@ -91,6 +126,12 @@ export class RouterHelper {
             .filter((m) => m[1] !== "use")
             .map((m) => [m[1].trim().toUpperCase(), this.removeTrailingSlash(m[2].trim()), m[3].trim()]);
     }
+    /**
+     * Removes trailing slash from a string
+     * @param {string} str - String to process
+     * @returns {string} - String without trailing slash
+     * @private
+     */
     static removeTrailingSlash(str) {
         return str.endsWith("/") ? str.slice(0, -1) : str;
     }

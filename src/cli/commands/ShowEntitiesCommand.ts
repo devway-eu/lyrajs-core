@@ -18,10 +18,12 @@ export class ShowEntitiesCommand {
     const entityFolder = path.join(process.cwd(), "src", "entity")
     const entities: string[] = ["ENTITIES"]
 
-    fs.readdirSync(entityFolder).forEach((file) => {
-      const entity = file.replace(".ts", "")
-      entities.push(`\u27A5  ${entity} \u0040 /src/entity/${file}`)
-    })
+    fs.readdirSync(entityFolder)
+      .filter((file) => file.endsWith(".ts") && !file.endsWith("~"))
+      .forEach((file) => {
+        const entity = file.replace(".ts", "")
+        entities.push(`\u27A5  ${entity} \u0040 /src/entity/${file}`)
+      })
 
     LyraConsole.success(...entities)
   }

@@ -1,3 +1,12 @@
+/**
+ * HTTP status code constants
+ * Comprehensive collection of standard and extended HTTP status codes
+ * Organized by category: informational (1xx), success (2xx), redirection (3xx), client errors (4xx), server errors (5xx)
+ * @example
+ * import { HTTP_STATUS } from '@lyra-js/core'
+ * res.status(HTTP_STATUS.OK).json({ message: 'Success' })
+ * res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Not found' })
+ */
 export declare const HTTP_STATUS: {
     readonly CONTINUE: 100;
     readonly SWITCH_PROTOCOLS: 101;
@@ -79,4 +88,8 @@ export declare const HTTP_STATUS: {
     readonly SITE_FROZEN: 530;
     readonly NETWORK_CONNECT_TIMEOUT_ERROR: 599;
 };
+/**
+ * Type representing all valid HTTP status code values
+ * Derived from HTTP_STATUS constant object keys
+ */
 export type HttpStatus = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS];

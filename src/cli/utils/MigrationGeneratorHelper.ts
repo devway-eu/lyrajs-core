@@ -29,7 +29,7 @@ export class MigrationGeneratorHelper<T extends object> {
     const entities: Array<Entity<T> | (new () => T)> = []
 
     const entityFolder = resolve(process.cwd(), "src", "entity")
-    const files = fs.readdirSync(entityFolder).filter((f) => f.endsWith(".ts") || f.endsWith(".js"))
+    const files = fs.readdirSync(entityFolder).filter((f) => (f.endsWith(".ts") || f.endsWith(".js")) && !f.endsWith("~"))
 
     for (const file of files) {
       const modulePath = path.join(entityFolder, file)

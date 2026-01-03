@@ -48,7 +48,7 @@ export class LoadFixturesCommand<T extends object> {
     const entities: Entity<T>[] = []
 
     const entityFolder = path.join(process.cwd(), "src", "entity")
-    const files = fs.readdirSync(entityFolder).filter((f) => f.endsWith(".ts"))
+    const files = fs.readdirSync(entityFolder).filter((f) => f.endsWith(".ts") && !f.endsWith("~"))
 
     for (const file of files) {
       const modulePath = path.join(entityFolder, file)

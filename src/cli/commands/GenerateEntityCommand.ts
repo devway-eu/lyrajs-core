@@ -75,9 +75,11 @@ export class GenerateEntityCommand {
         const entityFolder = path.join(process.cwd(), "src", "entity")
         const existingEntities: string[] = []
 
-        fs.readdirSync(entityFolder).forEach((file) => {
-          existingEntities.push(file.replace(".ts", "").toLowerCase())
-        })
+        fs.readdirSync(entityFolder)
+          .filter((file) => file.endsWith(".ts") && !file.endsWith("~"))
+          .forEach((file) => {
+            existingEntities.push(file.replace(".ts", "").toLowerCase())
+          })
 
         const relation = await inquirer.prompt([
           {
@@ -153,19 +155,52 @@ export class GenerateEntityCommand {
     }
 
     const entityFileContent = this.generateEntityFile(entity, properties)
-    const repositoryFileContent = this.generateRepositoryFile(entity)
     const entityFilePath = path.join(process.cwd(), "src", "entity", `${entity}.ts`)
     const repositoryFilePath = path.join(process.cwd(), "src", "repository", `${entity}Repository.ts`)
 
+    // Write entity file
     fs.writeFileSync(entityFilePath, entityFileContent)
-    fs.writeFileSync(repositoryFilePath, repositoryFileContent)
-    LyraConsole.success(
-      `Entity and repository generated!`,
-      `Entity file at: ${entityFilePath}`,
-      `Repository file at: ${repositoryFilePath}`,
-      "",
-      "You can create a controller for this entity using the 'make:controller' command"
-    )
+
+    // Check if repository already exists
+    let repositoryCreated = false
+    if (fs.existsSync(repositoryFilePath)) {
+      const { overwriteRepository } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "overwriteRepository",
+          message: `Repository "${entity}Repository" already exists. Do you want to overwrite it? This will delete any custom methods.`,
+          default: false
+        }
+      ])
+
+      if (overwriteRepository) {
+        const repositoryFileContent = this.generateRepositoryFile(entity)
+        fs.writeFileSync(repositoryFilePath, repositoryFileContent)
+        repositoryCreated = true
+      }
+    } else {
+      const repositoryFileContent = this.generateRepositoryFile(entity)
+      fs.writeFileSync(repositoryFilePath, repositoryFileContent)
+      repositoryCreated = true
+    }
+
+    if (repositoryCreated) {
+      LyraConsole.success(
+        `Entity and repository generated!`,
+        `Entity file at: ${entityFilePath}`,
+        `Repository file at: ${repositoryFilePath}`,
+        "",
+        "You can create a controller for this entity using the 'make:controller' command"
+      )
+    } else {
+      LyraConsole.success(
+        `Entity generated!`,
+        `Entity file at: ${entityFilePath}`,
+        `Repository file at: ${repositoryFilePath} (existing file preserved)`,
+        "",
+        "You can create a controller for this entity using the 'make:controller' command"
+      )
+    }
   }
 
   /**
@@ -217,9 +252,11 @@ export class GenerateEntityCommand {
         const entityFolder = path.join(process.cwd(), "src", "entity")
         const existingEntities: string[] = []
 
-        fs.readdirSync(entityFolder).forEach((file) => {
-          existingEntities.push(file.replace(".ts", "").toLowerCase())
-        })
+        fs.readdirSync(entityFolder)
+          .filter((file) => file.endsWith(".ts") && !file.endsWith("~"))
+          .forEach((file) => {
+            existingEntities.push(file.replace(".ts", "").toLowerCase())
+          })
 
         const relation = await inquirer.prompt([
           {

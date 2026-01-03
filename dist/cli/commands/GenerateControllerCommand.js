@@ -4,7 +4,18 @@ import path from "path";
 import { ControllerGeneratorHelper } from "../../cli/utils/index.js";
 import { ConsoleInputValidator } from "../../cli/utils/ConsoleInputValidator.js";
 import { LyraConsole } from "../../console/LyraConsole.js";
+/**
+ * GenerateControllerCommand class
+ * Generates controller files based on user preferences
+ * Supports entity-based controllers, blank controllers with methods, or totally blank controllers
+ * Can generate controllers with or without route decorators
+ */
 export class GenerateControllerCommand {
+    /**
+     * Executes the generate controller command
+     * Prompts for controller type and configuration, then generates the controller file
+     * @returns {Promise<void>}
+     */
     async execute() {
         const controller = {
             name: "",
@@ -24,7 +35,9 @@ export class GenerateControllerCommand {
             case "Entity based":
                 const entityFolder = path.join(process.cwd(), "src", "entity");
                 const existingEntities = [];
-                fs.readdirSync(entityFolder).forEach((file) => {
+                fs.readdirSync(entityFolder)
+                    .filter((file) => file.endsWith(".ts") && !file.endsWith("~"))
+                    .forEach((file) => {
                     existingEntities.push(file.replace(".ts", ""));
                 });
                 const { baseEntity } = await inquirer.prompt([
@@ -84,8 +97,23 @@ export class GenerateControllerCommand {
                 controller.type = controllerType;
                 break;
         }
-        const controllerFileContent = ControllerGeneratorHelper.getFullControllerCode(controller);
         const controllerFilePath = path.join(process.cwd(), "src", "controller", `${controller.name}.ts`);
+        // Check if controller already exists
+        if (fs.existsSync(controllerFilePath)) {
+            const { overwrite } = await inquirer.prompt([
+                {
+                    type: "confirm",
+                    name: "overwrite",
+                    message: `Controller "${controller.name}" already exists. Do you want to overwrite it? This will delete all existing code.`,
+                    default: false
+                }
+            ]);
+            if (!overwrite) {
+                LyraConsole.info("Operation cancelled. Existing controller was not modified.");
+                return;
+            }
+        }
+        const controllerFileContent = ControllerGeneratorHelper.getFullControllerCode(controller);
         fs.writeFileSync(controllerFilePath, controllerFileContent);
         LyraConsole.success(`Controller generated!`, `Controller file at: ${controllerFilePath}`);
     }

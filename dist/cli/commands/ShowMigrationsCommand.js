@@ -1,7 +1,17 @@
 import fs from "fs";
 import path from "path";
 import { LyraConsole } from "../../orm/index.js";
+/**
+ * ShowMigrationsCommand class
+ * Lists all migrations found in the migrations folder
+ * Displays migration names with timestamps and file paths
+ */
 export class ShowMigrationsCommand {
+    /**
+     * Executes the show migrations command
+     * Scans the migrations folder and displays all migration files in reverse chronological order
+     * @returns {Promise<void>}
+     */
     async execute() {
         const migrationsFolder = path.join(process.cwd(), "migrations");
         const migrations = ["MIGRATIONS"];

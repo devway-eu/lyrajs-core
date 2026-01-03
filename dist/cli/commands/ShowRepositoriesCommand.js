@@ -1,7 +1,17 @@
 import fs from "fs";
 import path from "path";
 import { LyraConsole } from "../../orm/index.js";
+/**
+ * ShowRepositoriesCommand class
+ * Lists all repositories found in the project's repository folder
+ * Displays repository names and their file paths
+ */
 export class ShowRepositoriesCommand {
+    /**
+     * Executes the show repositories command
+     * Scans the repository folder and displays all repository files
+     * @returns {Promise<void>}
+     */
     async execute() {
         const repositoryFolder = path.join(process.cwd(), "src", "repository");
         const repositories = ["REPOSITORIES"];

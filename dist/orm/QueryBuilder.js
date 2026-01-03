@@ -1,9 +1,27 @@
 import { db } from "../orm/Database.js";
+/**
+ * QueryBuilder class
+ * Fluent query builder for constructing SQL queries programmatically
+ * Provides chainable methods for SELECT, INSERT, UPDATE, DELETE with automatic SQL injection prevention
+ * Supports WHERE clauses, JOINs, ORDER BY, LIMIT, and raw SQL
+ * @example
+ * const qb = new QueryBuilder(User)
+ * const users = await qb
+ *   .selectFrom('users', ['id', 'name'])
+ *   .where('active', '=', true)
+ *   .orderBy('name', 'ASC')
+ *   .limit(10)
+ *   .execute()
+ */
 export class QueryBuilder {
     // private readonly table: string
     entity = null;
     sql = ``;
     params = [];
+    /**
+     * Creates a new QueryBuilder instance
+     * @param {Entity<EntityInterface> | StdConstructor | null} entity - Optional entity class for result mapping
+     */
     constructor(entity = null) {
         this.entity = entity;
         return this;

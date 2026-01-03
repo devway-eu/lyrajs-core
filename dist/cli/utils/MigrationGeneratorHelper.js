@@ -6,12 +6,21 @@ import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { DatabaseConfig } from "../../config/index.js";
 const dbConfig = new DatabaseConfig().getConfig();
+/**
+ * MigrationGeneratorHelper class
+ * Generates SQL migration files from entity metadata
+ * Creates CREATE TABLE and ALTER TABLE statements based on entity decorators
+ */
 export class MigrationGeneratorHelper {
     constructor() { }
+    /**
+     * Retrieves all entity instances from the entity folder
+     * @returns {Promise<Array<Entity<T> | (new () => T)>>} - Array of entity instances
+     */
     async getEntities() {
         const entities = [];
         const entityFolder = resolve(process.cwd(), "src", "entity");
-        const files = fs.readdirSync(entityFolder).filter((f) => f.endsWith(".ts") || f.endsWith(".js"));
+        const files = fs.readdirSync(entityFolder).filter((f) => (f.endsWith(".ts") || f.endsWith(".js")) && !f.endsWith("~"));
         for (const file of files) {
             const modulePath = path.join(entityFolder, file);
             const entityModule = await import(`file://${modulePath}`);
@@ -25,6 +34,11 @@ export class MigrationGeneratorHelper {
         }
         return entities;
     }
+    /**
+     * Builds SQL CREATE TABLE and ALTER TABLE queries from entity metadata
+     * Processes all entities and generates complete migration SQL
+     * @returns {Promise<string[]>} - Array of SQL query strings
+     */
     async buildCreateTableQueries() {
         const entities = await this.getEntities();
         const queries = [];
@@ -109,6 +123,11 @@ export class MigrationGeneratorHelper {
         });
         return queries; // return queries
     }
+    /**
+     * Generates a timestamped migration file with SQL queries
+     * @param {string[]} queries - Array of SQL queries to write
+     * @returns {void}
+     */
     generateMigrationFile(queries) {
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = dirname(__filename);
