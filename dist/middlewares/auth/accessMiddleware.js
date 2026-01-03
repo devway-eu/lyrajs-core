@@ -22,21 +22,24 @@ export const accessMiddleware = async (req, res, next) => {
             throw new UnauthorizedException("No token provided");
         try {
             const decoded = AccessControl.isTokenValid(token);
-            const userRepository = await getUserRepository();
-            if (!userRepository)
+            const UserRepositoryClass = await getUserRepository();
+            if (!UserRepositoryClass)
                 throw new UnauthorizedException("Repository not available");
+            const userRepository = new UserRepositoryClass();
             const user = await userRepository.find(decoded.id);
             if (!user)
                 throw new UnauthorizedException("Invalid token");
             req.user = user;
-            const matchingProtectedRoute = roleHierarchy.find((route) => route.path === routePath);
-            if (!(await AccessControl.canAccessRoute(user, matchingProtectedRoute))) {
+            const matchingProtectedRoute = Array.isArray(roleHierarchy)
+                ? roleHierarchy.find((route) => route.path === routePath)
+                : undefined;
+            if (matchingProtectedRoute && !(await AccessControl.canAccessRoute(user, matchingProtectedRoute))) {
                 throw new UnauthorizedException("Access denied");
             }
             return next();
         }
         catch (_jwtError) {
-            new UnauthorizedException('invalid token');
+            throw new UnauthorizedException('invalid token');
         }
     }
     catch (error) {

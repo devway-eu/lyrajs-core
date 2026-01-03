@@ -838,9 +838,16 @@ class LyraServer {
                     if (result instanceof Promise) {
                         result
                             .then(() => {
-                            // If next wasn't called but response was sent, resolve
-                            if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                            // If next was already called, nothing to do (already resolved)
+                            if (nextCalled)
+                                return;
+                            // If response was sent, resolve
+                            if (res.writableEnded || res.headersSent) {
                                 resolve();
+                            }
+                            else {
+                                // Middleware didn't call next() or send response
+                                reject(new Error('Middleware completed without calling next() or sending a response'));
                             }
                         })
                             .catch(reject);
@@ -848,8 +855,16 @@ class LyraServer {
                     else {
                         // For synchronous middlewares, check if response was sent
                         setImmediate(() => {
-                            if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                            // If next was already called, nothing to do (already resolved)
+                            if (nextCalled)
+                                return;
+                            // If response was sent, resolve
+                            if (res.writableEnded || res.headersSent) {
                                 resolve();
+                            }
+                            else {
+                                // Middleware didn't call next() or send response
+                                reject(new Error('Middleware completed without calling next() or sending a response'));
                             }
                         });
                     }
@@ -906,9 +921,16 @@ class LyraServer {
                         if (result instanceof Promise) {
                             result
                                 .then(() => {
-                                // If next wasn't called but response was sent, resolve
-                                if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                                // If next was called, we already resolved, do nothing
+                                if (nextCalled)
+                                    return;
+                                // If response was sent, resolve
+                                if (res.writableEnded || res.headersSent) {
                                     resolve();
+                                }
+                                else {
+                                    // Handler didn't call next() or send response - this is an error
+                                    reject(new Error('Handler completed without calling next() or sending a response'));
                                 }
                             })
                                 .catch(reject);
@@ -916,8 +938,16 @@ class LyraServer {
                         else {
                             // For synchronous handlers, check if response was sent
                             setImmediate(() => {
-                                if (!nextCalled && (res.writableEnded || res.headersSent)) {
+                                // If next was called, we already resolved, do nothing
+                                if (nextCalled)
+                                    return;
+                                // If response was sent, resolve
+                                if (res.writableEnded || res.headersSent) {
                                     resolve();
+                                }
+                                else {
+                                    // Handler didn't call next() or send response - this is an error
+                                    reject(new Error('Handler completed without calling next() or sending a response'));
                                 }
                             });
                         }
