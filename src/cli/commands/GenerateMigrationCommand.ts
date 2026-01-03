@@ -10,6 +10,6 @@ export class GenerateMigrationCommand {
 
     migrator.generateMigrationFile(queries)
 
-    LyraConsole.success("Migration created", "")
+    LyraConsole.success("Migration created")
   }
 }

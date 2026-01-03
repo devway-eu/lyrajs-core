@@ -5,7 +5,7 @@ export class GenerateMigrationCommand {
         const migrator = new MigrationGeneratorHelper();
         const queries = await migrator.buildCreateTableQueries();
         migrator.generateMigrationFile(queries);
-        LyraConsole.success("Migration created", "");
+        LyraConsole.success("Migration created");
     }
 }
 //# sourceMappingURL=GenerateMigrationCommand.js.map

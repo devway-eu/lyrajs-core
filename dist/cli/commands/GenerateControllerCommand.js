@@ -56,7 +56,7 @@ export class GenerateControllerCommand {
         const controllerFileContent = ControllerGeneratorHelper.getFullControllerCode(controller);
         const controllerFilePath = path.join(process.cwd(), "src", "controller", `${controller.name}.ts`);
         fs.writeFileSync(controllerFilePath, controllerFileContent);
-        LyraConsole.success(`Controller generated!`, `Controller file at: ${controllerFilePath}`, "");
+        LyraConsole.success(`Controller generated!`, `Controller file at: ${controllerFilePath}`);
     }
 }
 //# sourceMappingURL=GenerateControllerCommand.js.map

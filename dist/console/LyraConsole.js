@@ -117,7 +117,7 @@ class LyraConsoleClass {
             }
         }
         else {
-            this.print(fg, bg, strings.map((item) => {
+            this.print(fg, bg, ...strings.map((item) => {
                 return `${this.useIcons ? `${icon} ` : ""}${item}`;
             }));
         }
@@ -143,7 +143,7 @@ class LyraConsoleClass {
             }
         }
         else {
-            this.print(fg, bg, strings.map((item) => {
+            this.print(fg, bg, ...strings.map((item) => {
                 return `${this.useIcons ? `${icon} ` : ""}${item}`;
             }));
         }
@@ -168,7 +168,7 @@ class LyraConsoleClass {
             }
         }
         else {
-            this.print(fg, bg, strings.map((item) => {
+            this.print(fg, bg, ...strings.map((item) => {
                 return `${this.useIcons ? `${icon} ` : ""}${item}`;
             }));
         }
@@ -193,7 +193,7 @@ class LyraConsoleClass {
             }
         }
         else {
-            this.print(fg, bg, strings.map((item) => {
+            this.print(fg, bg, ...strings.map((item) => {
                 return `${this.useIcons ? `${icon} ` : ""}${item}`;
             }));
         }
@@ -218,7 +218,7 @@ class LyraConsoleClass {
             }
         }
         else {
-            this.print(fg, bg, strings.map((item) => {
+            this.print(fg, bg, ...strings.map((item) => {
                 return `${this.useIcons ? `${icon} ` : ""}${item}`;
             }));
         }
@@ -244,7 +244,7 @@ class LyraConsoleClass {
             }
         }
         else {
-            this.print(fg, bg, strings.map((item) => {
+            this.print(fg, bg, ...strings.map((item) => {
                 return `${this.useIcons ? `${icon} ` : ""}${item}`;
             }));
         }
@@ -270,7 +270,7 @@ class LyraConsoleClass {
             }
         }
         else {
-            this.print(fg, bg, strings.map((item) => {
+            this.print(fg, bg, ...strings.map((item) => {
                 return `${this.useIcons ? `${icon} ` : ""}${item}`;
             }));
         }

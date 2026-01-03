@@ -25,6 +25,10 @@ export const errorHandler = (error, req, res, _next) => {
     const httpError = error;
     const status = httpError.status || 500;
     logError(httpError, req);
+    // Don't send response if headers were already sent
+    if (res.headersSent) {
+        return;
+    }
     const errorResponse = {
         status,
         message: getErrorMessage(httpError),

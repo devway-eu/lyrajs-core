@@ -93,6 +93,7 @@ export interface CookieOptions {
     secure?: boolean;
     httpOnly?: boolean;
     sameSite?: 'Strict' | 'Lax' | 'None';
+    partitioned?: boolean;
 }
 
 /**

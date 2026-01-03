@@ -42,6 +42,11 @@ export const errorHandler = (error: HttpExceptionType, req: Request, res: Respon
 
   logError(httpError, req)
 
+  // Don't send response if headers were already sent
+  if (res.headersSent) {
+    return
+  }
+
   const errorResponse: ErrorResponse = {
     status,
     message: getErrorMessage(httpError),

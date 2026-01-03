@@ -23,8 +23,9 @@ export const httpRequestMiddleware = async (req, res, next) => {
         }
         if (token) {
             try {
-                const userRepository = await getUserRepository();
-                if (userRepository) {
+                const UserRepositoryClass = await getUserRepository();
+                if (UserRepositoryClass) {
+                    const userRepository = new UserRepositoryClass();
                     const decoded = AccessControl.isTokenValid(token);
                     if (decoded?.id) {
                         const user = await userRepository.find(decoded.id);

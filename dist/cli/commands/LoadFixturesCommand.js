@@ -8,7 +8,7 @@ export class LoadFixturesCommand {
         await this.emptyDatabase();
         const fixtures = new AppFixtures();
         await fixtures.load();
-        LyraConsole.success("Fixtures loaded", "");
+        LyraConsole.success("Fixtures loaded");
         process.exit(0);
     }
     async emptyDatabase() {

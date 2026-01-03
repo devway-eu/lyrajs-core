@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request } from "../server/index.js";
 import { Entity } from "../orm/index.js";
 import { StdObject } from "../types/StandardTypes.js";
 import { User } from "../loader/index.js";

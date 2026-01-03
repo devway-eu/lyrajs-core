@@ -56,7 +56,7 @@ export class Kernel {
       const commandInstance = new CommandClass()
       await commandInstance.execute(args)
     } catch (error: any) {
-      LyraConsole.error(error.message, "")
+      LyraConsole.error(error.message)
       process.exit(1)
     }
   }

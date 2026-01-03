@@ -25,7 +25,7 @@ export class ControllerGeneratorHelper {
 
     const repository = `${controller.baseEntity?.toLowerCase()}Repository`
 
-    controllerCodeContent += `import {NextFunction, Request, Response} from "express"\n\n`
+    controllerCodeContent += `import {NextFunction, Request, Response} from "@lyra-js/core"\n\n`
     controllerCodeContent += `import {AuthenticatedRequest} from "@lyra-js/core"\n\n`
     controllerCodeContent += `import {${controller.baseEntity?.toLowerCase()}Repository} from "@repository/${controller.baseEntity}Repository"\n\n`
     controllerCodeContent += `export class ${controller.name} {\n`
@@ -84,7 +84,7 @@ export class ControllerGeneratorHelper {
 
   private static getBlankControllerCode(controller: ControllerObjType) {
     let controllerCodeContent = ``
-    controllerCodeContent += `import {NextFunction, Request, Response} from "express"\n\n`
+    controllerCodeContent += `import {NextFunction, Request, Response} from "@lyra-js/core"\n\n`
     controllerCodeContent += `import {AuthenticatedRequest} from "@lyra-js/core"\n\n`
     controllerCodeContent += `export class ${controller.name} {\n`
     controllerCodeContent += `  static list = async (req: AuthenticatedRequest<Request>, res: Response, next: NextFunction) => {\n`
@@ -128,7 +128,7 @@ export class ControllerGeneratorHelper {
 
   private static getTotallyBlankControllerCode(controller: ControllerObjType) {
     let controllerCodeContent = ``
-    controllerCodeContent += `import {NextFunction, Request, Response} from "express"\n\n`
+    controllerCodeContent += `import {NextFunction, Request, Response} from "@lyra-js/core"\n\n`
     controllerCodeContent += `export class ${controller.name} {\n`
     controllerCodeContent += `  \n`
     controllerCodeContent += `}\n`

@@ -6,5 +6,5 @@ export interface ControllerRouteType {
 export declare class RoutesGeneratorHelper {
     generateRoutesFile(controllerName: string, controllerRoutes: ControllerRouteType[]): void;
     private getFullRoutesCode;
-    private updateRouter;
+    private updatecreateRouter;
 }

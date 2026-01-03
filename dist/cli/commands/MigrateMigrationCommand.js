@@ -21,7 +21,7 @@ export class MigrateMigrationCommand {
                 await db.query(query);
             }
         }
-        LyraConsole.success("Migration applied", "");
+        LyraConsole.success("Migration applied");
         process.exit(0);
     }
     async listMigrationsFiles() {

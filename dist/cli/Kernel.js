@@ -32,7 +32,7 @@ export class Kernel {
             await commandInstance.execute(args);
         }
         catch (error) {
-            LyraConsole.error(error.message, "");
+            LyraConsole.error(error.message);
             process.exit(1);
         }
     }

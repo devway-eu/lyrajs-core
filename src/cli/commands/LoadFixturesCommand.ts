@@ -11,7 +11,7 @@ export class LoadFixturesCommand<T extends object> {
     const fixtures = new AppFixtures()
     await fixtures.load()
 
-    LyraConsole.success("Fixtures loaded", "")
+    LyraConsole.success("Fixtures loaded")
     process.exit(0)
   }
 

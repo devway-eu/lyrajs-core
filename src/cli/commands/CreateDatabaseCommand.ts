@@ -20,6 +20,6 @@ export class CreateDatabaseCommand {
     await connection.query(`CREATE DATABASE IF NOT EXISTS ??`, [dbName])
     await connection.end()
 
-    LyraConsole.success("Database created", "")
+    LyraConsole.success("Database created")
   }
 }

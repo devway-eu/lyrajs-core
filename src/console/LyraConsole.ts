@@ -126,7 +126,7 @@ class LyraConsoleClass {
       this.print(
         fg,
         bg,
-        strings.map((item) => {
+        ...strings.map((item) => {
           return `${this.useIcons ? `${icon} ` : ""}${item}`
         })
       )
@@ -156,7 +156,7 @@ class LyraConsoleClass {
       this.print(
         fg,
         bg,
-        strings.map((item) => {
+        ...strings.map((item) => {
           return `${this.useIcons ? `${icon} ` : ""}${item}`
         })
       )
@@ -185,7 +185,7 @@ class LyraConsoleClass {
       this.print(
         fg,
         bg,
-        strings.map((item) => {
+        ...strings.map((item) => {
           return `${this.useIcons ? `${icon} ` : ""}${item}`
         })
       )
@@ -214,7 +214,7 @@ class LyraConsoleClass {
       this.print(
         fg,
         bg,
-        strings.map((item) => {
+        ...strings.map((item) => {
           return `${this.useIcons ? `${icon} ` : ""}${item}`
         })
       )
@@ -243,7 +243,7 @@ class LyraConsoleClass {
       this.print(
         fg,
         bg,
-        strings.map((item) => {
+        ...strings.map((item) => {
           return `${this.useIcons ? `${icon} ` : ""}${item}`
         })
       )
@@ -273,7 +273,7 @@ class LyraConsoleClass {
       this.print(
         fg,
         bg,
-        strings.map((item) => {
+        ...strings.map((item) => {
           return `${this.useIcons ? `${icon} ` : ""}${item}`
         })
       )
@@ -303,7 +303,7 @@ class LyraConsoleClass {
       this.print(
         fg,
         bg,
-        strings.map((item) => {
+        ...strings.map((item) => {
           return `${this.useIcons ? `${icon} ` : ""}${item}`
         })
       )

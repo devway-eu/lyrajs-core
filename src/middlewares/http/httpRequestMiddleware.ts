@@ -18,10 +18,10 @@ const matchRoute = (pattern: string, path: string): boolean => {
 export const httpRequestMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Try to get authenticated user (don't throw error if not authenticated)
-    (req as any).user = null
+    req.user = null
 
     // Try to get token from cookies first, then from Authorization header
-    let token = (req as any).cookies?.Token
+    let token = req.cookies?.Token
     if (!token) {
       const authHeader = req.headers.authorization
       if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -31,19 +31,20 @@ export const httpRequestMiddleware = async (req: Request, res: Response, next: N
 
     if (token) {
       try {
-        const userRepository = await getUserRepository()
-        if (userRepository) {
+        const UserRepositoryClass = await getUserRepository()
+        if (UserRepositoryClass) {
+          const userRepository = new UserRepositoryClass()
           const decoded = AccessControl.isTokenValid(token)
           if (decoded?.id) {
             const user = await userRepository.find(decoded.id)
             if (user) {
-              (req as any).user = user
+              req.user = user
             }
           }
         }
       } catch (error) {
         // Token invalid/expired or user not found - silently continue
-        (req as any).user = null
+        req.user = null
       }
     }
 

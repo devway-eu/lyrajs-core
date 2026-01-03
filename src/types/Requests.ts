@@ -1,5 +1,4 @@
-import { Request } from "express"
-
+import { Request } from "@/core/server"
 import { Entity } from "@/core/orm"
 import { StdObject } from "@/core/types/StandardTypes"
 import { User } from "@/core/loader"

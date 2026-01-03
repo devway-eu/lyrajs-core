@@ -31,7 +31,7 @@ export class MigrateMigrationCommand {
       }
     }
 
-    LyraConsole.success("Migration applied", "")
+    LyraConsole.success("Migration applied")
     process.exit(0)
   }
 

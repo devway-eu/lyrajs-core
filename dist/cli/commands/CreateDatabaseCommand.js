@@ -14,7 +14,7 @@ export class CreateDatabaseCommand {
             throw new Error("Invalid database name");
         await connection.query(`CREATE DATABASE IF NOT EXISTS ??`, [dbName]);
         await connection.end();
-        LyraConsole.success("Database created", "");
+        LyraConsole.success("Database created");
     }
 }
 //# sourceMappingURL=CreateDatabaseCommand.js.map

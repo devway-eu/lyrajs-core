@@ -18,7 +18,7 @@ export class RoutesGeneratorHelper {
     fs.writeFileSync(routesFilePath, routesFileContent)
     LyraConsole.success(`Routes file generated successfully`, `File path: ${routesFilePath}`)
 
-    this.updateRouter()
+    this.updatecreateRouter()
   }
 
   private getFullRoutesCode(controllerName: string, controllerRoutes: ControllerRouteType[]) {
@@ -26,8 +26,8 @@ export class RoutesGeneratorHelper {
     const routesName = `${controllerName.replace("Controller", "").toLowerCase()}Routes`
 
     routesFileContent += `import { ${controllerName} } from "@controller/${controllerName}"\n`
-    routesFileContent += `import { Router } from "express"\n\n`
-    routesFileContent += `export const ${routesName} = Router()\n\n`
+    routesFileContent += `import { createRouter } from "@lyra-js/core"\n\n`
+    routesFileContent += `export const ${routesName} = createRouter()\n\n`
 
     controllerRoutes.forEach((route) => {
       routesFileContent += `${routesName}.${route.routeHttpMethod}("${route.routePathEnd}", ${controllerName}.${route.ctrlMethod})\n`
@@ -36,7 +36,7 @@ export class RoutesGeneratorHelper {
     return routesFileContent
   }
 
-  private updateRouter() {
+  private updatecreateRouter() {
     const routeFolderPath = path.join(process.cwd(), "src", "router", "routes")
     const indexFilePath = path.join(process.cwd(), "src", "router", "routes", "index.ts")
 
@@ -45,18 +45,18 @@ export class RoutesGeneratorHelper {
       .filter((f) => f.endsWith(".ts") && f !== "index.ts")
       .map((f) => f.replace(".ts", ""))
 
-    let indexFileContent = `import { Router } from "express"\n\n`
+    let indexFileContent = `import { createRouter } from "@lyra-js/core"\n\n`
 
     routeFiles.forEach((routeName) => {
       indexFileContent += `import { ${routeName} } from "@router/routes/${routeName}"\n`
     })
     indexFileContent += `\n`
-    indexFileContent += `export const routes = Router()\n\n`
+    indexFileContent += `export const routes = createRouter()\n\n`
     routeFiles.forEach((routeName) => {
       indexFileContent += `routes.use("/${routeName.replace("Routes", "")}", ${routeName})\n`
     })
 
     fs.writeFileSync(indexFilePath, indexFileContent)
-    LyraConsole.success(`Router file updated successfully`, `File path: ${indexFilePath}`)
+    LyraConsole.success(`createRouter file updated successfully`, `File path: ${indexFilePath}`)
   }
 }

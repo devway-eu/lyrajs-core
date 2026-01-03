@@ -144,7 +144,6 @@ class LyraServer {
     // Mount a router with optional path prefix
     private mountRouter(basePath: string, router: IRouter): void {
         const routes = router.getRoutes();
-        console.log(`[LyraServer] Mounting router with basePath: ${basePath}, routes:`, routes.length);
 
         routes.forEach(route => {
             const fullPath = basePath + route.path;
@@ -163,7 +162,6 @@ class LyraServer {
                     } else {
                         // Route handler
                         this.addRoute(route.method as HttpMethod, fullPath, [handler as RouteHandler]);
-                        console.log(`[LyraServer] Mounted router route: ${route.method} ${fullPath}`);
                     }
                 }
             });
@@ -239,7 +237,6 @@ class LyraServer {
 
             // Register the route based on HTTP method
             this.addRoute(route.method, fullPath, handlers);
-            console.log(`[LyraServer] Registered route: ${route.method} ${fullPath}`);
         });
 
         return this;
@@ -677,12 +674,18 @@ class LyraServer {
     createResponse(res: Response): Response {
         // JSON response
         res.json = (data) => {
+            if (res.headersSent) {
+                return;
+            }
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(data));
         };
 
         // Send response
         res.send = (data) => {
+            if (res.headersSent) {
+                return;
+            }
             if (typeof data === 'object') {
                 res.json(data);
             } else {
@@ -710,14 +713,15 @@ class LyraServer {
 
             if (options) {
                 if (options.maxAge) {
-                    cookieString += `; Max-Age=${options.maxAge}`;
+                    // Convert milliseconds to seconds (Express uses ms, but Set-Cookie expects seconds)
+                    const maxAgeInSeconds = Math.floor(options.maxAge / 1000);
+                    cookieString += `; Max-Age=${maxAgeInSeconds}`;
                 }
                 if (options.expires) {
                     cookieString += `; Expires=${options.expires.toUTCString()}`;
                 }
-                if (options.path) {
-                    cookieString += `; Path=${options.path}`;
-                }
+                // Default path to "/" if not specified
+                cookieString += `; Path=${options.path || '/'}`;
                 if (options.domain) {
                     cookieString += `; Domain=${options.domain}`;
                 }
@@ -730,6 +734,12 @@ class LyraServer {
                 if (options.sameSite) {
                     cookieString += `; SameSite=${options.sameSite}`;
                 }
+                if (options.partitioned) {
+                    cookieString += `; Partitioned`;
+                }
+            } else {
+                // No options provided, default path to "/"
+                cookieString += `; Path=/`;
             }
 
             // Get existing Set-Cookie headers
@@ -753,6 +763,7 @@ class LyraServer {
         res.clearCookie = (name: string, options?: CookieOptions) => {
             // To clear a cookie, set it with an expiration date in the past
             const clearOptions: CookieOptions = {
+                path: '/', // Default to "/" to match cookie setting
                 ...options,
                 expires: new Date(0), // Set to epoch time (Jan 1, 1970)
                 maxAge: 0
