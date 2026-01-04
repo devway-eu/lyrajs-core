@@ -245,7 +245,7 @@ class LyraServer {
             ];
 
             // Register the route based on HTTP method
-            this.addRoute(route.method, fullPath, handlers);
+            this.addRoute(route.method, fullPath, handlers, route.parserType);
         });
 
         return this;
@@ -541,14 +541,15 @@ class LyraServer {
         return this;
     }
 
-    addRoute(method: HttpMethod, path: string, handlers: RouteHandler[]): void {
+    addRoute(method: HttpMethod, path: string, handlers: RouteHandler[], parserType?: 'json' | 'xml' | 'urlencoded' | 'raw'): void {
         const pattern = this.pathToRegex(path);
         const paramNames = this.extractParamNames(path);
 
         this.routes[method][path] = {
             pattern,
             paramNames,
-            handlers
+            handlers,
+            parserType
         };
     }
 
@@ -579,7 +580,7 @@ class LyraServer {
                     params[name] = match[index + 1];
                 });
 
-                return { handlers: route.handlers, params };
+                return { handlers: route.handlers, params, parserType: route.parserType };
             }
         }
 
@@ -605,7 +606,7 @@ class LyraServer {
     }
 
     // Parse request body
-    async parseBody(req: Request): Promise<any> {
+    async parseBody(req: Request, parserType?: 'json' | 'xml' | 'urlencoded' | 'raw'): Promise<any> {
         return new Promise((resolve, reject) => {
             let body = '';
             let receivedBytes = 0;
@@ -627,18 +628,44 @@ class LyraServer {
             req.on('end', () => {
                 try {
                     const contentType = req.headers['content-type'] || '';
+                    const globalParserType = this.getSetting('parserType') || 'json';
+                    const effectiveParserType = parserType || globalParserType;
 
-                    if (contentType.includes('application/json')) {
-                        resolve(JSON.parse(body));
-                    } else if (contentType.includes('application/x-www-form-urlencoded')) {
-                        const parsed: any = {};
-                        body.split('&').forEach(pair => {
-                            const [key, value] = pair.split('=');
-                            parsed[decodeURIComponent(key)] = decodeURIComponent(value);
-                        });
-                        resolve(parsed);
-                    } else {
-                        resolve(body);
+                    // Determine parser type from content-type header if not explicitly set
+                    let detectedType = effectiveParserType;
+                    if (!parserType && !this.getSetting('parserType')) {
+                        if (contentType.includes('application/json')) {
+                            detectedType = 'json';
+                        } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
+                            detectedType = 'xml';
+                        } else if (contentType.includes('application/x-www-form-urlencoded')) {
+                            detectedType = 'urlencoded';
+                        }
+                    }
+
+                    // Parse based on parser type
+                    switch (detectedType) {
+                        case 'json':
+                            resolve(body ? JSON.parse(body) : {});
+                            break;
+                        case 'xml':
+                            const { parseXML } = require('./xmlParser');
+                            resolve(body ? parseXML(body) : {});
+                            break;
+                        case 'urlencoded':
+                            const parsed: any = {};
+                            if (body) {
+                                body.split('&').forEach(pair => {
+                                    const [key, value] = pair.split('=');
+                                    parsed[decodeURIComponent(key)] = decodeURIComponent(value);
+                                });
+                            }
+                            resolve(parsed);
+                            break;
+                        case 'raw':
+                        default:
+                            resolve(body);
+                            break;
                     }
                 } catch (error) {
                     reject(error);
@@ -690,6 +717,34 @@ class LyraServer {
             res.end(JSON.stringify(data));
         };
 
+        // XML response
+        res.xml = (data) => {
+            if (res.headersSent) {
+                return;
+            }
+            const { serializeToXML } = require('./xmlParser');
+            res.setHeader('Content-Type', 'application/xml');
+            res.end(serializeToXML(data));
+        };
+
+        // HTML response
+        res.html = (data) => {
+            if (res.headersSent) {
+                return;
+            }
+            res.setHeader('Content-Type', 'text/html');
+            res.end(String(data));
+        };
+
+        // Text response
+        res.text = (data) => {
+            if (res.headersSent) {
+                return;
+            }
+            res.setHeader('Content-Type', 'text/plain');
+            res.end(String(data));
+        };
+
         // Send response
         res.send = (data) => {
             if (res.headersSent) {
@@ -710,9 +765,16 @@ class LyraServer {
         };
 
         // Redirect
-        res.redirect = (url) => {
-            res.statusCode = 302;
-            res.setHeader('Location', url);
+        res.redirect = (statusCodeOrUrl: number | string, url?: string) => {
+            if (typeof statusCodeOrUrl === 'number') {
+                // Called with statusCode and url
+                res.statusCode = statusCodeOrUrl;
+                res.setHeader('Location', url!);
+            } else {
+                // Called with only url
+                res.statusCode = 302;
+                res.setHeader('Location', statusCodeOrUrl);
+            }
             res.end();
         };
 
@@ -1066,16 +1128,8 @@ class LyraServer {
 
             // Parse cookies
             req.cookies = this.parseCookies(req);
-            req.body = {};
-            // Parse body for POST/PUT/PATCH
-            if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-                req.body = await this.parseBody(req);
-            }
 
-            // Execute matching middlewares (global and path-specific)
-            await this.executeMiddlewares(req, res, pathname);
-
-            // Match route
+            // Match route early to get parser type
             const route = this.matchRoute(req.method as HttpMethod, pathname);
 
             if (!route) {
@@ -1086,6 +1140,15 @@ class LyraServer {
 
             // Update request with route params
             req.params = route.params;
+
+            // Parse body for POST/PUT/PATCH with route-specific or global parser type
+            req.body = {};
+            if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+                req.body = await this.parseBody(req, route.parserType);
+            }
+
+            // Execute matching middlewares (global and path-specific)
+            await this.executeMiddlewares(req, res, pathname);
 
             // Execute route handlers
             for (const handler of route.handlers) {

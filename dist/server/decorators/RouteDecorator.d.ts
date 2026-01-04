@@ -1,5 +1,7 @@
 import 'reflect-metadata';
 import { HttpMethod, Middleware } from '../serverTypes.js';
+/** Parser type for request body parsing */
+export type ParserType = 'json' | 'xml' | 'urlencoded' | 'raw';
 /** Route metadata stored for each route method */
 export interface RouteMetadata {
     path: string;
@@ -7,6 +9,7 @@ export interface RouteMetadata {
     methodName: string;
     middlewares?: Middleware[];
     resolve?: Record<string, any>;
+    parserType?: ParserType;
 }
 /** Route decorator options for class-level routing */
 export interface ClassRouteOptions {
@@ -19,6 +22,7 @@ export interface MethodRouteOptions {
     method: HttpMethod;
     middlewares?: Middleware[];
     resolve?: Record<string, any>;
+    parserType?: ParserType;
 }
 /** Combined route options type */
 export type RouteOptions = ClassRouteOptions | MethodRouteOptions;
@@ -34,6 +38,7 @@ export interface HttpMethodOptions {
     path?: string;
     middlewares?: Middleware[];
     resolve?: Record<string, any>;
+    parserType?: ParserType;
 }
 /**
  * GET method decorator

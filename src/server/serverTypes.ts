@@ -50,6 +50,24 @@ export interface Response extends ServerResponse {
      */
     json: (data: any) => void;
     /**
+     * Send XML response
+     * @param {any} data - Data to send as XML
+     * @returns {void}
+     */
+    xml: (data: any) => void;
+    /**
+     * Send HTML response
+     * @param {any} data - Data to send as HTML
+     * @returns {void}
+     */
+    html: (data: any) => void;
+    /**
+     * Send plain text response
+     * @param {any} data - Data to send as plain text
+     * @returns {void}
+     */
+    text: (data: any) => void;
+    /**
      * Send response data
      * @param {any} data - Data to send
      * @returns {void}
@@ -66,7 +84,14 @@ export interface Response extends ServerResponse {
      * @param {string} url - Target URL
      * @returns {void}
      */
-    redirect: (url: string) => void;
+    redirect(url: string): void;
+    /**
+     * Redirect to URL with status code
+     * @param {number} statusCode - HTTP redirect status code
+     * @param {string} url - Target URL
+     * @returns {void}
+     */
+    redirect(statusCode: number, url: string): void;
     /**
      * Set cookie
      * @param {string} name - Cookie name
@@ -127,6 +152,7 @@ interface Route {
     pattern: RegExp;
     paramNames: string[];
     handlers: RouteHandler[];
+    parserType?: 'json' | 'xml' | 'urlencoded' | 'raw';
 }
 
 /** Routes registry organized by HTTP method and path */
@@ -136,6 +162,7 @@ export type Routes = Record<HttpMethod, Record<string, Route>>;
 export interface MatchedRoute {
     handlers: RouteHandler[];
     params: RouteParams;
+    parserType?: 'json' | 'xml' | 'urlencoded' | 'raw';
 }
 
 /** CORS middleware configuration */

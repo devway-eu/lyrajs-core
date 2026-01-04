@@ -162,4 +162,30 @@ export abstract class Controller extends Container {
             throw new Error(`Template rendering failed: ${error.message}`);
         }
     }
+
+    /**
+     * Redirect to a URL
+     * @param {string} url - The URL to redirect to
+     * @param {number} [statusCode=302] - HTTP redirect status code (default: 302 Found)
+     * @returns {void}
+     * @example
+     * this.redirect('https://example.com')
+     * this.redirect('https://example.com/page', 301)
+     */
+    protected redirect(url: string, statusCode: number = 302): void {
+        this.res.redirect(statusCode, url);
+    }
+
+    /**
+     * Redirect to a route path
+     * @param {string} path - The route path to redirect to
+     * @param {number} [statusCode=302] - HTTP redirect status code (default: 302 Found)
+     * @returns {void}
+     * @example
+     * this.redirectToPath('/users')
+     * this.redirectToPath('/users/123', 301)
+     */
+    protected redirectToPath(path: string, statusCode: number = 302): void {
+        this.res.redirect(statusCode, path);
+    }
 }

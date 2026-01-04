@@ -106,4 +106,24 @@ export declare abstract class Controller extends Container {
      * await this.render('pages/home.ejs', { title: 'Welcome', user: this.req.user })
      */
     protected render(template: string, data?: object): Promise<void>;
+    /**
+     * Redirect to a URL
+     * @param {string} url - The URL to redirect to
+     * @param {number} [statusCode=302] - HTTP redirect status code (default: 302 Found)
+     * @returns {void}
+     * @example
+     * this.redirect('https://example.com')
+     * this.redirect('https://example.com/page', 301)
+     */
+    protected redirect(url: string, statusCode?: number): void;
+    /**
+     * Redirect to a route path
+     * @param {string} path - The route path to redirect to
+     * @param {number} [statusCode=302] - HTTP redirect status code (default: 302 Found)
+     * @returns {void}
+     * @example
+     * this.redirectToPath('/users')
+     * this.redirectToPath('/users/123', 301)
+     */
+    protected redirectToPath(path: string, statusCode?: number): void;
 }

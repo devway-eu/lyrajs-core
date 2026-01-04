@@ -193,7 +193,7 @@ class LyraServer {
                 handler
             ];
             // Register the route based on HTTP method
-            this.addRoute(route.method, fullPath, handlers);
+            this.addRoute(route.method, fullPath, handlers, route.parserType);
         });
         return this;
     }
@@ -447,13 +447,14 @@ class LyraServer {
         this.addRoute('PATCH', path, handlers);
         return this;
     }
-    addRoute(method, path, handlers) {
+    addRoute(method, path, handlers, parserType) {
         const pattern = this.pathToRegex(path);
         const paramNames = this.extractParamNames(path);
         this.routes[method][path] = {
             pattern,
             paramNames,
-            handlers
+            handlers,
+            parserType
         };
     }
     // Convert route path to regex (e.g., /users/:id -> regex)
@@ -478,7 +479,7 @@ class LyraServer {
                 route.paramNames.forEach((name, index) => {
                     params[name] = match[index + 1];
                 });
-                return { handlers: route.handlers, params };
+                return { handlers: route.handlers, params, parserType: route.parserType };
             }
         }
         return null;
@@ -499,7 +500,7 @@ class LyraServer {
         return value * (units[unit] || 1);
     }
     // Parse request body
-    async parseBody(req) {
+    async parseBody(req, parserType) {
         return new Promise((resolve, reject) => {
             let body = '';
             let receivedBytes = 0;
@@ -517,19 +518,44 @@ class LyraServer {
             req.on('end', () => {
                 try {
                     const contentType = req.headers['content-type'] || '';
-                    if (contentType.includes('application/json')) {
-                        resolve(JSON.parse(body));
+                    const globalParserType = this.getSetting('parserType') || 'json';
+                    const effectiveParserType = parserType || globalParserType;
+                    // Determine parser type from content-type header if not explicitly set
+                    let detectedType = effectiveParserType;
+                    if (!parserType && !this.getSetting('parserType')) {
+                        if (contentType.includes('application/json')) {
+                            detectedType = 'json';
+                        }
+                        else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
+                            detectedType = 'xml';
+                        }
+                        else if (contentType.includes('application/x-www-form-urlencoded')) {
+                            detectedType = 'urlencoded';
+                        }
                     }
-                    else if (contentType.includes('application/x-www-form-urlencoded')) {
-                        const parsed = {};
-                        body.split('&').forEach(pair => {
-                            const [key, value] = pair.split('=');
-                            parsed[decodeURIComponent(key)] = decodeURIComponent(value);
-                        });
-                        resolve(parsed);
-                    }
-                    else {
-                        resolve(body);
+                    // Parse based on parser type
+                    switch (detectedType) {
+                        case 'json':
+                            resolve(body ? JSON.parse(body) : {});
+                            break;
+                        case 'xml':
+                            const { parseXML } = require('./xmlParser.js');
+                            resolve(body ? parseXML(body) : {});
+                            break;
+                        case 'urlencoded':
+                            const parsed = {};
+                            if (body) {
+                                body.split('&').forEach(pair => {
+                                    const [key, value] = pair.split('=');
+                                    parsed[decodeURIComponent(key)] = decodeURIComponent(value);
+                                });
+                            }
+                            resolve(parsed);
+                            break;
+                        case 'raw':
+                        default:
+                            resolve(body);
+                            break;
                     }
                 }
                 catch (error) {
@@ -573,6 +599,31 @@ class LyraServer {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(data));
         };
+        // XML response
+        res.xml = (data) => {
+            if (res.headersSent) {
+                return;
+            }
+            const { serializeToXML } = require('./xmlParser.js');
+            res.setHeader('Content-Type', 'application/xml');
+            res.end(serializeToXML(data));
+        };
+        // HTML response
+        res.html = (data) => {
+            if (res.headersSent) {
+                return;
+            }
+            res.setHeader('Content-Type', 'text/html');
+            res.end(String(data));
+        };
+        // Text response
+        res.text = (data) => {
+            if (res.headersSent) {
+                return;
+            }
+            res.setHeader('Content-Type', 'text/plain');
+            res.end(String(data));
+        };
         // Send response
         res.send = (data) => {
             if (res.headersSent) {
@@ -592,9 +643,17 @@ class LyraServer {
             return res;
         };
         // Redirect
-        res.redirect = (url) => {
-            res.statusCode = 302;
-            res.setHeader('Location', url);
+        res.redirect = (statusCodeOrUrl, url) => {
+            if (typeof statusCodeOrUrl === 'number') {
+                // Called with statusCode and url
+                res.statusCode = statusCodeOrUrl;
+                res.setHeader('Location', url);
+            }
+            else {
+                // Called with only url
+                res.statusCode = 302;
+                res.setHeader('Location', statusCodeOrUrl);
+            }
             res.end();
         };
         // Set cookie
@@ -897,14 +956,7 @@ class LyraServer {
             res = this.createResponse(res);
             // Parse cookies
             req.cookies = this.parseCookies(req);
-            req.body = {};
-            // Parse body for POST/PUT/PATCH
-            if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-                req.body = await this.parseBody(req);
-            }
-            // Execute matching middlewares (global and path-specific)
-            await this.executeMiddlewares(req, res, pathname);
-            // Match route
+            // Match route early to get parser type
             const route = this.matchRoute(req.method, pathname);
             if (!route) {
                 res.statusCode = 404;
@@ -913,6 +965,13 @@ class LyraServer {
             }
             // Update request with route params
             req.params = route.params;
+            // Parse body for POST/PUT/PATCH with route-specific or global parser type
+            req.body = {};
+            if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+                req.body = await this.parseBody(req, route.parserType);
+            }
+            // Execute matching middlewares (global and path-specific)
+            await this.executeMiddlewares(req, res, pathname);
             // Execute route handlers
             for (const handler of route.handlers) {
                 await new Promise((resolve, reject) => {

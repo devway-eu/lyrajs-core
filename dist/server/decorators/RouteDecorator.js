@@ -11,7 +11,8 @@ export function Route(options) {
                 method: options.method,
                 methodName: propertyKey.toString(),
                 middlewares: options.middlewares,
-                resolve: options.resolve
+                resolve: options.resolve,
+                parserType: options.parserType
             });
             Reflect.defineMetadata(ROUTES_KEY, routes, constructor);
         };
@@ -33,7 +34,7 @@ export function Route(options) {
 export function Get(options) {
     const opts = typeof options === 'string'
         ? { path: options, method: 'GET' }
-        : { path: options?.path || '', method: 'GET', middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'GET', middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts);
 }
 /**
@@ -44,7 +45,7 @@ export function Get(options) {
 export function Post(options) {
     const opts = typeof options === 'string'
         ? { path: options, method: 'POST' }
-        : { path: options?.path || '', method: 'POST', middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'POST', middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts);
 }
 /**
@@ -55,7 +56,7 @@ export function Post(options) {
 export function Put(options) {
     const opts = typeof options === 'string'
         ? { path: options, method: 'PUT' }
-        : { path: options?.path || '', method: 'PUT', middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'PUT', middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts);
 }
 /**
@@ -66,7 +67,7 @@ export function Put(options) {
 export function Delete(options) {
     const opts = typeof options === 'string'
         ? { path: options, method: 'DELETE' }
-        : { path: options?.path || '', method: 'DELETE', middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'DELETE', middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts);
 }
 /**
@@ -77,7 +78,7 @@ export function Delete(options) {
 export function Patch(options) {
     const opts = typeof options === 'string'
         ? { path: options, method: 'PATCH' }
-        : { path: options?.path || '', method: 'PATCH', middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'PATCH', middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts);
 }
 /**

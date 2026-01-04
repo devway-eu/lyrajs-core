@@ -4,6 +4,9 @@ import {HttpMethod, Middleware} from '../serverTypes';
 const ROUTE_PREFIX_KEY = Symbol('routePrefix');
 const ROUTES_KEY = Symbol('routes');
 
+/** Parser type for request body parsing */
+export type ParserType = 'json' | 'xml' | 'urlencoded' | 'raw';
+
 /** Route metadata stored for each route method */
 export interface RouteMetadata {
     path: string;
@@ -11,6 +14,7 @@ export interface RouteMetadata {
     methodName: string;
     middlewares?: Middleware[];
     resolve?: Record<string, any>;
+    parserType?: ParserType;
 }
 
 /** Route decorator options for class-level routing */
@@ -25,6 +29,7 @@ export interface MethodRouteOptions {
     method: HttpMethod;
     middlewares?: Middleware[];
     resolve?: Record<string, any>;
+    parserType?: ParserType;
 }
 
 /** Combined route options type */
@@ -49,7 +54,8 @@ export function Route(options: RouteOptions): ClassDecorator | MethodDecorator {
                 method: options.method,
                 methodName: propertyKey.toString(),
                 middlewares: options.middlewares,
-                resolve: options.resolve
+                resolve: options.resolve,
+                parserType: options.parserType
             });
 
             Reflect.defineMetadata(ROUTES_KEY, routes, constructor);
@@ -70,6 +76,7 @@ export interface HttpMethodOptions {
     path?: string;
     middlewares?: Middleware[];
     resolve?: Record<string, any>;
+    parserType?: ParserType;
 }
 
 /**
@@ -80,7 +87,7 @@ export interface HttpMethodOptions {
 export function Get(options?: string | HttpMethodOptions): MethodDecorator {
     const opts = typeof options === 'string'
         ? { path: options, method: 'GET' as HttpMethod }
-        : { path: options?.path || '', method: 'GET' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'GET' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts) as MethodDecorator;
 }
 
@@ -92,7 +99,7 @@ export function Get(options?: string | HttpMethodOptions): MethodDecorator {
 export function Post(options?: string | HttpMethodOptions): MethodDecorator {
     const opts = typeof options === 'string'
         ? { path: options, method: 'POST' as HttpMethod }
-        : { path: options?.path || '', method: 'POST' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'POST' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts) as MethodDecorator;
 }
 
@@ -104,7 +111,7 @@ export function Post(options?: string | HttpMethodOptions): MethodDecorator {
 export function Put(options?: string | HttpMethodOptions): MethodDecorator {
     const opts = typeof options === 'string'
         ? { path: options, method: 'PUT' as HttpMethod }
-        : { path: options?.path || '', method: 'PUT' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'PUT' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts) as MethodDecorator;
 }
 
@@ -116,7 +123,7 @@ export function Put(options?: string | HttpMethodOptions): MethodDecorator {
 export function Delete(options?: string | HttpMethodOptions): MethodDecorator {
     const opts = typeof options === 'string'
         ? { path: options, method: 'DELETE' as HttpMethod }
-        : { path: options?.path || '', method: 'DELETE' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'DELETE' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts) as MethodDecorator;
 }
 
@@ -128,7 +135,7 @@ export function Delete(options?: string | HttpMethodOptions): MethodDecorator {
 export function Patch(options?: string | HttpMethodOptions): MethodDecorator {
     const opts = typeof options === 'string'
         ? { path: options, method: 'PATCH' as HttpMethod }
-        : { path: options?.path || '', method: 'PATCH' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve };
+        : { path: options?.path || '', method: 'PATCH' as HttpMethod, middlewares: options?.middlewares, resolve: options?.resolve, parserType: options?.parserType };
     return Route(opts) as MethodDecorator;
 }
 

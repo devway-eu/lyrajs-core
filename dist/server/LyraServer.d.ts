@@ -139,12 +139,12 @@ declare class LyraServer {
      * @returns {this} - Server instance for chaining
      */
     patch(path: string, ...handlers: RouteHandler[]): this;
-    addRoute(method: HttpMethod, path: string, handlers: RouteHandler[]): void;
+    addRoute(method: HttpMethod, path: string, handlers: RouteHandler[], parserType?: 'json' | 'xml' | 'urlencoded' | 'raw'): void;
     pathToRegex(path: string): RegExp;
     extractParamNames(path: string): string[];
     matchRoute(method: HttpMethod, pathname: string): MatchedRoute | null;
     private parseSizeToBytes;
-    parseBody(req: Request): Promise<any>;
+    parseBody(req: Request, parserType?: 'json' | 'xml' | 'urlencoded' | 'raw'): Promise<any>;
     parseCookies(req: Request): {
         [key: string]: string;
     };
