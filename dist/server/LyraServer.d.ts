@@ -19,6 +19,7 @@ declare class LyraServer {
      * @example
      * app.setSetting('trust proxy', true)
      * app.setSetting('request max size', '50mb')
+     * app.setSetting('ssr', { engine: 'ejs', templates: './templates' })
      */
     setSetting(key: string, value: any): this;
     /**

@@ -1,127 +1,165 @@
-import { Response, Container } from '@/core/server';
+import { Request, Response, Container, NextFunction } from '@/core/server';
+import { TemplateRenderer } from '@/core/ssr';
+import { HTTP_STATUS } from '@/core/errors';
 
 /**
  * Abstract base Controller class with dependency injection and HTTP response helpers
+ * Request and response objects are automatically injected and available as this.req and this.res
  * @example
  * @Route({ path: '/users' })
  * class UserController extends Controller {
  *     @Get('/all')
- *     async getAllUsers(req, res, next) {
- *         const users = await this.services.userService.getUsers();
- *         this.ok(res, users);
+ *     async getAllUsers() {
+ *         const users = await this.userService.getUsers();
+ *         this.ok(users);
  *     }
  * }
  */
 export abstract class Controller extends Container {
+    /**
+     * HTTP Request object (automatically injected)
+     */
+    protected req!: Request
+
+    /**
+     * HTTP Response object (automatically injected)
+     */
+    protected res!: Response
+
+    /**
+     * Next function for middleware chain (automatically injected)
+     */
+    protected next!: NextFunction
 
     /**
      * Send 200 OK response with JSON data
-     * @param {Response} res - HTTP response object
      * @param {any} data - Response data
      * @returns {void}
      */
-    protected ok(res: Response, data: any): void {
-        res.status(200).json(data);
+    protected ok(data: any): void {
+        this.res.status(HTTP_STATUS.OK).json(data);
     }
 
     /**
      * Send 201 Created response with JSON data
-     * @param {Response} res - HTTP response object
      * @param {any} data - Response data
      * @returns {void}
      */
-    protected created(res: Response, data: any): void {
-        res.status(201).json(data);
+    protected created(data: any): void {
+        this.res.status(HTTP_STATUS.CREATED).json(data);
     }
 
     /**
      * Send 204 No Content response
-     * @param {Response} res - HTTP response object
      * @returns {void}
      */
-    protected noContent(res: Response): void {
-        res.status(204).send('');
+    protected noContent(): void {
+        this.res.status(HTTP_STATUS.NO_CONTENT).send('');
     }
 
     /**
      * Send 400 Bad Request response
-     * @param {Response} res - HTTP response object
      * @param {string} message - Error message
      * @returns {void}
      */
-    protected badRequest(res: Response, message: string): void {
-        res.status(400).json({ error: message });
+    protected badRequest(message: string): void {
+        this.res.status(HTTP_STATUS.BAD_REQUEST).json({ error: message });
     }
 
     /**
      * Send 401 Unauthorized response
-     * @param {Response} res - HTTP response object
      * @param {string} [message='Unauthorized'] - Error message
      * @returns {void}
      */
-    protected unauthorized(res: Response, message: string = 'Unauthorized'): void {
-        res.status(401).json({ error: message });
+    protected unauthorized(message: string = 'Unauthorized'): void {
+        this.res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: message });
     }
 
     /**
      * Send 403 Forbidden response
-     * @param {Response} res - HTTP response object
      * @param {string} [message='Forbidden'] - Error message
      * @returns {void}
      */
-    protected forbidden(res: Response, message: string = 'Forbidden'): void {
-        res.status(403).json({ error: message });
+    protected forbidden(message: string = 'Forbidden'): void {
+        this.res.status(HTTP_STATUS.FORBIDDEN).json({ error: message });
     }
 
     /**
      * Send 404 Not Found response
-     * @param {Response} res - HTTP response object
      * @param {string} message - Error message
      * @returns {void}
      */
-    protected notFound(res: Response, message: string): void {
-        res.status(404).json({ error: message });
+    protected notFound(message: string): void {
+        this.res.status(HTTP_STATUS.NOT_FOUND).json({ error: message });
     }
 
     /**
      * Send 409 Conflict response
-     * @param {Response} res - HTTP response object
      * @param {string} message - Error message
      * @returns {void}
      */
-    protected conflict(res: Response, message: string): void {
-        res.status(409).json({ error: message });
+    protected conflict(message: string): void {
+        this.res.status(HTTP_STATUS.CONFLICT).json({ error: message });
     }
 
     /**
      * Send 422 Unprocessable Entity response
-     * @param {Response} res - HTTP response object
      * @param {any} errors - Validation errors
      * @returns {void}
      */
-    protected unprocessableEntity(res: Response, errors: any): void {
-        res.status(422).json({ errors });
+    protected unprocessableEntity(errors: any): void {
+        this.res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).json({ errors });
     }
 
     /**
      * Send 500 Internal Server Error response
-     * @param {Response} res - HTTP response object
      * @param {any} error - Error object
      * @returns {void}
      */
-    protected serverError(res: Response, error: any): void {
+    protected serverError(error: any): void {
         const message = error?.message || 'Internal Server Error';
-        res.status(500).json({ error: message });
+        this.res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: message });
     }
 
     /**
      * Send custom status code with JSON data
-     * @param {Response} res - HTTP response object
      * @param {number} statusCode - HTTP status code
      * @param {any} data - Response data
      * @returns {void}
      */
-    protected respond(res: Response, statusCode: number, data: any): void {
-        res.status(statusCode).json(data);
+    protected respond(statusCode: number, data: any): void {
+        this.res.status(statusCode).json(data);
+    }
+
+    /**
+     * Render a template with server-side rendering (SSR)
+     * Requires SSR to be configured in LyraServer settings
+     * @param {string} template - Template path (relative to templates directory)
+     * @param {object} data - Data to pass to the template
+     * @returns {Promise<void>}
+     * @throws {Error} - If SSR is not configured or template engine is not installed
+     * @example
+     * // Configure SSR in server setup:
+     * app.setSetting('ssr', { engine: 'ejs', templates: './templates' })
+     *
+     * // Use in controller:
+     * await this.render('pages/home.ejs', { title: 'Welcome', user: this.req.user })
+     */
+    protected async render(template: string, data: object = {}): Promise<void> {
+        const renderer = TemplateRenderer.getInstance();
+
+        if (!renderer.isConfigured()) {
+            throw new Error(
+                'SSR is not configured. Please configure SSR using app.setSetting("ssr", { engine: "ejs", templates: "./templates" })'
+            );
+        }
+
+        try {
+            const html = await renderer.render(template, data);
+            this.res.setHeader('Content-Type', 'text/html');
+            this.res.status(HTTP_STATUS.OK).send(html);
+        } catch (error: any) {
+            throw new Error(`Template rendering failed: ${error.message}`);
+        }
     }
 }

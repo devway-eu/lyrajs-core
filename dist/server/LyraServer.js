@@ -6,6 +6,7 @@ import * as path from "path";
 import { errorHandler, httpRequestMiddleware, accessMiddleware } from "../middlewares/index.js";
 import { Config } from "../config/index.js";
 import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger } from '../server/index.js';
+import { TemplateRenderer } from '../ssr/index.js';
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
     routes;
@@ -49,9 +50,15 @@ class LyraServer {
      * @example
      * app.setSetting('trust proxy', true)
      * app.setSetting('request max size', '50mb')
+     * app.setSetting('ssr', { engine: 'ejs', templates: './templates' })
      */
     setSetting(key, value) {
         this.settings.set(key, value);
+        // Configure SSR if setting is 'ssr'
+        if (key === 'ssr') {
+            const renderer = TemplateRenderer.getInstance();
+            renderer.configure(value);
+        }
         return this;
     }
     /**
@@ -677,6 +684,10 @@ class LyraServer {
         const self = this;
         return async function wrappedHandler(req, res, next) {
             try {
+                // Inject req, res, and next into controller instance
+                controllerInstance.req = req;
+                controllerInstance.res = res;
+                controllerInstance.next = next;
                 // Resolve parameters using metadata
                 const resolvedParams = await self.resolveParameters(methodName, // Use methodName instead of handler
                 controllerInstance, req, res, next);

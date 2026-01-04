@@ -27,6 +27,7 @@ import {
     MiddlewareRoute,
     CookieOptions
 } from '@/core/server';
+import { TemplateRenderer, SSRConfig } from '@/core/ssr';
 
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
@@ -77,9 +78,17 @@ class LyraServer {
      * @example
      * app.setSetting('trust proxy', true)
      * app.setSetting('request max size', '50mb')
+     * app.setSetting('ssr', { engine: 'ejs', templates: './templates' })
      */
     setSetting(key: string, value: any): this {
         this.settings.set(key, value);
+
+        // Configure SSR if setting is 'ssr'
+        if (key === 'ssr') {
+            const renderer = TemplateRenderer.getInstance();
+            renderer.configure(value as SSRConfig);
+        }
+
         return this;
     }
 
@@ -808,6 +817,11 @@ class LyraServer {
 
         return async function wrappedHandler(req: Request, res: Response, next: NextFunction) {
             try {
+                // Inject req, res, and next into controller instance
+                controllerInstance.req = req;
+                controllerInstance.res = res;
+                controllerInstance.next = next;
+
                 // Resolve parameters using metadata
                 const resolvedParams = await self.resolveParameters(
                     methodName,  // Use methodName instead of handler
