@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "../../server/index.js";
 /**
  * Authentication middleware
  * Verifies that a user is authenticated by checking for req.user
- * Returns 401 Unauthorized if user is not authenticated
+ * Throws UnauthorizedException if user is not authenticated
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function

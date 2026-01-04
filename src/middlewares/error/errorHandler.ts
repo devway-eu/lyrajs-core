@@ -57,7 +57,7 @@ const logError = (error: HttpException, req: Request): void => {
 
 /**
  * Global error handler middleware
- * Catches all errors thrown in the application and formats them as JSON responses
+ * Catches all errors thrown in the application and redirects to ErrorController routes or formats them as JSON responses
  * Logs errors with request context and handles production/development differences
  * @param {HttpExceptionType} error - The error object (HttpException or generic error)
  * @param {Request} req - Express request object
@@ -78,6 +78,51 @@ export const errorHandler = (error: HttpExceptionType, req: Request, res: Respon
     return
   }
 
+  // Try to redirect to ErrorController route if it exists
+  // Avoid redirect loop - don't redirect if already on an error route
+  const isErrorRoute = req.url?.startsWith('/error/') || req.url?.includes('/error/')
+
+  console.log('[errorHandler] Debug info:', {
+    url: req.url,
+    status,
+    isErrorRoute,
+    headersSent: res.headersSent
+  })
+
+  if (!isErrorRoute) {
+    // Get base path from config (e.g., '/api')
+    let basePath = ''
+    try {
+      basePath = new Config().get("router.base_path") || ''
+    } catch (error) {
+      basePath = ''
+    }
+
+    const errorRoutes: { [key: number]: string } = {
+      400: `${basePath}/error/400`,
+      401: `${basePath}/error/401`,
+      403: `${basePath}/error/403`,
+      404: `${basePath}/error/404`,
+      409: `${basePath}/error/409`,
+      422: `${basePath}/error/422`,
+      500: `${basePath}/error/500`
+    }
+
+    const errorRoute = errorRoutes[status]
+    console.log('[errorHandler] Attempting redirect to:', errorRoute)
+
+    if (errorRoute) {
+      // Redirect to error route (ErrorController will handle the response)
+      // Use direct HTTP redirect instead of enhanced res.redirect() to ensure it works
+      res.statusCode = 302
+      res.setHeader('Location', errorRoute)
+      res.end()
+      console.log('[errorHandler] Redirect sent')
+      return
+    }
+  }
+
+  // Fallback to JSON response if no error route exists or redirect is not available
   const errorResponse: ErrorResponse = {
     status,
     message: getErrorMessage(httpError),

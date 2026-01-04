@@ -959,8 +959,15 @@ class LyraServer {
             // Match route early to get parser type
             const route = this.matchRoute(req.method, pathname);
             if (!route) {
-                res.statusCode = 404;
-                res.end('Not Found');
+                // Avoid redirect loop - don't redirect if already on an error route
+                if (pathname.includes('/error/')) {
+                    res.statusCode = 404;
+                    res.end('Not Found');
+                    return;
+                }
+                // Redirect to ErrorController 404 route (with base path)
+                const errorPath = `${this.basePath}/error/404`;
+                res.redirect(errorPath);
                 return;
             }
             // Update request with route params
