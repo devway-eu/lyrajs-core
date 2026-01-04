@@ -63,12 +63,6 @@ export const errorHandler = (error, req, res, _next) => {
     // Try to redirect to ErrorController route if it exists
     // Avoid redirect loop - don't redirect if already on an error route
     const isErrorRoute = req.url?.startsWith('/error/') || req.url?.includes('/error/');
-    console.log('[errorHandler] Debug info:', {
-        url: req.url,
-        status,
-        isErrorRoute,
-        headersSent: res.headersSent
-    });
     if (!isErrorRoute) {
         // Get base path from config (e.g., '/api')
         let basePath = '';
@@ -88,14 +82,12 @@ export const errorHandler = (error, req, res, _next) => {
             500: `${basePath}/error/500`
         };
         const errorRoute = errorRoutes[status];
-        console.log('[errorHandler] Attempting redirect to:', errorRoute);
         if (errorRoute) {
             // Redirect to error route (ErrorController will handle the response)
             // Use direct HTTP redirect instead of enhanced res.redirect() to ensure it works
             res.statusCode = 302;
             res.setHeader('Location', errorRoute);
             res.end();
-            console.log('[errorHandler] Redirect sent');
             return;
         }
     }
