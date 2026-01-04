@@ -1,6 +1,6 @@
 import { ShowRoutesCommand } from "../cli/commands/ShowRoutesCommand.js";
 import { LyraConsole } from "../console/LyraConsole.js";
-import { CreateDatabaseCommand, CreateRoutesCommand, GenerateControllerCommand, GenerateEntityCommand, GenerateMigrationCommand, HelpCommand, LoadFixturesCommand, MigrateMigrationCommand, ShowControllersCommand, ShowEntitiesCommand, ShowMigrationsCommand, ShowRepositoriesCommand } from "./commands/index.js";
+import { CreateDatabaseCommand, CreateRoutesCommand, GenerateControllerCommand, GenerateEntityCommand, GenerateMigrationCommand, HelpCommand, LoadFixturesCommand, MakeFixturesCommand, MigrateMigrationCommand, ShowControllersCommand, ShowEntitiesCommand, ShowMigrationsCommand, ShowRepositoriesCommand } from "./commands/index.js";
 /**
  * CLI Kernel class
  * Handles command parsing, routing, and execution
@@ -13,6 +13,7 @@ export class Kernel {
         "make:entity": GenerateEntityCommand,
         "make:controller": GenerateControllerCommand,
         "make:migration": GenerateMigrationCommand,
+        "make:fixtures": MakeFixturesCommand,
         "migration:migrate": MigrateMigrationCommand,
         "fixtures:load": LoadFixturesCommand,
         "show:controllers": ShowControllersCommand,
