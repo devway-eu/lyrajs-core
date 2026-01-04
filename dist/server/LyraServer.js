@@ -7,6 +7,7 @@ import { errorHandler, httpRequestMiddleware, accessMiddleware } from "../middle
 import { Config } from "../config/index.js";
 import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger } from '../server/index.js';
 import { TemplateRenderer } from '../ssr/index.js';
+import { parseXML, serializeToXML } from './xmlParser.js';
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
     routes;
@@ -539,7 +540,6 @@ class LyraServer {
                             resolve(body ? JSON.parse(body) : {});
                             break;
                         case 'xml':
-                            const { parseXML } = require('./xmlParser.js');
                             resolve(body ? parseXML(body) : {});
                             break;
                         case 'urlencoded':
@@ -604,7 +604,6 @@ class LyraServer {
             if (res.headersSent) {
                 return;
             }
-            const { serializeToXML } = require('./xmlParser.js');
             res.setHeader('Content-Type', 'application/xml');
             res.end(serializeToXML(data));
         };

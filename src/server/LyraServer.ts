@@ -28,6 +28,7 @@ import {
     CookieOptions
 } from '@/core/server';
 import { TemplateRenderer, SSRConfig } from '@/core/ssr';
+import { parseXML, serializeToXML } from './xmlParser';
 
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
@@ -649,7 +650,6 @@ class LyraServer {
                             resolve(body ? JSON.parse(body) : {});
                             break;
                         case 'xml':
-                            const { parseXML } = require('./xmlParser');
                             resolve(body ? parseXML(body) : {});
                             break;
                         case 'urlencoded':
@@ -722,7 +722,6 @@ class LyraServer {
             if (res.headersSent) {
                 return;
             }
-            const { serializeToXML } = require('./xmlParser');
             res.setHeader('Content-Type', 'application/xml');
             res.end(serializeToXML(data));
         };
