@@ -1,6 +1,6 @@
 import { describe, it } from "node:test"
-import assert from "node:assert"
-import { Entity } from "../src/orm/Entity.js"
+import * as assert from "node:assert"
+import { Entity } from "../src"
 
 describe("Entity", () => {
   it("should create entity with default id null", () => {
@@ -50,9 +50,11 @@ describe("Entity", () => {
 
   it("should maintain entity type when extended", () => {
     class Product extends Entity<Product> {
+      declare title?: string
+      declare price?: number
+
       constructor(product?: Partial<Product> | Product) {
         super(product)
-        // Don't declare fields - let Object.assign handle them
       }
     }
 
@@ -60,22 +62,24 @@ describe("Entity", () => {
 
     assert.ok(product instanceof Product)
     assert.ok(product instanceof Entity)
-    assert.strictEqual((product as any).title, "Laptop")
-    assert.strictEqual((product as any).price, 999.99)
+    assert.strictEqual(product.title, "Laptop")
+    assert.strictEqual(product.price, 999.99)
   })
 
   it("should handle Object.assign correctly with inherited classes", () => {
     class User extends Entity<User> {
+      declare name?: string
+      declare age?: number
+
       constructor(user?: Partial<User> | User) {
         super(user)
-        // Properties are assigned via Object.assign in parent
       }
     }
 
     const user = new User({ id: 1, name: "Bob", age: 30 })
 
     assert.strictEqual(user.id, 1)
-    assert.strictEqual((user as any).name, "Bob")
-    assert.strictEqual((user as any).age, 30)
+    assert.strictEqual(user.name, "Bob")
+    assert.strictEqual(user.age, 30)
   })
 })
