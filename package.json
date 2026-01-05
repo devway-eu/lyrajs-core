@@ -19,6 +19,8 @@
   },
   "scripts": {
     "build": "tsc && tsc-alias",
+    "test": "tsx --test --experimental-test-coverage tests/**/*.test.ts",
+    "test:watch": "tsx --test --watch tests/**/*.test.ts",
     "prepublishOnly": "npm run build"
   },
   "description": "A lightweight TypeScript framework for building APIs with ORM, CLI tools, and authentication",
