@@ -11,6 +11,15 @@ export declare class MigrationGenerator {
      */
     generate(options?: GenerateOptions): Promise<void>;
     /**
+     * Prompt user to confirm detected renames
+     * Returns the confirmed renames and updates diff to remove false positives
+     */
+    private promptForRenameConfirmation;
+    /**
+     * Helper to ask yes/no questions
+     */
+    private askYesNo;
+    /**
      * Build the TypeScript migration class content using string concatenation
      */
     private buildMigrationClass;
@@ -46,6 +55,12 @@ export declare class MigrationGenerator {
      * Generate ADD FOREIGN KEY SQL
      */
     private generateAddForeignKeySQL;
+    /**
+     * Generate RENAME COLUMN SQL
+     * Note: MySQL uses CHANGE COLUMN which requires the full column definition
+     * For simplicity, we'll use a comment noting this needs the column type
+     */
+    private generateRenameColumnSQL;
     /**
      * Print a summary of the diff
      */

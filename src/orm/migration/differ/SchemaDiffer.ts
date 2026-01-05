@@ -13,6 +13,7 @@ import {
   ForeignKeyToAdd,
   ForeignKeyToRemove
 } from '../interfaces/types'
+import { RenameDetector } from '../detector/RenameDetector'
 
 /**
  * SchemaDiffer
@@ -20,6 +21,11 @@ import {
  * Detects table/column additions, modifications, and removals
  */
 export class SchemaDiffer {
+  private renameDetector: RenameDetector
+
+  constructor() {
+    this.renameDetector = new RenameDetector()
+  }
   /**
    * Compare current and desired schemas
    */
@@ -37,16 +43,38 @@ export class SchemaDiffer {
       const currentTable = current.getTable(tableName)!
       const desiredTable = desired.getTable(tableName)!
 
-      // Column additions
+      // Get columns to add and remove
       const columnsToAdd = this.findNewColumns(currentTable, desiredTable)
-      result.columnsToAdd.push(...columnsToAdd.map(col => ({
+      const columnsToRemove = this.findRemovedColumns(currentTable, desiredTable)
+
+      // Detect potential column renames
+      const removedColumnDefs = columnsToRemove
+        .map(colName => currentTable.columns.find(c => c.name === colName))
+        .filter(col => col !== undefined) as ColumnDefinition[]
+
+      const columnRenames = this.renameDetector.detectColumnRenames(
+        tableName,
+        removedColumnDefs,
+        columnsToAdd
+      )
+
+      result.columnsToRename.push(...columnRenames)
+
+      // Filter out detected renames from additions and removals
+      const renamedFrom = new Set(columnRenames.map(r => r.from))
+      const renamedTo = new Set(columnRenames.map(r => r.to))
+
+      const actualColumnsToAdd = columnsToAdd.filter(col => !renamedTo.has(col.name))
+      const actualColumnsToRemove = columnsToRemove.filter(colName => !renamedFrom.has(colName))
+
+      // Column additions (excluding renamed columns)
+      result.columnsToAdd.push(...actualColumnsToAdd.map(col => ({
         table: tableName,
         column: col
       })))
 
-      // Column removals
-      const columnsToRemove = this.findRemovedColumns(currentTable, desiredTable)
-      result.columnsToRemove.push(...columnsToRemove.map(colName => ({
+      // Column removals (excluding renamed columns)
+      result.columnsToRemove.push(...actualColumnsToRemove.map(colName => ({
         table: tableName,
         column: colName
       })))
@@ -101,16 +129,19 @@ export class SchemaDiffer {
    */
   private findRemovedTables(current: DatabaseSchema, desired: DatabaseSchema): string[] {
     const desiredNames = new Set(desired.getTableNames())
-    return current.getTableNames().filter(name => !desiredNames.has(name))
+    return current.getTableNames()
+      .filter(name => name != null && name !== '') // Filter out undefined/empty names
+      .filter(name => !desiredNames.has(name))
   }
 
   /**
    * Detect potential table renames using similarity
    */
   private detectTableRenames(current: DatabaseSchema, desired: DatabaseSchema): TableRename[] {
-    // For Phase 1, we'll keep this simple
-    // Advanced rename detection can be added in later phases
-    return []
+    const removedTables = this.findNewTables(desired, current) // Tables in current but not desired
+    const addedTables = this.findNewTables(current, desired) // Tables in desired but not current
+
+    return this.renameDetector.detectTableRenames(removedTables, addedTables)
   }
 
   /**
@@ -225,15 +256,56 @@ export class SchemaDiffer {
 
   /**
    * Normalize type names for comparison
+   * Maps various type names to their canonical form
    */
   private normalizeType(type: string): string {
     const normalized = type.toLowerCase().trim()
 
-    // Map common type aliases
+    // Comprehensive type mapping for MySQL types
     const typeMap: { [key: string]: string } = {
-      'int': 'integer',
-      'bool': 'boolean',
-      'varchar': 'string'
+      // Integer types
+      'int': 'int',
+      'integer': 'int',
+      'tinyint': 'tinyint',
+      'smallint': 'smallint',
+      'mediumint': 'mediumint',
+      'bigint': 'bigint',
+
+      // Boolean
+      'bool': 'tinyint',
+      'boolean': 'tinyint',
+
+      // String types
+      'varchar': 'varchar',
+      'char': 'char',
+      'text': 'text',
+      'tinytext': 'tinytext',
+      'mediumtext': 'mediumtext',
+      'longtext': 'longtext',
+
+      // Decimal types
+      'float': 'float',
+      'double': 'double',
+      'decimal': 'decimal',
+
+      // Date/Time types
+      'date': 'date',
+      'time': 'time',
+      'datetime': 'datetime',
+      'timestamp': 'timestamp',
+      'year': 'year',
+
+      // Binary types
+      'blob': 'blob',
+      'tinyblob': 'tinyblob',
+      'mediumblob': 'mediumblob',
+      'longblob': 'longblob',
+
+      // JSON
+      'json': 'json',
+
+      // Enum
+      'enum': 'enum'
     }
 
     return typeMap[normalized] || normalized

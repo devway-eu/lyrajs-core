@@ -2,20 +2,26 @@ import { ShowRoutesCommand } from "@/core/cli/commands/ShowRoutesCommand"
 import { LyraConsole } from "@/core/console/LyraConsole"
 
 import {
+  CleanupBackupsCommand,
   CreateDatabaseCommand,
   CreateRoutesCommand,
+  FreshMigrationCommand,
   GenerateControllerCommand,
   GenerateEntityCommand,
   GenerateMigrationCommand,
   HelpCommand,
+  ListBackupsCommand,
   LoadFixturesCommand,
   MakeFixturesCommand,
   MigrateMigrationCommand,
+  RefreshMigrationCommand,
+  RestoreBackupCommand,
   RollbackMigrationCommand,
   ShowControllersCommand,
   ShowEntitiesCommand,
   ShowMigrationsCommand,
-  ShowRepositoriesCommand
+  ShowRepositoriesCommand,
+  SquashMigrationCommand
 } from "./commands"
 
 type CommandMap = Record<string, { new (): ICommand }>
@@ -35,15 +41,21 @@ export interface ICommand {
  */
 export class Kernel {
   private static commands: CommandMap = {
+    "cleanup:backups": CleanupBackupsCommand,
     "create:database": CreateDatabaseCommand,
-    "make:routes": CreateRoutesCommand,
-    "make:entity": GenerateEntityCommand,
-    "make:controller": GenerateControllerCommand,
-    "make:migration": GenerateMigrationCommand,
-    "make:fixtures": MakeFixturesCommand,
-    "migration:migrate": MigrateMigrationCommand,
-    "migration:rollback": RollbackMigrationCommand,
     "fixtures:load": LoadFixturesCommand,
+    "list:backups": ListBackupsCommand,
+    "make:controller": GenerateControllerCommand,
+    "make:entity": GenerateEntityCommand,
+    "make:fixtures": MakeFixturesCommand,
+    "make:migration": GenerateMigrationCommand,
+    "make:routes": CreateRoutesCommand,
+    "migration:fresh": FreshMigrationCommand,
+    "migration:migrate": MigrateMigrationCommand,
+    "migration:refresh": RefreshMigrationCommand,
+    "migration:rollback": RollbackMigrationCommand,
+    "migration:squash": SquashMigrationCommand,
+    "restore:backup": RestoreBackupCommand,
     "show:controllers": ShowControllersCommand,
     "show:entities": ShowEntitiesCommand,
     "show:migrations": ShowMigrationsCommand,

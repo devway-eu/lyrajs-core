@@ -4,6 +4,7 @@ export * from "./DataFormatter.js";
 export * from "./decorator/index.js";
 export * from "./Entity.js";
 export * from "./Fixture.js";
+export * from "./migration/index.js";
 export * from "./ObjectCleaner.js";
 export * from "./QueryBuilder.js";
 export * from "./Repository.js";

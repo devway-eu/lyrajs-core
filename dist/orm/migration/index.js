@@ -14,4 +14,5 @@ export { MigrationGenerator } from './generator/MigrationGenerator.js';
 export { MigrationExecutor } from './executor/MigrationExecutor.js';
 export { MigrationValidator } from './validator/MigrationValidator.js';
 export { MigrationLockManager } from './lock/MigrationLockManager.js';
+export { MigrationSquasher } from './squasher/MigrationSquasher.js';
 //# sourceMappingURL=index.js.map

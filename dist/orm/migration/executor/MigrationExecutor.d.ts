@@ -20,7 +20,12 @@ export declare class MigrationExecutor {
      */
     rollbackToVersion(targetVersion: string): Promise<void>;
     /**
-     * Show migration status
+     * Rollback all executed migrations
+     * Rolls back every migration in reverse order (most recent first)
+     */
+    rollbackAll(): Promise<void>;
+    /**
+     * Show migration status with enhanced details
      */
     status(): Promise<void>;
     /**

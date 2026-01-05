@@ -1,9 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as process from 'process';
+import { LyraConsole } from '../../../console/LyraConsole.js';
 import { MigrationLockManager } from '../lock/MigrationLockManager.js';
 import { MigrationValidator } from '../validator/MigrationValidator.js';
 import { SchemaIntrospector } from '../introspector/SchemaIntrospector.js';
+import { BackupManager } from '../backup/BackupManager.js';
 /**
  * MigrationExecutor
  * Executes and tracks migrations with transaction support
@@ -19,6 +21,9 @@ export class MigrationExecutor {
     async migrate(options = {}) {
         const lockManager = new MigrationLockManager(this.connection);
         await lockManager.withLock(async () => {
+            const GREEN = '\x1b[32m';
+            const CYAN = '\x1b[36m';
+            const RESET = '\x1b[0m';
             // 1. Load all migrations
             const allMigrations = await this.loadAllMigrations();
             // 2. Get executed migrations
@@ -26,12 +31,13 @@ export class MigrationExecutor {
             // 3. Find pending migrations
             const pending = allMigrations.filter(m => !executed.some(e => e.version === m.version));
             if (pending.length === 0) {
-                console.log('✓ No pending migrations');
+                console.log(`${GREEN}✓ No pending migrations - database is up to date${RESET}`);
                 return;
             }
-            console.log(`Found ${pending.length} pending migration(s)`);
+            console.log(`${CYAN}Found ${pending.length} pending migration(s) to execute${RESET}`);
             // 4. Validate each migration
             if (!options.force) {
+                console.log(`${CYAN}Validating migrations...${RESET}`);
                 await this.validateMigrations(pending);
             }
             // 5. Get next batch number
@@ -40,7 +46,7 @@ export class MigrationExecutor {
             for (const migration of pending) {
                 await this.executeMigration(migration, nextBatch, options);
             }
-            console.log(`✓ Successfully executed ${pending.length} migration(s)`);
+            console.log(`\n${GREEN}✓ Successfully executed ${pending.length} migration(s) in batch ${nextBatch}${RESET}`);
         });
     }
     /**
@@ -49,6 +55,10 @@ export class MigrationExecutor {
     async rollback(steps = 1) {
         const lockManager = new MigrationLockManager(this.connection);
         await lockManager.withLock(async () => {
+            const GREEN = '\x1b[32m';
+            const YELLOW = '\x1b[33m';
+            const CYAN = '\x1b[36m';
+            const RESET = '\x1b[0m';
             // Get last N batches
             const result = await this.connection.query(`
         SELECT DISTINCT batch
@@ -59,12 +69,12 @@ export class MigrationExecutor {
             // mysql2 returns [rows, fields], we only need rows
             const batches = Array.isArray(result[0]) ? result[0] : result;
             if (batches.length === 0) {
-                console.log('✓ No migrations to rollback');
+                console.log(`${GREEN}✓ No migrations to rollback - database is clean${RESET}`);
                 return;
             }
             const batchNumbers = batches.map((b) => b.batch).filter((b) => b !== null && b !== undefined);
             if (batchNumbers.length === 0) {
-                console.log('✓ No valid batches to rollback');
+                console.log(`${GREEN}✓ No valid batches to rollback${RESET}`);
                 return;
             }
             // Get migrations to rollback
@@ -75,14 +85,14 @@ export class MigrationExecutor {
         ORDER BY version DESC
       `);
             const toRollback = Array.isArray(rollbackResult[0]) ? rollbackResult[0] : rollbackResult;
-            console.log(`Rolling back ${toRollback.length} migration(s)...`);
+            console.log(`${YELLOW}⚠ Rolling back ${toRollback.length} migration(s) from batch(es): ${batchNumbers.join(', ')}${RESET}`);
             for (const record of toRollback) {
                 const migration = await this.loadMigration(record.version);
                 if (migration) {
                     await this.rollbackMigration(migration);
                 }
             }
-            console.log(`✓ Rolled back ${toRollback.length} migration(s)`);
+            console.log(`\n${GREEN}✓ Successfully rolled back ${toRollback.length} migration(s)${RESET}`);
         });
     }
     /**
@@ -92,58 +102,133 @@ export class MigrationExecutor {
     async rollbackToVersion(targetVersion) {
         const lockManager = new MigrationLockManager(this.connection);
         await lockManager.withLock(async () => {
+            const GREEN = '\x1b[32m';
+            const YELLOW = '\x1b[33m';
+            const RED = '\x1b[31m';
+            const RESET = '\x1b[0m';
             // Get all executed migrations
             const executed = await this.getExecutedMigrations();
             // Check if target version exists
             const targetExists = executed.some(m => m.version === targetVersion);
             if (!targetExists) {
-                throw new Error(`Migration version ${targetVersion} not found in executed migrations`);
+                throw new Error(`${RED}Migration version ${targetVersion} not found in executed migrations${RESET}`);
             }
             // Get migrations to rollback (all migrations >= target version)
             const toRollback = executed
                 .filter(m => m.version >= targetVersion)
                 .sort((a, b) => b.version.localeCompare(a.version)); // Descending order
             if (toRollback.length === 0) {
-                console.log('✓ No migrations to rollback');
+                console.log(`${GREEN}✓ No migrations to rollback - already at target version${RESET}`);
                 return;
             }
-            console.log(`Rolling back ${toRollback.length} migration(s) to version ${targetVersion}...`);
+            console.log(`${YELLOW}⚠ Rolling back ${toRollback.length} migration(s) to version ${targetVersion}...${RESET}`);
             for (const record of toRollback) {
                 const migration = await this.loadMigration(record.version);
                 if (migration) {
                     await this.rollbackMigration(migration);
                 }
             }
-            console.log(`✓ Rolled back to version ${targetVersion}`);
+            console.log(`\n${GREEN}✓ Successfully rolled back to version ${targetVersion}${RESET}`);
         });
     }
     /**
-     * Show migration status
+     * Rollback all executed migrations
+     * Rolls back every migration in reverse order (most recent first)
+     */
+    async rollbackAll() {
+        const lockManager = new MigrationLockManager(this.connection);
+        await lockManager.withLock(async () => {
+            const GREEN = '\x1b[32m';
+            const YELLOW = '\x1b[33m';
+            const RESET = '\x1b[0m';
+            // Get all executed migrations
+            const executed = await this.getExecutedMigrations();
+            if (executed.length === 0) {
+                console.log(`${GREEN}✓ No migrations to rollback - database is clean${RESET}`);
+                return;
+            }
+            // Sort in descending order (rollback most recent first)
+            const toRollback = executed.sort((a, b) => b.version.localeCompare(a.version));
+            console.log(`${YELLOW}⚠ Rolling back all ${toRollback.length} migration(s)...${RESET}`);
+            for (const record of toRollback) {
+                const migration = await this.loadMigration(record.version);
+                if (migration) {
+                    await this.rollbackMigration(migration);
+                }
+            }
+            console.log(`\n${GREEN}✓ Successfully rolled back all ${toRollback.length} migration(s)${RESET}`);
+        });
+    }
+    /**
+     * Show migration status with enhanced details
      */
     async status() {
         const allMigrations = await this.loadAllMigrations();
         const executed = await this.getExecutedMigrations();
-        console.log('\n📊 Migration Status:\n');
-        console.log('Executed migrations:');
-        if (executed.length === 0) {
-            console.log('  (none)');
-        }
-        else {
-            executed.forEach((m) => {
-                console.log(`  ✓ ${m.version} (batch: ${m.batch})`);
-            });
-        }
         const pending = allMigrations.filter(m => !executed.some(e => e.version === m.version));
-        console.log('\nPending migrations:');
-        if (pending.length === 0) {
-            console.log('  (none)');
-        }
-        else {
-            pending.forEach(m => {
-                console.log(`  ⏳ ${m.version}`);
+        const output = ["MIGRATIONS"];
+        const rows = [];
+        // Add executed migrations
+        for (const m of executed) {
+            const migration = await this.loadMigration(m.version);
+            const flags = [];
+            if (migration?.isDestructive) {
+                flags.push("\u26A0"); // ⚠ Warning sign
+            }
+            if (m.backup_path) {
+                flags.push("\u2713"); // ✓ Check mark
+            }
+            rows.push({
+                version: m.version,
+                status: "\u2713 Executed", // ✓ Check mark
+                batch: m.batch.toString(),
+                time: m.execution_time ? `${m.execution_time}ms` : "-",
+                date: m.executed_at ? new Date(m.executed_at).toLocaleDateString() : "-",
+                flags: flags.join(" ")
             });
         }
-        console.log('');
+        // Add pending migrations
+        for (const m of pending) {
+            const flags = [];
+            if (m.isDestructive) {
+                flags.push("\u26A0"); // ⚠ Warning sign
+            }
+            rows.push({
+                version: m.version,
+                status: "\u25CB Pending", // ○ White circle
+                batch: "-",
+                time: "-",
+                date: "-",
+                flags: flags.join(" ")
+            });
+        }
+        // Calculate column widths
+        const versionWidth = Math.max(15, ...rows.map(r => r.version.length));
+        const statusWidth = Math.max(10, ...rows.map(r => r.status.length));
+        const batchWidth = 6;
+        const timeWidth = 8;
+        const dateWidth = 12;
+        const flagsWidth = 6;
+        // Build table
+        output.push(`┌${"─".repeat(versionWidth + 2)}┬${"─".repeat(statusWidth + 2)}┬${"─".repeat(batchWidth + 2)}┬${"─".repeat(timeWidth + 2)}┬${"─".repeat(dateWidth + 2)}┬${"─".repeat(flagsWidth + 2)}┐`);
+        output.push(`│ ${"VERSION".padEnd(versionWidth)} │ ${"STATUS".padEnd(statusWidth)} │ ${"BATCH".padEnd(batchWidth)} │ ${"TIME".padEnd(timeWidth)} │ ${"DATE".padEnd(dateWidth)} │ ${"FLAGS".padEnd(flagsWidth)} │`);
+        output.push(`├${"─".repeat(versionWidth + 2)}┼${"─".repeat(statusWidth + 2)}┼${"─".repeat(batchWidth + 2)}┼${"─".repeat(timeWidth + 2)}┼${"─".repeat(dateWidth + 2)}┼${"─".repeat(flagsWidth + 2)}┤`);
+        for (const row of rows) {
+            output.push(`│ ${row.version.padEnd(versionWidth)} │ ${row.status.padEnd(statusWidth)} │ ${row.batch.padEnd(batchWidth)} │ ${row.time.padEnd(timeWidth)} │ ${row.date.padEnd(dateWidth)} │ ${row.flags.padEnd(flagsWidth)} │`);
+        }
+        output.push(`└${"─".repeat(versionWidth + 2)}┴${"─".repeat(statusWidth + 2)}┴${"─".repeat(batchWidth + 2)}┴${"─".repeat(timeWidth + 2)}┴${"─".repeat(dateWidth + 2)}┴${"─".repeat(flagsWidth + 2)}┘`);
+        // Add summary
+        output.push("");
+        output.push(`Total: ${allMigrations.length} \u2502 Executed: ${executed.length} \u2502 Pending: ${pending.length}`);
+        if (executed.length > 0) {
+            const latestBatch = Math.max(...executed.map(m => m.batch));
+            const withBackups = executed.filter(m => m.backup_path).length;
+            const totalTime = executed.reduce((sum, m) => sum + (m.execution_time || 0), 0);
+            output.push(`Latest batch: ${latestBatch} \u2502 With backups: ${withBackups} \u2502 Total time: ${totalTime}ms`);
+        }
+        output.push("");
+        output.push("Legend: \u2713=Executed \u25CB=Pending \u26A0=Destructive");
+        LyraConsole.success(...output);
     }
     /**
      * Validate pending migrations
@@ -173,12 +258,25 @@ export class MigrationExecutor {
      */
     async executeMigration(migration, batch, options) {
         const startTime = Date.now();
+        let backupPath = null;
+        const GREEN = '\x1b[32m';
+        const CYAN = '\x1b[36m';
+        const YELLOW = '\x1b[33m';
+        const RED = '\x1b[31m';
+        const RESET = '\x1b[0m';
         try {
-            console.log(`▶ Running: ${migration.version}`);
+            console.log(`${CYAN}▶ Running migration: ${migration.version}${RESET}`);
+            // Create backup if migration is destructive or requires backup
+            if (migration.isDestructive || migration.requiresBackup) {
+                console.log(`  ${YELLOW}⚠ Destructive migration detected - creating backup...${RESET}`);
+                const backupManager = new BackupManager(this.connection);
+                backupPath = await backupManager.createBackup(migration.version);
+                console.log(`  ${GREEN}✓ Backup created: ${path.basename(backupPath)}${RESET}`);
+            }
             if (options.dryRun) {
                 if (migration.dryRun) {
                     const sql = await migration.dryRun(this.connection);
-                    console.log('  SQL Preview:');
+                    console.log(`  ${CYAN}SQL Preview:${RESET}`);
                     sql.forEach(s => console.log(`    ${s}`));
                 }
                 return;
@@ -187,7 +285,7 @@ export class MigrationExecutor {
             await this.connection.query('START TRANSACTION');
             // Execute migration
             await migration.up(this.connection);
-            // Record in migrations table
+            // Record in migrations table with backup path
             const executionTime = Date.now() - startTime;
             await this.connection.query(`
         INSERT INTO migrations (version, executed_at, execution_time, batch, squashed, backup_path)
@@ -197,17 +295,22 @@ export class MigrationExecutor {
                 executionTime,
                 batch,
                 false,
-                null
+                backupPath
             ]);
             // Commit transaction
             await this.connection.query('COMMIT');
-            console.log(`  ✓ Completed in ${executionTime}ms`);
+            console.log(`  ${GREEN}✓ Completed in ${executionTime}ms${RESET}`);
         }
         catch (error) {
             // Rollback on error
             await this.connection.query('ROLLBACK');
-            console.error(`  ❌ Failed: ${error.message}`);
-            throw error;
+            console.error(`  ${RED}❌ Migration failed: ${error.message}${RESET}`);
+            // Keep backup on error for recovery
+            if (backupPath) {
+                console.log(`  ${YELLOW}💾 Backup preserved at: ${backupPath}${RESET}`);
+                console.log(`  ${YELLOW}   You can restore using: npx maestro restore:backup ${migration.version}${RESET}`);
+            }
+            throw new Error(`Migration ${migration.version} failed: ${error.message}`);
         }
     }
     /**
@@ -215,8 +318,12 @@ export class MigrationExecutor {
      */
     async rollbackMigration(migration) {
         const startTime = Date.now();
+        const GREEN = '\x1b[32m';
+        const YELLOW = '\x1b[33m';
+        const RED = '\x1b[31m';
+        const RESET = '\x1b[0m';
         try {
-            console.log(`◀ Rolling back: ${migration.version}`);
+            console.log(`${YELLOW}◀ Rolling back: ${migration.version}${RESET}`);
             await this.connection.query('START TRANSACTION');
             // Execute down migration
             await migration.down(this.connection);
@@ -226,12 +333,12 @@ export class MigrationExecutor {
       `, [migration.version]);
             await this.connection.query('COMMIT');
             const duration = Date.now() - startTime;
-            console.log(`  ✓ Rolled back in ${duration}ms`);
+            console.log(`  ${GREEN}✓ Rolled back in ${duration}ms${RESET}`);
         }
         catch (error) {
             await this.connection.query('ROLLBACK');
-            console.error(`  ❌ Rollback failed: ${error.message}`);
-            throw error;
+            console.error(`  ${RED}❌ Rollback failed: ${error.message}${RESET}`);
+            throw new Error(`Rollback of ${migration.version} failed: ${error.message}`);
         }
     }
     /**

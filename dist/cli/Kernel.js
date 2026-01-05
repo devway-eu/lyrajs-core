@@ -1,6 +1,6 @@
 import { ShowRoutesCommand } from "../cli/commands/ShowRoutesCommand.js";
 import { LyraConsole } from "../console/LyraConsole.js";
-import { CreateDatabaseCommand, CreateRoutesCommand, GenerateControllerCommand, GenerateEntityCommand, GenerateMigrationCommand, HelpCommand, LoadFixturesCommand, MakeFixturesCommand, MigrateMigrationCommand, RollbackMigrationCommand, ShowControllersCommand, ShowEntitiesCommand, ShowMigrationsCommand, ShowRepositoriesCommand } from "./commands/index.js";
+import { CleanupBackupsCommand, CreateDatabaseCommand, CreateRoutesCommand, FreshMigrationCommand, GenerateControllerCommand, GenerateEntityCommand, GenerateMigrationCommand, HelpCommand, ListBackupsCommand, LoadFixturesCommand, MakeFixturesCommand, MigrateMigrationCommand, RefreshMigrationCommand, RestoreBackupCommand, RollbackMigrationCommand, ShowControllersCommand, ShowEntitiesCommand, ShowMigrationsCommand, ShowRepositoriesCommand, SquashMigrationCommand } from "./commands/index.js";
 /**
  * CLI Kernel class
  * Handles command parsing, routing, and execution
@@ -8,15 +8,21 @@ import { CreateDatabaseCommand, CreateRoutesCommand, GenerateControllerCommand, 
  */
 export class Kernel {
     static commands = {
+        "cleanup:backups": CleanupBackupsCommand,
         "create:database": CreateDatabaseCommand,
-        "make:routes": CreateRoutesCommand,
-        "make:entity": GenerateEntityCommand,
-        "make:controller": GenerateControllerCommand,
-        "make:migration": GenerateMigrationCommand,
-        "make:fixtures": MakeFixturesCommand,
-        "migration:migrate": MigrateMigrationCommand,
-        "migration:rollback": RollbackMigrationCommand,
         "fixtures:load": LoadFixturesCommand,
+        "list:backups": ListBackupsCommand,
+        "make:controller": GenerateControllerCommand,
+        "make:entity": GenerateEntityCommand,
+        "make:fixtures": MakeFixturesCommand,
+        "make:migration": GenerateMigrationCommand,
+        "make:routes": CreateRoutesCommand,
+        "migration:fresh": FreshMigrationCommand,
+        "migration:migrate": MigrateMigrationCommand,
+        "migration:refresh": RefreshMigrationCommand,
+        "migration:rollback": RollbackMigrationCommand,
+        "migration:squash": SquashMigrationCommand,
+        "restore:backup": RestoreBackupCommand,
         "show:controllers": ShowControllersCommand,
         "show:entities": ShowEntitiesCommand,
         "show:migrations": ShowMigrationsCommand,

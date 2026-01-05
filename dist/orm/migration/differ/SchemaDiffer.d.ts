@@ -6,6 +6,8 @@ import { SchemaDiff } from '../interfaces/types.js';
  * Detects table/column additions, modifications, and removals
  */
 export declare class SchemaDiffer {
+    private renameDetector;
+    constructor();
     /**
      * Compare current and desired schemas
      */
@@ -56,6 +58,7 @@ export declare class SchemaDiffer {
     private findRemovedForeignKeys;
     /**
      * Normalize type names for comparison
+     * Maps various type names to their canonical form
      */
     private normalizeType;
     /**

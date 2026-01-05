@@ -41,7 +41,12 @@ export class SchemaIntrospector {
       AND TABLE_NAME NOT IN ('migrations', 'migration_lock')
       ORDER BY TABLE_NAME
     `);
-        return result.map((row) => row.TABLE_NAME);
+        // Handle mysql2 result format [rows, fields]
+        const rows = Array.isArray(result[0]) ? result[0] : result;
+        // Filter out any undefined/null table names
+        return rows
+            .map((row) => row.TABLE_NAME)
+            .filter((name) => name != null && name !== '');
     }
     /**
      * Get all columns for a specific table
@@ -62,7 +67,9 @@ export class SchemaIntrospector {
       AND TABLE_NAME = ?
       ORDER BY ORDINAL_POSITION
     `, [tableName]);
-        return result.map((row) => ({
+        // Handle mysql2 result format [rows, fields]
+        const rows = Array.isArray(result[0]) ? result[0] : result;
+        return rows.map((row) => ({
             name: row.name,
             type: row.type ? row.type.toLowerCase() : 'varchar',
             length: row.length,
@@ -90,9 +97,11 @@ export class SchemaIntrospector {
       AND INDEX_NAME != 'PRIMARY'
       ORDER BY INDEX_NAME, SEQ_IN_INDEX
     `, [tableName]);
+        // Handle mysql2 result format [rows, fields]
+        const rows = Array.isArray(result[0]) ? result[0] : result;
         // Group by index name
         const indexes = new Map();
-        for (const row of result) {
+        for (const row of rows) {
             if (!indexes.has(row.name)) {
                 indexes.set(row.name, {
                     name: row.name,
@@ -125,7 +134,9 @@ export class SchemaIntrospector {
       AND kcu.TABLE_NAME = ?
       AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
     `, [tableName]);
-        return result.map((row) => ({
+        // Handle mysql2 result format [rows, fields]
+        const rows = Array.isArray(result[0]) ? result[0] : result;
+        return rows.map((row) => ({
             name: row.name,
             column: row.columnName,
             referencedTable: row.referencedTable,
