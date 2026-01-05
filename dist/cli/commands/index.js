@@ -6,7 +6,7 @@ export * from "./GenerateControllerCommand.js";
 export * from "./GenerateEntityCommand.js";
 export * from "./GenerateMigrationCommand.js";
 export * from "./HelpCommand.js";
-export * from "./ListBackupsCommand.js";
+export * from "./ShowBackupsCommand.js";
 export * from "./LoadFixturesCommand.js";
 export * from "./MakeFixturesCommand.js";
 export * from "./MigrateMigrationCommand.js";
