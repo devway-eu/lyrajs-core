@@ -1,3 +1,7 @@
+import * as fs from "node:fs"
+import * as path from "node:path"
+import * as process from "node:process"
+
 import {NextFunction, Request, Response} from "@/core/server";
 import {HTTP_STATUS} from "@/core/errors/HttpStatus";
 import {LyraConsole} from "@/core/console/LyraConsole";
@@ -9,7 +13,28 @@ const STATUS_CODE_TO_NAME: Record<number, string> = Object.entries(HTTP_STATUS).
 }, {} as Record<number, string>);
 
 /**
+ * Writes a log message to the appropriate log file based on environment
+ * @param {string} message - Log message to write
+ * @returns {void}
+ */
+function writeToLogFile(message: string): void {
+    const env = process.env.NODE_ENV || "dev"
+    const logDir = path.join(process.cwd(), "logs")
+    const logFile = env === "production" || env === "prod" ? "prod.log" : "dev.log"
+    const logPath = path.join(logDir, logFile)
+
+    // Ensure logs directory exists
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true })
+    }
+
+    // Append log message with newline
+    fs.appendFileSync(logPath, message + "\n", "utf8")
+}
+
+/**
  * Logging middleware that outputs request method, URL, status name, and status code with timestamp
+ * Logs to console and writes to log files based on environment (dev.log or prod.log)
  * @param {Request} req - HTTP request object
  * @param {Response} res - HTTP response object
  * @param {NextFunction} next - Next middleware function
@@ -25,6 +50,9 @@ export function logger(req: Request, res: Response, next: NextFunction) {
         const statusName = STATUS_CODE_TO_NAME[res.statusCode] || 'UNKNOWN';
         const statusCode = res.statusCode;
         const logMessage = `[${timestamp}] ${req.method} ${req.url} ➞ ${statusName} ${statusCode} (${duration}ms)`;
+
+        // Write to log file
+        writeToLogFile(logMessage)
 
         // Use appropriate log level based on status code
         if (statusCode >= 500) {
