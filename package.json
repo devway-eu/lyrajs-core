@@ -30,7 +30,7 @@
     "mysql",
     "lyrajs"
   ],
-  "author": "Matthieu Fergola & Anthony Dewitte",
+  "author": "Matthieu Fergola",
   "license": "GPL-3.0",
   "repository": {
     "type": "git",

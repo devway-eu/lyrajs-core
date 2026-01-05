@@ -1,12 +1,12 @@
 /**
  * ShowMigrationsCommand class
- * Lists all migrations found in the migrations folder
- * Displays migration names with timestamps and file paths
+ * Shows the status of all migrations (executed and pending)
+ * Uses the new TypeScript-based migration system
  */
 export declare class ShowMigrationsCommand {
     /**
      * Executes the show migrations command
-     * Scans the migrations folder and displays all migration files in reverse chronological order
+     * Displays all migrations with their execution status
      * @returns {Promise<void>}
      */
     execute(): Promise<void>;

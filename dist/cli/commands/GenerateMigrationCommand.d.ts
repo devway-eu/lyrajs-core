@@ -1,12 +1,12 @@
 /**
  * GenerateMigrationCommand class
- * Generates SQL migration files based on entity definitions
- * Creates timestamped migration files with CREATE TABLE and ALTER TABLE statements
+ * Generates TypeScript migration files based on entity definitions
+ * Compares entity schema with current database and creates incremental migrations
  */
 export declare class GenerateMigrationCommand {
     /**
      * Executes the generate migration command
-     * Builds SQL queries from entities and writes them to a migration file
+     * Creates incremental TypeScript migrations by comparing entities with database
      * @returns {Promise<void>}
      */
     execute(): Promise<void>;

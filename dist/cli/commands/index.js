@@ -7,6 +7,7 @@ export * from "./HelpCommand.js";
 export * from "./LoadFixturesCommand.js";
 export * from "./MakeFixturesCommand.js";
 export * from "./MigrateMigrationCommand.js";
+export * from "./RollbackMigrationCommand.js";
 export * from "./ShowControllersCommand.js";
 export * from "./ShowEntitiesCommand.js";
 export * from "./ShowMigrationsCommand.js";
