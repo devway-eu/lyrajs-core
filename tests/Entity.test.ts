@@ -1,6 +1,6 @@
 import { describe, it } from "node:test"
 import * as assert from "node:assert"
-import { Entity } from "../src"
+import { Entity } from "../src/orm/Entity.js"
 
 describe("Entity", () => {
   it("should create entity with default id null", () => {
