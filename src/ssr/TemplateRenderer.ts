@@ -1,10 +1,10 @@
 import * as path from "path"
 
 import { TemplateEngine } from "./TemplateEngine"
-import { EjsEngine, EtaEngine, HandlebarsEngine, PugEngine, ZareEngine } from "./engines"
+import { EjsEngine, EtaEngine, HandlebarsEngine, PugEngine, ZareEngine, JsxEngine } from "./engines"
 
 export interface SSRConfig {
-  engine: "ejs" | "pug" | "handlebars" | "eta" | "zare"
+  engine: "ejs" | "pug" | "handlebars" | "eta" | "zare" | "jsx"
   templates?: string
   options?: any
 }
@@ -62,9 +62,12 @@ export class TemplateRenderer {
       case "zare":
         this.engine = new ZareEngine()
         break
+      case "jsx":
+        this.engine = new JsxEngine(options)
+        break
       default:
         throw new Error(
-          `Unsupported template engine: ${engine}. Supported engines: ejs, pug, handlebars, eta, zare`
+          `Unsupported template engine: ${engine}. Supported engines: ejs, pug, handlebars, eta, zare, jsx`
         )
     }
   }

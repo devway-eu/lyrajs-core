@@ -67,7 +67,7 @@ const logError = (error: HttpException, req: Request): void => {
  * import { errorHandler } from '@lyra-js/core'
  * app.use(errorHandler) // Must be last middleware
  */
-export const errorHandler = (error: HttpExceptionType, req: Request, res: Response, _next?: NextFunction): void => {
+export const errorHandler = async (error: HttpExceptionType, req: Request, res: Response, _next?: NextFunction): Promise<void> => {
   const httpError = error as HttpException
   const status = httpError.status || 500
 
@@ -78,11 +78,11 @@ export const errorHandler = (error: HttpExceptionType, req: Request, res: Respon
     return
   }
 
-  // Try to redirect to ErrorController route if it exists
-  // Avoid redirect loop - don't redirect if already on an error route
+  // Try to internally forward to ErrorController route if it exists
+  // Avoid infinite loop - don't forward if already on an error route
   const isErrorRoute = req.url?.startsWith('/error/') || req.url?.includes('/error/')
 
-  if (!isErrorRoute) {
+  if (!isErrorRoute && (req as any)._server) {
     // Get base path from config (e.g., '/api')
     let basePath = ''
     try {
@@ -101,15 +101,26 @@ export const errorHandler = (error: HttpExceptionType, req: Request, res: Respon
       500: `${basePath}/error/500`
     }
 
-    const errorRoute = errorRoutes[status]
+    const errorPath = errorRoutes[status]
 
-    if (errorRoute) {
-      // Redirect to error route (ErrorController will handle the response)
-      // Use direct HTTP redirect instead of enhanced res.redirect() to ensure it works
-      res.statusCode = 302
-      res.setHeader('Location', errorRoute)
-      res.end()
-      return
+    if (errorPath) {
+      // Internally forward to error route (preserves original URL for logging)
+      const server = (req as any)._server;
+      const errorRoute = server.matchRoute('GET', errorPath);
+
+      if (errorRoute) {
+        req.params = errorRoute.params;
+        res.statusCode = status;
+
+        // Execute error route handlers
+        try {
+          await server.executeHandlers(errorRoute.handlers, req, res);
+          return;
+        } catch (handlerError: any) {
+          // If error handler itself fails, fall through to JSON response
+          LyraConsole.error('ERROR', 'Error handler failed:', handlerError?.message || String(handlerError));
+        }
+      }
     }
   }
 

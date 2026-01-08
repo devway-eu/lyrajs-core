@@ -1,5 +1,6 @@
 export * from "./ConfigTypes"
 export * from "./Errors"
+export * from "./jsx"
 export * from "./OrmTypes"
 export * from "./Requests"
 export * from "./RoutingTypes"

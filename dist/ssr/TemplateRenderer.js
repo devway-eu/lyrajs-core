@@ -1,5 +1,5 @@
 import * as path from "path";
-import { EjsEngine, EtaEngine, HandlebarsEngine, PugEngine, ZareEngine } from "./engines/index.js";
+import { EjsEngine, EtaEngine, HandlebarsEngine, PugEngine, ZareEngine, JsxEngine } from "./engines/index.js";
 /**
  * TemplateRenderer Service (Singleton)
  * Manages template engine configuration and rendering
@@ -48,8 +48,11 @@ export class TemplateRenderer {
             case "zare":
                 this.engine = new ZareEngine();
                 break;
+            case "jsx":
+                this.engine = new JsxEngine(options);
+                break;
             default:
-                throw new Error(`Unsupported template engine: ${engine}. Supported engines: ejs, pug, handlebars, eta, zare`);
+                throw new Error(`Unsupported template engine: ${engine}. Supported engines: ejs, pug, handlebars, eta, zare, jsx`);
         }
     }
     /**

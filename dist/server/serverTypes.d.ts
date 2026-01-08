@@ -21,6 +21,7 @@ export interface ParsedQuery {
 /** Enhanced HTTP Request with routing capabilities */
 export interface Request extends IncomingMessage {
     url: string;
+    originalUrl?: string;
     method: string;
     headers: IncomingMessage['headers'];
     params: RouteParams;
@@ -30,6 +31,7 @@ export interface Request extends IncomingMessage {
         [key: string]: string;
     };
     user?: typeof User | Partial<typeof User> | null;
+    _server?: any;
 }
 /** Enhanced HTTP Response with helper methods */
 export interface Response extends ServerResponse {

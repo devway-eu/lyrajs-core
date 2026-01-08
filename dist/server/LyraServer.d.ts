@@ -180,6 +180,7 @@ declare class LyraServer {
      */
     private findRepositoryForEntity;
     executeMiddlewares(req: Request, res: Response, pathname: string): Promise<void>;
+    private executeHandlers;
     handleRequest(req: Request, res: Response, next?: NextFunction): Promise<void>;
     /**
      * Start HTTP server on specified port

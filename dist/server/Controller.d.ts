@@ -107,6 +107,21 @@ export declare abstract class Controller extends Container {
      */
     protected render(template: string, data?: object): Promise<void>;
     /**
+     * Static render method for static controller methods
+     * Allows rendering templates from static methods that don't have access to 'this'
+     * @param {Response} res - Express response object
+     * @param {string} template - Path to the template file (relative to templates directory)
+     * @param {object} [data={}] - Data to pass to the template
+     * @returns {Promise<void>}
+     * @throws {Error} - If SSR is not configured or template rendering fails
+     * @example
+     * // In a static controller method:
+     * static async myStaticMethod(req: Request, res: Response) {
+     *   await Controller.renderStatic(res, 'pages/home.tsx', { title: 'Welcome' })
+     * }
+     */
+    static renderStatic(res: Response, template: string, data?: object): Promise<void>;
+    /**
      * Redirect to a URL
      * @param {string} url - The URL to redirect to
      * @param {number} [statusCode=302] - HTTP redirect status code (default: 302 Found)

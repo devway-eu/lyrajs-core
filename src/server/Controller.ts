@@ -158,6 +158,56 @@ export abstract class Controller extends Container {
             const html = await renderer.render(template, data);
             this.res.setHeader('Content-Type', 'text/html');
             this.res.status(HTTP_STATUS.OK).send(html);
+
+            // Wait for response to actually be sent
+            await new Promise<void>((resolve) => {
+                if (this.res.writableEnded) {
+                    resolve();
+                } else {
+                    this.res.on('finish', () => resolve());
+                }
+            });
+        } catch (error: any) {
+            throw new Error(`Template rendering failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Static render method for static controller methods
+     * Allows rendering templates from static methods that don't have access to 'this'
+     * @param {Response} res - Express response object
+     * @param {string} template - Path to the template file (relative to templates directory)
+     * @param {object} [data={}] - Data to pass to the template
+     * @returns {Promise<void>}
+     * @throws {Error} - If SSR is not configured or template rendering fails
+     * @example
+     * // In a static controller method:
+     * static async myStaticMethod(req: Request, res: Response) {
+     *   await Controller.renderStatic(res, 'pages/home.tsx', { title: 'Welcome' })
+     * }
+     */
+    static async renderStatic(res: Response, template: string, data: object = {}): Promise<void> {
+        const renderer = TemplateRenderer.getInstance();
+
+        if (!renderer.isConfigured()) {
+            throw new Error(
+                'SSR is not configured. Please configure SSR using app.setSetting("ssr", { engine: "ejs", templates: "./templates" })'
+            );
+        }
+
+        try {
+            const html = await renderer.render(template, data);
+            res.setHeader('Content-Type', 'text/html');
+            res.status(HTTP_STATUS.OK).send(html);
+
+            // Wait for response to actually be sent
+            await new Promise<void>((resolve) => {
+                if (res.writableEnded) {
+                    resolve();
+                } else {
+                    res.on('finish', () => resolve());
+                }
+            });
         } catch (error: any) {
             throw new Error(`Template rendering failed: ${error.message}`);
         }

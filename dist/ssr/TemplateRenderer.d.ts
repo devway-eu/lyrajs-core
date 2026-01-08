@@ -1,5 +1,5 @@
 export interface SSRConfig {
-    engine: "ejs" | "pug" | "handlebars" | "eta" | "zare";
+    engine: "ejs" | "pug" | "handlebars" | "eta" | "zare" | "jsx";
     templates?: string;
     options?: any;
 }

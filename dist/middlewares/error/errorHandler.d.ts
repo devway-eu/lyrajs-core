@@ -12,4 +12,4 @@ import { HttpExceptionType } from "../../types/Errors.js";
  * import { errorHandler } from '@lyra-js/core'
  * app.use(errorHandler) // Must be last middleware
  */
-export declare const errorHandler: (error: HttpExceptionType, req: Request, res: Response, _next?: NextFunction) => void;
+export declare const errorHandler: (error: HttpExceptionType, req: Request, res: Response, _next?: NextFunction) => Promise<void>;

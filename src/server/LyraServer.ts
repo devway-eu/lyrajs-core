@@ -210,7 +210,11 @@ class LyraServer {
 
             let handler: RouteHandler;
 
-            if (controllerInstance) {
+            // Check if the method is static (exists on the class) or instance (exists on prototype)
+            const isStaticMethod = typeof (controller as any)[methodName] === 'function';
+            const isInstanceMethod = controllerInstance && typeof controllerInstance[methodName] === 'function';
+
+            if (isInstanceMethod && !isStaticMethod) {
                 // Instance method (DI-enabled controller)
                 const originalHandler = controllerInstance[methodName];
 
@@ -226,8 +230,8 @@ class LyraServer {
                     controllerInstance,
                     methodName
                 );
-            } else {
-                // Static method (traditional controller)
+            } else if (isStaticMethod) {
+                // Static method (traditional controller or static method on DI controller)
                 handler = (controller as any)[methodName];
 
                 if (!handler || typeof handler !== 'function') {
@@ -236,6 +240,10 @@ class LyraServer {
                         `Make sure the method is static.`
                     );
                 }
+            } else {
+                throw new Error(
+                    `Method ${methodName} not found on controller ${controller.name}.`
+                );
             }
 
             // Combine class middlewares, route middlewares, and the handler
@@ -708,11 +716,22 @@ class LyraServer {
 
     // Enhanced response object
     createResponse(res: Response): Response {
+        // Add explicit tracking flag for response state
+        (res as any)._responseSent = false;
+
+        // Store original end method
+        const originalEnd = res.end.bind(res);
+        res.end = function (this: Response, ...args: any[]): any {
+            (this as any)._responseSent = true;
+            return originalEnd(...args);
+        };
+
         // JSON response
         res.json = (data) => {
             if (res.headersSent) {
                 return;
             }
+            (res as any)._responseSent = true;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(data));
         };
@@ -722,6 +741,7 @@ class LyraServer {
             if (res.headersSent) {
                 return;
             }
+            (res as any)._responseSent = true;
             res.setHeader('Content-Type', 'application/xml');
             res.end(serializeToXML(data));
         };
@@ -731,6 +751,7 @@ class LyraServer {
             if (res.headersSent) {
                 return;
             }
+            (res as any)._responseSent = true;
             res.setHeader('Content-Type', 'text/html');
             res.end(String(data));
         };
@@ -740,6 +761,7 @@ class LyraServer {
             if (res.headersSent) {
                 return;
             }
+            (res as any)._responseSent = true;
             res.setHeader('Content-Type', 'text/plain');
             res.end(String(data));
         };
@@ -749,6 +771,7 @@ class LyraServer {
             if (res.headersSent) {
                 return;
             }
+            (res as any)._responseSent = true;
             if (typeof data === 'object') {
                 res.json(data);
             } else {
@@ -765,6 +788,7 @@ class LyraServer {
 
         // Redirect
         res.redirect = (statusCodeOrUrl: number | string, url?: string) => {
+            (res as any)._responseSent = true;
             if (typeof statusCodeOrUrl === 'number') {
                 // Called with statusCode and url
                 res.statusCode = statusCodeOrUrl;
@@ -1076,6 +1100,11 @@ class LyraServer {
 
                     const result = mw.middleware(req, res, next);
 
+                    // Helper to check if response was sent
+                    const isResponseSent = () => {
+                        return (res as any)._responseSent || res.writableEnded || res.headersSent;
+                    };
+
                     // If middleware returns a promise, wait for it
                     if (result instanceof Promise) {
                         result
@@ -1084,7 +1113,7 @@ class LyraServer {
                                 if (nextCalled) return;
 
                                 // If response was sent, resolve
-                                if (res.writableEnded || res.headersSent) {
+                                if (isResponseSent()) {
                                     resolve();
                                 } else {
                                     // Middleware didn't call next() or send response
@@ -1099,7 +1128,7 @@ class LyraServer {
                             if (nextCalled) return;
 
                             // If response was sent, resolve
-                            if (res.writableEnded || res.headersSent) {
+                            if (isResponseSent()) {
                                 resolve();
                             } else {
                                 // Middleware didn't call next() or send response
@@ -1114,9 +1143,79 @@ class LyraServer {
         }
     }
 
+    // Execute route handlers with proper next() handling
+    private async executeHandlers(handlers: RouteHandler[], req: Request, res: Response): Promise<void> {
+        for (const handler of handlers) {
+            await new Promise<void>((resolve, reject) => {
+                try {
+                    let nextCalled = false;
+                    let resolved = false;
+
+                    const next: NextFunction = (err) => {
+                        if (nextCalled) return;
+                        nextCalled = true;
+                        if (err) reject(err);
+                        else resolve();
+                    };
+
+                    const result = handler(req, res, next);
+
+                    // Helper to check if response was sent
+                    const isResponseSent = () => {
+                        return (res as any)._responseSent || res.writableEnded || res.headersSent;
+                    };
+
+                    // If handler returns a promise, wait for it
+                    if (result instanceof Promise) {
+                        result
+                            .then(() => {
+                                // If next was called, we already resolved, do nothing
+                                if (nextCalled || resolved) return;
+
+                                // Check if response was sent (using our explicit flag)
+                                if (isResponseSent()) {
+                                    resolved = true;
+                                    resolve();
+                                } else {
+                                    // Handler didn't call next() or send response - this is an error
+                                    reject(new Error('Handler completed without calling next() or sending a response'));
+                                }
+                            })
+                            .catch(reject);
+                    } else {
+                        // For synchronous handlers, check if response was sent
+                        setImmediate(() => {
+                            // If next was called, we already resolved, do nothing
+                            if (nextCalled || resolved) return;
+
+                            // Check if response was sent
+                            if (isResponseSent()) {
+                                resolved = true;
+                                resolve();
+                            } else {
+                                // Handler didn't call next() or send response - this is an error
+                                reject(new Error('Handler completed without calling next() or sending a response'));
+                            }
+                        });
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+    }
+
     // Main request handler
     async handleRequest(req: Request, res: Response, next?: NextFunction): Promise<void> {
         try {
+            // Capture original URL before any modifications
+            if (!req.originalUrl) {
+                req.originalUrl = req.url;
+            }
+
+            // Store server reference for internal error forwarding
+            req._server = this;
+
             const parsedUrl = url.parse(req.url, true);
             const pathname = parsedUrl.pathname!;
             const query = parsedUrl.query;
@@ -1128,19 +1227,37 @@ class LyraServer {
             // Parse cookies
             req.cookies = this.parseCookies(req);
 
+            // Execute middlewares early (including logger) so they run for all requests including 404s
+            await this.executeMiddlewares(req, res, pathname);
+
             // Match route early to get parser type
             const route = this.matchRoute(req.method as HttpMethod, pathname);
 
             if (!route) {
-                // Avoid redirect loop - don't redirect if already on an error route
+                // Avoid infinite loop - don't try to handle error if already on an error route
                 if (pathname.includes('/error/')) {
                     res.statusCode = 404;
                     res.end('Not Found');
                     return;
                 }
-                // Redirect to ErrorController 404 route (with base path)
+                // Instead of redirecting, internally forward to the error handler
+                // This preserves the original URL for logging
                 const errorPath = `${this.basePath}/error/404`;
-                res.redirect(errorPath);
+                const errorRoute = this.matchRoute('GET' as HttpMethod, errorPath);
+
+                if (errorRoute) {
+                    // Update request with error route params but keep original URL
+                    req.params = errorRoute.params;
+                    res.statusCode = 404;
+
+                    // Execute error route handlers
+                    await this.executeHandlers(errorRoute.handlers, req, res);
+                    return;
+                }
+
+                // Fallback if no error route exists
+                res.statusCode = 404;
+                res.end('Not Found');
                 return;
             }
 
@@ -1153,60 +1270,8 @@ class LyraServer {
                 req.body = await this.parseBody(req, route.parserType);
             }
 
-            // Execute matching middlewares (global and path-specific)
-            await this.executeMiddlewares(req, res, pathname);
-
-            // Execute route handlers
-            for (const handler of route.handlers) {
-                await new Promise<void>((resolve, reject) => {
-                    try {
-                        let nextCalled = false;
-
-                        const next: NextFunction = (err) => {
-                            if (nextCalled) return;
-                            nextCalled = true;
-                            if (err) reject(err);
-                            else resolve();
-                        };
-
-                        const result = handler(req, res, next);
-
-                        // If handler returns a promise, wait for it
-                        if (result instanceof Promise) {
-                            result
-                                .then(() => {
-                                    // If next was called, we already resolved, do nothing
-                                    if (nextCalled) return;
-
-                                    // If response was sent, resolve
-                                    if (res.writableEnded || res.headersSent) {
-                                        resolve();
-                                    } else {
-                                        // Handler didn't call next() or send response - this is an error
-                                        reject(new Error('Handler completed without calling next() or sending a response'));
-                                    }
-                                })
-                                .catch(reject);
-                        } else {
-                            // For synchronous handlers, check if response was sent
-                            setImmediate(() => {
-                                // If next was called, we already resolved, do nothing
-                                if (nextCalled) return;
-
-                                // If response was sent, resolve
-                                if (res.writableEnded || res.headersSent) {
-                                    resolve();
-                                } else {
-                                    // Handler didn't call next() or send response - this is an error
-                                    reject(new Error('Handler completed without calling next() or sending a response'));
-                                }
-                            });
-                        }
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }
+            // Execute route handlers (middlewares already executed above)
+            await this.executeHandlers(route.handlers, req, res);
 
         } catch (error: any) {
             errorHandler(error, req, res, next);

@@ -69,5 +69,13 @@
     "inquirer": "^12.7.0",
     "tsc-alias": "^1.8.16",
     "typescript-eslint": "^8.23.0"
+  },
+  "peerDependencies": {
+    "esbuild": ">=0.20.0"
+  },
+  "peerDependenciesMeta": {
+    "esbuild": {
+      "optional": true
+    }
   }
 }

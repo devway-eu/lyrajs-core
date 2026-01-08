@@ -55,12 +55,16 @@ export function logger(req: Request, res: Response, next: NextFunction) {
     const timestamp = new Date().toISOString();
     const startTime = Date.now();
 
+    // Use original URL (captured at request start) for logging
+    // This ensures we log the actual URL the user requested, not internal forwards
+    const originalUrl = req.originalUrl || req.url;
+
     // Log after response is finished
     res.on('finish', () => {
         const duration = Date.now() - startTime;
         const statusName = STATUS_CODE_TO_NAME[res.statusCode] || 'UNKNOWN';
         const statusCode = res.statusCode;
-        const logMessage = `[${timestamp}] ${req.method} ${req.url} ➞ ${statusName} ${statusCode} (${duration}ms)`;
+        const logMessage = `[${timestamp}] ${req.method} ${originalUrl} ➞ ${statusName} ${statusCode} (${duration}ms)`;
 
         // Write to log file
         writeToLogFile(logMessage)
