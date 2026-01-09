@@ -6,11 +6,11 @@ import { EjsEngine, EtaEngine, HandlebarsEngine, PugEngine, ZareEngine, JsxEngin
  * Provides a centralized service for server-side rendering
  */
 export class TemplateRenderer {
-    static instance = null;
-    engine = null;
-    templatePath = "";
-    options = {};
-    constructor() { }
+    constructor() {
+        this.engine = null;
+        this.templatePath = "";
+        this.options = {};
+    }
     /**
      * Get singleton instance of TemplateRenderer
      * @returns {TemplateRenderer} - Singleton instance
@@ -90,4 +90,5 @@ export class TemplateRenderer {
         return this.templatePath;
     }
 }
+TemplateRenderer.instance = null;
 //# sourceMappingURL=TemplateRenderer.js.map

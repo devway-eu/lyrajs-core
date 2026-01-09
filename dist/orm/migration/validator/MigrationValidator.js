@@ -3,7 +3,6 @@
  * Validates migrations before execution for safety
  */
 export class MigrationValidator {
-    connection;
     constructor(connection) {
         this.connection = connection;
     }
@@ -78,12 +77,13 @@ export class MigrationValidator {
      * Check if table has existing data
      */
     async checkForExistingData(query) {
+        var _a;
         try {
             const tableName = this.extractTableName(query);
             if (!tableName)
                 return false;
             const result = await this.connection.query(`SELECT COUNT(*) as count FROM \`${tableName}\` LIMIT 1`);
-            return result[0]?.count > 0;
+            return ((_a = result[0]) === null || _a === void 0 ? void 0 : _a.count) > 0;
         }
         catch (error) {
             return false;
@@ -100,6 +100,7 @@ export class MigrationValidator {
      * Get approximate row count for a table
      */
     async getTableRowCount(tableName) {
+        var _a;
         try {
             const result = await this.connection.query(`
         SELECT TABLE_ROWS as rowCount
@@ -107,7 +108,7 @@ export class MigrationValidator {
         WHERE TABLE_SCHEMA = DATABASE()
         AND TABLE_NAME = ?
       `, [tableName]);
-            return result[0]?.rowCount || 0;
+            return ((_a = result[0]) === null || _a === void 0 ? void 0 : _a.rowCount) || 0;
         }
         catch (error) {
             return 0;

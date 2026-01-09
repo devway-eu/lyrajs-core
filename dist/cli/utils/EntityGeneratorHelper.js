@@ -1,120 +1,10 @@
+var _a;
 /**
  * EntityGeneratorHelper class
  * Generates entity class code from property definitions
  * Creates entity files with decorators and TypeScript type annotations
  */
 export class EntityGeneratorHelper {
-    static starts = {
-        table: "@Table(",
-        column: "@Column({ "
-    };
-    static ends = {
-        table: ")",
-        column: " })"
-    };
-    /**
-     * Generates import statements for entity file
-     * @returns {string} - Import statements code
-     */
-    static importsString = () => {
-        return `import { Column, Entity, Table } from "@lyra-js/core"\n\n`;
-    };
-    /**
-     * Generates @Table decorator
-     * @returns {string} - Table decorator code
-     */
-    static tableDecorator = () => {
-        return this.starts.table + this.ends.table + "\n";
-    };
-    /**
-     * Generates constructor code for entity class
-     * @param {string} entityName - Name of the entity
-     * @returns {string} - Constructor code
-     */
-    static constructorString = (entityName) => {
-        return (`  constructor(${entityName.toLowerCase()}?: Partial<${entityName}> | ${entityName}) {` +
-            `\n` +
-            `    super(${entityName.toLowerCase()})` +
-            `\n` +
-            `  }` +
-            `\n`);
-    };
-    /**
-     * Generates @Column decorator for a property
-     * @param {ColumnType} property - Property definition
-     * @returns {string} - Column decorator code
-     */
-    static columnDecorator = (property) => {
-        let decoratorString = "  " + this.starts.column;
-        decoratorString += `type: "${property.type === "relation" ? "bigint" : property.type}"`;
-        decoratorString += property.size ? `, size: ${property.size}` : ``;
-        decoratorString += property.pk ? `, pk: true` : ``;
-        decoratorString += property.references ? `, fk: true, references: "${property.references}.id"` : ``;
-        decoratorString += property.onDelete ? `, onDelete: "${property.onDelete}"` : ``;
-        decoratorString += property.nullable ? `, nullable: true` : ``;
-        decoratorString += property.unique ? `, unique: true` : ``;
-        decoratorString += property.default ? `, default: ${property.default}` : ``;
-        decoratorString += this.ends.column;
-        return decoratorString;
-    };
-    /**
-     * Generates property declaration with TypeScript type
-     * @param {ColumnType} property - Property definition
-     * @returns {string} - Property declaration code
-     */
-    static propertyString = (property) => {
-        let propertyString = "  " + property.name + ": ";
-        switch (property.type.toLowerCase()) {
-            case "date":
-            case "time":
-            case "year":
-            case "datetime":
-            case "timestamp":
-                propertyString +=
-                    `string | Date` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ` = new Date()`);
-                break;
-            case "tinyint":
-            case "smallint":
-            case "mediumint":
-            case "int":
-            case "integer":
-            case "bigint":
-            case "float":
-            case "double":
-            case "decimal":
-                propertyString += `number` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
-                break;
-            case "char":
-            case "varchar":
-            case "tinytext":
-            case "text":
-            case "mediumtext":
-            case "longtext":
-            case "json":
-            case "tinyblob":
-            case "blob":
-            case "mediumblob":
-            case "longblob":
-                propertyString += `string` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
-                break;
-            case "bool":
-                propertyString +=
-                    `boolean` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ` = false`);
-                break;
-            case "relation":
-                propertyString += `number` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
-                break;
-        }
-        return propertyString;
-    };
-    /**
-     * Generates property with decorator and declaration
-     * @param {ColumnType} property - Property definition
-     * @returns {string} - Complete property code
-     */
-    static propertyWithDecorator = (property) => {
-        return this.columnDecorator(property) + "\n" + this.propertyString(property) + "\n";
-    };
     /**
      * Generates complete entity file code
      * @param {string} entityName - Name of the entity
@@ -166,4 +56,116 @@ export class EntityGeneratorHelper {
         return beforeConstructor + newPropertiesCode + fromConstructor;
     }
 }
+_a = EntityGeneratorHelper;
+EntityGeneratorHelper.starts = {
+    table: "@Table(",
+    column: "@Column({ "
+};
+EntityGeneratorHelper.ends = {
+    table: ")",
+    column: " })"
+};
+/**
+ * Generates import statements for entity file
+ * @returns {string} - Import statements code
+ */
+EntityGeneratorHelper.importsString = () => {
+    return `import { Column, Entity, Table } from "@lyra-js/core"\n\n`;
+};
+/**
+ * Generates @Table decorator
+ * @returns {string} - Table decorator code
+ */
+EntityGeneratorHelper.tableDecorator = () => {
+    return _a.starts.table + _a.ends.table + "\n";
+};
+/**
+ * Generates constructor code for entity class
+ * @param {string} entityName - Name of the entity
+ * @returns {string} - Constructor code
+ */
+EntityGeneratorHelper.constructorString = (entityName) => {
+    return (`  constructor(${entityName.toLowerCase()}?: Partial<${entityName}> | ${entityName}) {` +
+        `\n` +
+        `    super(${entityName.toLowerCase()})` +
+        `\n` +
+        `  }` +
+        `\n`);
+};
+/**
+ * Generates @Column decorator for a property
+ * @param {ColumnType} property - Property definition
+ * @returns {string} - Column decorator code
+ */
+EntityGeneratorHelper.columnDecorator = (property) => {
+    let decoratorString = "  " + _a.starts.column;
+    decoratorString += `type: "${property.type === "relation" ? "bigint" : property.type}"`;
+    decoratorString += property.size ? `, size: ${property.size}` : ``;
+    decoratorString += property.pk ? `, pk: true` : ``;
+    decoratorString += property.references ? `, fk: true, references: "${property.references}.id"` : ``;
+    decoratorString += property.onDelete ? `, onDelete: "${property.onDelete}"` : ``;
+    decoratorString += property.nullable ? `, nullable: true` : ``;
+    decoratorString += property.unique ? `, unique: true` : ``;
+    decoratorString += property.default ? `, default: ${property.default}` : ``;
+    decoratorString += _a.ends.column;
+    return decoratorString;
+};
+/**
+ * Generates property declaration with TypeScript type
+ * @param {ColumnType} property - Property definition
+ * @returns {string} - Property declaration code
+ */
+EntityGeneratorHelper.propertyString = (property) => {
+    let propertyString = "  " + property.name + ": ";
+    switch (property.type.toLowerCase()) {
+        case "date":
+        case "time":
+        case "year":
+        case "datetime":
+        case "timestamp":
+            propertyString +=
+                `string | Date` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ` = new Date()`);
+            break;
+        case "tinyint":
+        case "smallint":
+        case "mediumint":
+        case "int":
+        case "integer":
+        case "bigint":
+        case "float":
+        case "double":
+        case "decimal":
+            propertyString += `number` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
+            break;
+        case "char":
+        case "varchar":
+        case "tinytext":
+        case "text":
+        case "mediumtext":
+        case "longtext":
+        case "json":
+        case "tinyblob":
+        case "blob":
+        case "mediumblob":
+        case "longblob":
+            propertyString += `string` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
+            break;
+        case "bool":
+            propertyString +=
+                `boolean` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ` = false`);
+            break;
+        case "relation":
+            propertyString += `number` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
+            break;
+    }
+    return propertyString;
+};
+/**
+ * Generates property with decorator and declaration
+ * @param {ColumnType} property - Property definition
+ * @returns {string} - Complete property code
+ */
+EntityGeneratorHelper.propertyWithDecorator = (property) => {
+    return _a.columnDecorator(property) + "\n" + _a.propertyString(property) + "\n";
+};
 //# sourceMappingURL=EntityGeneratorHelper.js.map

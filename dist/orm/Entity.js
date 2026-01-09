@@ -11,7 +11,6 @@
  * const user = new User({ name: 'John', email: 'john@example.com' })
  */
 export class Entity {
-    id = null;
     /**
      * Creates a new Entity instance
      * Automatically assigns properties from provided object
@@ -19,6 +18,7 @@ export class Entity {
      * @returns {Entity<T>} - Entity instance with assigned properties
      */
     constructor(entity) {
+        this.id = null;
         if (entity) {
             Object.assign(this, entity);
         }

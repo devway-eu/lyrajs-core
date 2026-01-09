@@ -7,7 +7,8 @@ export function Table() {
 }
 export function Column(config) {
     return (target, propertyKey) => {
-        const columns = Reflect.getMetadata("entity:columns", target) ?? [];
+        var _a;
+        const columns = (_a = Reflect.getMetadata("entity:columns", target)) !== null && _a !== void 0 ? _a : [];
         columns.push({ name: propertyKey, ...config });
         Reflect.defineMetadata("entity:columns", columns, target);
     };

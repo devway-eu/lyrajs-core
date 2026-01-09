@@ -53,6 +53,7 @@ const logError = (error, req) => {
  * app.use(errorHandler) // Must be last middleware
  */
 export const errorHandler = async (error, req, res, _next) => {
+    var _a, _b;
     const httpError = error;
     const status = httpError.status || 500;
     logError(httpError, req);
@@ -62,7 +63,7 @@ export const errorHandler = async (error, req, res, _next) => {
     }
     // Try to internally forward to ErrorController route if it exists
     // Avoid infinite loop - don't forward if already on an error route
-    const isErrorRoute = req.url?.startsWith('/error/') || req.url?.includes('/error/');
+    const isErrorRoute = ((_a = req.url) === null || _a === void 0 ? void 0 : _a.startsWith('/error/')) || ((_b = req.url) === null || _b === void 0 ? void 0 : _b.includes('/error/'));
     if (!isErrorRoute && req._server) {
         // Get base path from config (e.g., '/api')
         let basePath = '';
@@ -96,7 +97,7 @@ export const errorHandler = async (error, req, res, _next) => {
                 }
                 catch (handlerError) {
                     // If error handler itself fails, fall through to JSON response
-                    LyraConsole.error('ERROR', 'Error handler failed:', handlerError?.message || String(handlerError));
+                    LyraConsole.error('ERROR', 'Error handler failed:', (handlerError === null || handlerError === void 0 ? void 0 : handlerError.message) || String(handlerError));
                 }
             }
         }

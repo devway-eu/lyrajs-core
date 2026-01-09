@@ -6,8 +6,6 @@ import fs from "fs/promises";
  * Supports loading entities, repositories, and fixtures with fallback for .ts and .js extensions
  */
 class UserModuleLoader {
-    projectRoot;
-    srcRoot;
     /**
      * Creates a new UserModuleLoader instance
      * Initializes project root and source directory paths

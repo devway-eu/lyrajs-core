@@ -33,11 +33,12 @@ const matchRoute = (pattern, path) => {
  * app.use(httpRequestMiddleware) // Should be early in middleware chain
  */
 export const httpRequestMiddleware = async (req, res, next) => {
+    var _a;
     try {
         // Try to get authenticated user (don't throw error if not authenticated)
         req.user = null;
         // Try to get token from cookies first, then from Authorization header
-        let token = req.cookies?.Token;
+        let token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.Token;
         if (!token) {
             const authHeader = req.headers.authorization;
             if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -50,7 +51,7 @@ export const httpRequestMiddleware = async (req, res, next) => {
                 if (UserRepositoryClass) {
                     const userRepository = new UserRepositoryClass();
                     const decoded = AccessControl.isTokenValid(token);
-                    if (decoded?.id) {
+                    if (decoded === null || decoded === void 0 ? void 0 : decoded.id) {
                         const user = await userRepository.find(decoded.id);
                         if (user) {
                             req.user = user;

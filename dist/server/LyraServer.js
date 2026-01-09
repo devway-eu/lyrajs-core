@@ -8,16 +8,13 @@ import { Config } from "../config/index.js";
 import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger } from '../server/index.js';
 import { TemplateRenderer } from '../ssr/index.js';
 import { parseXML, serializeToXML } from './xmlParser.js';
+import { Scheduler } from '../scheduler/index.js';
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
-    routes;
-    middlewares;
-    diContainer;
-    basePath;
-    settings;
-    controllersLoaded = false;
-    servicesRegistered = false;
     constructor() {
+        this.controllersLoaded = false;
+        this.servicesRegistered = false;
+        this.schedulerEnabled = false;
         this.diContainer = new DIContainer();
         this.routes = {
             GET: {},
@@ -69,6 +66,27 @@ class LyraServer {
      */
     getSetting(key) {
         return this.settings.get(key);
+    }
+    /**
+     * Enable the scheduler system
+     * Automatically discovers and runs jobs with @Schedule({ enabled: true })
+     * @param {SchedulerOptions} [options] - Scheduler configuration options
+     * @returns {this} - Server instance for chaining
+     * @example
+     * app.enableScheduler()
+     * app.enableScheduler({ timezone: 'America/New_York' })
+     */
+    enableScheduler(options) {
+        this.scheduler = new Scheduler(this.diContainer, options);
+        this.schedulerEnabled = true;
+        return this;
+    }
+    /**
+     * Get the scheduler instance (if enabled)
+     * @returns {Scheduler | undefined} - Scheduler instance
+     */
+    getScheduler() {
+        return this.scheduler;
     }
     /**
      * Load controllers asynchronously
@@ -302,7 +320,8 @@ class LyraServer {
      * Stripe instance -> 'stripe', Redis instance -> 'redis'
      */
     getPropertyNameFromInstance(instance) {
-        const constructorName = instance.constructor?.name;
+        var _a;
+        const constructorName = (_a = instance.constructor) === null || _a === void 0 ? void 0 : _a.name;
         if (!constructorName || constructorName === 'Object') {
             throw new Error('Cannot auto-detect property name for instance. ' +
                 'Please provide a name parameter: app.register(instance, "propertyName")');
@@ -321,8 +340,8 @@ class LyraServer {
      * await app.autoRegister({ services: 'src/services', repositories: 'src/repositories' });
      */
     async autoRegister(options) {
-        const servicesPath = options?.services || 'src/services';
-        const repositoriesPath = options?.repositories || 'src/repository';
+        const servicesPath = (options === null || options === void 0 ? void 0 : options.services) || 'src/services';
+        const repositoriesPath = (options === null || options === void 0 ? void 0 : options.repositories) || 'src/repository';
         // Auto-discover and register services
         await this.autoDiscoverInjectables(servicesPath, 'service');
         // Auto-discover and register repositories
@@ -818,6 +837,7 @@ class LyraServer {
      * async getUser(req, res, @Param('userId', User) user) { ... }
      */
     async resolveParameters(methodName, target, req, res, next) {
+        var _a, _b;
         // Start with req, res, next
         const resolvedParams = [req, res, next];
         // Get route metadata for this method
@@ -825,7 +845,7 @@ class LyraServer {
         const routes = getRoutes(constructor);
         const routeMetadata = routes.find(r => r.methodName === methodName);
         // Approach 1: Use route-level resolve configuration (new approach)
-        if (routeMetadata?.resolve && Object.keys(routeMetadata.resolve).length > 0) {
+        if ((routeMetadata === null || routeMetadata === void 0 ? void 0 : routeMetadata.resolve) && Object.keys(routeMetadata.resolve).length > 0) {
             // Get parameter names from the method
             const method = target[methodName];
             const paramNames = this.getParameterNames(method);
@@ -835,7 +855,7 @@ class LyraServer {
                 const paramIndex = paramNames.indexOf(routeParamName);
                 if (paramIndex >= 0) {
                     // Get the route parameter value
-                    const paramValue = req.params?.[routeParamName];
+                    const paramValue = (_a = req.params) === null || _a === void 0 ? void 0 : _a[routeParamName];
                     if (paramValue) {
                         // Find repository for this entity type
                         const repository = this.findRepositoryForEntity(target, EntityType);
@@ -869,7 +889,7 @@ class LyraServer {
                 resolvedParams.push(undefined);
             }
             // Get the route parameter value
-            const paramValue = req.params?.[routeParamName];
+            const paramValue = (_b = req.params) === null || _b === void 0 ? void 0 : _b[routeParamName];
             if (paramValue) {
                 // Find repository for this entity type
                 const repository = this.findRepositoryForEntity(target, entityType);
@@ -1109,7 +1129,12 @@ class LyraServer {
             await this.loadControllersAsync();
             this.controllersLoaded = true;
         }
-        // Step 3: Start the HTTP server
+        // Step 3: Discover and start scheduler jobs (if enabled)
+        if (this.schedulerEnabled && this.scheduler) {
+            await this.scheduler.discoverJobs('src/jobs');
+            await this.scheduler.start();
+        }
+        // Step 4: Start the HTTP server
         const server = http.createServer((req, res) => {
             this.handleRequest(req, res);
         });

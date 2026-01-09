@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import * as http from "http";
 import { HttpMethod, RouteHandler, Middleware, NextFunction, Request, Response, RouteParams, ParsedQuery, MatchedRoute, IRouter } from '../server/index.js';
+import { Scheduler, SchedulerOptions } from '../scheduler/index.js';
 /** Main HTTP server class with routing, middleware, and dependency injection */
 declare class LyraServer {
     private routes;
@@ -8,8 +9,10 @@ declare class LyraServer {
     private diContainer;
     private basePath;
     private settings;
+    private scheduler?;
     private controllersLoaded;
     private servicesRegistered;
+    private schedulerEnabled;
     constructor();
     /**
      * Set application setting
@@ -28,6 +31,21 @@ declare class LyraServer {
      * @returns {any} - Setting value
      */
     getSetting(key: string): any;
+    /**
+     * Enable the scheduler system
+     * Automatically discovers and runs jobs with @Schedule({ enabled: true })
+     * @param {SchedulerOptions} [options] - Scheduler configuration options
+     * @returns {this} - Server instance for chaining
+     * @example
+     * app.enableScheduler()
+     * app.enableScheduler({ timezone: 'America/New_York' })
+     */
+    enableScheduler(options?: SchedulerOptions): this;
+    /**
+     * Get the scheduler instance (if enabled)
+     * @returns {Scheduler | undefined} - Scheduler instance
+     */
+    getScheduler(): Scheduler | undefined;
     /**
      * Load controllers asynchronously
      * @returns {Promise<void>}

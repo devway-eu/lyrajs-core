@@ -1,8 +1,6 @@
 import { getRoutePrefix, getRoutes } from '../server/index.js';
 /** Modular router for organizing routes and middlewares */
 export class Router {
-    routes;
-    mountPath;
     constructor() {
         this.routes = [];
     }

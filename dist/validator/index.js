@@ -5,19 +5,6 @@
  */
 export class Validator {
     /**
-     * Regex patterns for common validation scenarios
-     * - date: YYYY-MM-DD format
-     * - username: Alphanumeric + underscore, min 2 chars
-     * - email: Standard email format
-     * - password: Min 10 chars, requires uppercase, lowercase, digit, and special char
-     */
-    static patterns = {
-        date: /[1-9][0-9][0-9]{2}-([0][1-9]|[1][0-2])-([1-2][0-9]|[0][1-9]|[3][0-1])/,
-        username: /^[a-zA-Z0-9_]{2,}$/,
-        email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$/,
-        password: /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])\S{10,}$/
-    };
-    /**
      * Validates username format
      * Allows alphanumeric characters and underscores, minimum 2 characters
      * @param {string} username - Username to validate
@@ -66,4 +53,17 @@ export class Validator {
         return this.patterns.date.test(stringDate);
     }
 }
+/**
+ * Regex patterns for common validation scenarios
+ * - date: YYYY-MM-DD format
+ * - username: Alphanumeric + underscore, min 2 chars
+ * - email: Standard email format
+ * - password: Min 10 chars, requires uppercase, lowercase, digit, and special char
+ */
+Validator.patterns = {
+    date: /[1-9][0-9][0-9]{2}-([0][1-9]|[1][0-2])-([1-2][0-9]|[0][1-9]|[3][0-1])/,
+    username: /^[a-zA-Z0-9_]{2,}$/,
+    email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$/,
+    password: /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])\S{10,}$/
+};
 //# sourceMappingURL=index.js.map

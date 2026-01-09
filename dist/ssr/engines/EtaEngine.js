@@ -6,7 +6,6 @@ import * as fs from "fs";
  * Requires 'eta' package to be installed
  */
 export class EtaEngine {
-    eta;
     constructor() {
         this.checkInstallation();
     }

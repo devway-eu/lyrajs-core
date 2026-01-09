@@ -29,6 +29,7 @@ import {
 } from '@/core/server';
 import { TemplateRenderer, SSRConfig } from '@/core/ssr';
 import { parseXML, serializeToXML } from './xmlParser';
+import { Scheduler, SchedulerOptions } from '@/core/scheduler';
 
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
@@ -38,9 +39,11 @@ class LyraServer {
     private diContainer: DIContainer;
     private basePath: string;
     private settings: Map<string, any>;
+    private scheduler?: Scheduler;
 
     private controllersLoaded: boolean = false;
     private servicesRegistered: boolean = false;
+    private schedulerEnabled: boolean = false;
 
     constructor() {
         this.diContainer = new DIContainer();
@@ -100,6 +103,29 @@ class LyraServer {
      */
     getSetting(key: string): any {
         return this.settings.get(key);
+    }
+
+    /**
+     * Enable the scheduler system
+     * Automatically discovers and runs jobs with @Schedule({ enabled: true })
+     * @param {SchedulerOptions} [options] - Scheduler configuration options
+     * @returns {this} - Server instance for chaining
+     * @example
+     * app.enableScheduler()
+     * app.enableScheduler({ timezone: 'America/New_York' })
+     */
+    enableScheduler(options?: SchedulerOptions): this {
+        this.scheduler = new Scheduler(this.diContainer, options);
+        this.schedulerEnabled = true;
+        return this;
+    }
+
+    /**
+     * Get the scheduler instance (if enabled)
+     * @returns {Scheduler | undefined} - Scheduler instance
+     */
+    getScheduler(): Scheduler | undefined {
+        return this.scheduler;
     }
 
     /**
@@ -1298,7 +1324,13 @@ class LyraServer {
             this.controllersLoaded = true;
         }
 
-        // Step 3: Start the HTTP server
+        // Step 3: Discover and start scheduler jobs (if enabled)
+        if (this.schedulerEnabled && this.scheduler) {
+            await this.scheduler.discoverJobs('src/jobs');
+            await this.scheduler.start();
+        }
+
+        // Step 4: Start the HTTP server
         const server = http.createServer((req, res) => {
             this.handleRequest(req as Request, res as Response);
         });

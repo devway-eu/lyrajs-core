@@ -5,12 +5,15 @@ import { Container } from "../server/Container.js";
  * Supports dependency resolution for proper execution order
  */
 export class Fixture extends Container {
-    /**
-     * Optional array of fixture classes that must be loaded before this one
-     * Used for automatic dependency resolution and execution ordering
-     * @example
-     * dependencies = [UserFixtures, RoleFixtures]
-     */
-    dependencies = [];
+    constructor() {
+        super(...arguments);
+        /**
+         * Optional array of fixture classes that must be loaded before this one
+         * Used for automatic dependency resolution and execution ordering
+         * @example
+         * dependencies = [UserFixtures, RoleFixtures]
+         */
+        this.dependencies = [];
+    }
 }
 //# sourceMappingURL=Fixture.js.map

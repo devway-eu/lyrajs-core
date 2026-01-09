@@ -44,17 +44,20 @@ export class EntitySchemaBuilder {
             }
             return true;
         })
-            .map((col) => ({
-            name: col.name,
-            type: col.type.toLowerCase(),
-            length: col.size,
-            nullable: col.nullable ?? true,
-            default: col.default,
-            primary: col.pk ?? false,
-            unique: col.unique ?? false,
-            autoIncrement: col.pk ?? false, // Assume PKs are auto-increment
-            comment: undefined
-        }));
+            .map((col) => {
+            var _a, _b, _c, _d;
+            return ({
+                name: col.name,
+                type: col.type.toLowerCase(),
+                length: col.size,
+                nullable: (_a = col.nullable) !== null && _a !== void 0 ? _a : true,
+                default: col.default,
+                primary: (_b = col.pk) !== null && _b !== void 0 ? _b : false,
+                unique: (_c = col.unique) !== null && _c !== void 0 ? _c : false,
+                autoIncrement: (_d = col.pk) !== null && _d !== void 0 ? _d : false, // Assume PKs are auto-increment
+                comment: undefined
+            });
+        });
         // Build indexes (from unique columns and foreign keys)
         const indexes = [];
         // Add unique indexes

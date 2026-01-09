@@ -3,9 +3,12 @@ import { Container, Service } from '../server/index.js';
 import { Repository as RepositoryBase } from "../orm/index.js";
 /** Dependency injection container for managing services, repositories, and controllers */
 export class DIContainer extends Container {
-    instances = new Map();
-    services = new Map();
-    repositories = new Map();
+    constructor() {
+        super(...arguments);
+        this.instances = new Map();
+        this.services = new Map();
+        this.repositories = new Map();
+    }
     /**
      * Register a class as a service or repository
      * @param {new (...args: any[]) => T} ClassType - Class constructor to register

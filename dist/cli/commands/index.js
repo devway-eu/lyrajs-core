@@ -9,6 +9,8 @@ export * from "./HelpCommand.js";
 export * from "./ShowBackupsCommand.js";
 export * from "./LoadFixturesCommand.js";
 export * from "./MakeFixturesCommand.js";
+export * from "./MakeJobCommand.js";
+export * from "./MakeSchedulerCommand.js";
 export * from "./MigrateMigrationCommand.js";
 export * from "./RefreshMigrationCommand.js";
 export * from "./RestoreBackupCommand.js";
@@ -17,5 +19,7 @@ export * from "./ShowControllersCommand.js";
 export * from "./ShowEntitiesCommand.js";
 export * from "./ShowMigrationsCommand.js";
 export * from "./ShowRepositoriesCommand.js";
+export * from "./ShowRoutesCommand.js";
+export * from "./ShowSchedulersCommand.js";
 export * from "./SquashMigrationCommand.js";
 //# sourceMappingURL=index.js.map

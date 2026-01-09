@@ -49,7 +49,8 @@ export class MigrationGeneratorHelper {
             const pk = Reflect.getMetadata("entity:columns", entity).filter((c) => c.pk === true)[0];
             const fks = Reflect.getMetadata("entity:columns", entity).filter((c) => c.fk === true);
             fks.forEach((fk) => {
-                const reference = fk.references ? fk.references?.split(".") : null;
+                var _a;
+                const reference = fk.references ? (_a = fk.references) === null || _a === void 0 ? void 0 : _a.split(".") : null;
                 if (reference) {
                     const key = "fk_" + table + "_" + fk.name + "";
                     queries.push("ALTER TABLE `" + table + "` DROP FOREIGN KEY `" + key + "`;");
@@ -83,9 +84,10 @@ export class MigrationGeneratorHelper {
                             ", ";
                 }
             });
-            query += pk.pk && pk?.name ? "PRIMARY KEY (`" + pk.name + "`)" : "";
+            query += pk.pk && (pk === null || pk === void 0 ? void 0 : pk.name) ? "PRIMARY KEY (`" + pk.name + "`)" : "";
             fks.forEach((fk) => {
-                const reference = fk.references ? fk.references?.split(".") : null;
+                var _a;
+                const reference = fk.references ? (_a = fk.references) === null || _a === void 0 ? void 0 : _a.split(".") : null;
                 if (reference) {
                     const key = "fk_" + table + "_" + fk.name + "";
                     query += ", KEY `" + key + "` (`" + fk.name + "`)";
@@ -98,7 +100,8 @@ export class MigrationGeneratorHelper {
             const table = Reflect.getMetadata("entity:table", entity) || entity.constructor.name.toLowerCase();
             const fks = Reflect.getMetadata("entity:columns", entity).filter((c) => c.fk === true);
             fks.forEach((fk) => {
-                const reference = fk.references ? fk.references?.split(".") : null;
+                var _a;
+                const reference = fk.references ? (_a = fk.references) === null || _a === void 0 ? void 0 : _a.split(".") : null;
                 if (reference) {
                     let query = "ALTER TABLE `" + table + "` ADD ";
                     const key = `fk_${table}_${fk.name}`;

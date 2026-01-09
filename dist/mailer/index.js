@@ -5,14 +5,13 @@ import { Transporter } from "./Transporter.js";
  * Supports queuing multiple emails for batch sending
  */
 class Mailer {
-    transporter;
-    mails = [];
     /**
      * Creates a new Mailer instance
      * Initializes with configured SMTP transporter
      * @returns {Mailer} - Mailer instance for chaining
      */
     constructor() {
+        this.mails = [];
         this.transporter = Transporter;
         return this;
     }

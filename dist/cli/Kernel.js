@@ -1,34 +1,12 @@
 import { ShowRoutesCommand } from "../cli/commands/ShowRoutesCommand.js";
 import { LyraConsole } from "../console/LyraConsole.js";
-import { CleanupBackupsCommand, CreateDatabaseCommand, CreateRoutesCommand, FreshMigrationCommand, GenerateControllerCommand, GenerateEntityCommand, GenerateMigrationCommand, HelpCommand, ShowBackupsCommand, LoadFixturesCommand, MakeFixturesCommand, MigrateMigrationCommand, RefreshMigrationCommand, RestoreBackupCommand, RollbackMigrationCommand, ShowControllersCommand, ShowEntitiesCommand, ShowMigrationsCommand, ShowRepositoriesCommand, SquashMigrationCommand } from "./commands/index.js";
+import { CleanupBackupsCommand, CreateDatabaseCommand, CreateRoutesCommand, FreshMigrationCommand, GenerateControllerCommand, GenerateEntityCommand, GenerateMigrationCommand, HelpCommand, ShowBackupsCommand, LoadFixturesCommand, MakeFixturesCommand, MakeJobCommand, MakeSchedulerCommand, MigrateMigrationCommand, RefreshMigrationCommand, RestoreBackupCommand, RollbackMigrationCommand, ShowControllersCommand, ShowEntitiesCommand, ShowMigrationsCommand, ShowRepositoriesCommand, ShowSchedulersCommand, SquashMigrationCommand } from "./commands/index.js";
 /**
  * CLI Kernel class
  * Handles command parsing, routing, and execution
  * Manages the lifecycle of CLI commands and provides error handling
  */
 export class Kernel {
-    static commands = {
-        "cleanup:backups": CleanupBackupsCommand,
-        "create:database": CreateDatabaseCommand,
-        "fixtures:load": LoadFixturesCommand,
-        "show:backups": ShowBackupsCommand,
-        "make:controller": GenerateControllerCommand,
-        "make:entity": GenerateEntityCommand,
-        "make:fixtures": MakeFixturesCommand,
-        "make:migration": GenerateMigrationCommand,
-        "make:routes": CreateRoutesCommand,
-        "migration:fresh": FreshMigrationCommand,
-        "migration:migrate": MigrateMigrationCommand,
-        "migration:refresh": RefreshMigrationCommand,
-        "migration:rollback": RollbackMigrationCommand,
-        "migration:squash": SquashMigrationCommand,
-        "restore:backup": RestoreBackupCommand,
-        "show:controllers": ShowControllersCommand,
-        "show:entities": ShowEntitiesCommand,
-        "show:migrations": ShowMigrationsCommand,
-        "show:repositories": ShowRepositoriesCommand,
-        "show:routes": ShowRoutesCommand
-    };
     /**
      * Executes a CLI command based on command-line arguments
      * Parses the command name and delegates to the appropriate command class
@@ -64,4 +42,29 @@ export class Kernel {
         }
     }
 }
+Kernel.commands = {
+    "cleanup:backups": CleanupBackupsCommand,
+    "create:database": CreateDatabaseCommand,
+    "fixtures:load": LoadFixturesCommand,
+    "show:backups": ShowBackupsCommand,
+    "make:controller": GenerateControllerCommand,
+    "make:entity": GenerateEntityCommand,
+    "make:fixtures": MakeFixturesCommand,
+    "make:job": MakeJobCommand,
+    "make:migration": GenerateMigrationCommand,
+    "make:routes": CreateRoutesCommand,
+    "make:scheduler": MakeSchedulerCommand,
+    "migration:fresh": FreshMigrationCommand,
+    "migration:migrate": MigrateMigrationCommand,
+    "migration:refresh": RefreshMigrationCommand,
+    "migration:rollback": RollbackMigrationCommand,
+    "migration:squash": SquashMigrationCommand,
+    "restore:backup": RestoreBackupCommand,
+    "show:controllers": ShowControllersCommand,
+    "show:entities": ShowEntitiesCommand,
+    "show:migrations": ShowMigrationsCommand,
+    "show:repositories": ShowRepositoriesCommand,
+    "show:routes": ShowRoutesCommand,
+    "show:schedulers": ShowSchedulersCommand
+};
 //# sourceMappingURL=Kernel.js.map

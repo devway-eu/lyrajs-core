@@ -6,7 +6,6 @@ import { RenameDetector } from '../detector/RenameDetector.js';
  * Detects table/column additions, modifications, and removals
  */
 export class SchemaDiffer {
-    renameDetector;
     constructor() {
         this.renameDetector = new RenameDetector();
     }

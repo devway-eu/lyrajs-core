@@ -9,7 +9,6 @@ import { SchemaIntrospector } from "../introspector/SchemaIntrospector.js";
  * Reduces migration count for fresh installations
  */
 export class MigrationSquasher {
-    connection;
     constructor(connection) {
         this.connection = connection;
     }

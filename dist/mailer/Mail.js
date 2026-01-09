@@ -6,10 +6,6 @@ const mailFrom = new Config().get("mailer.sender");
  * Automatically sets the sender from mailer.sender configuration
  */
 export class Mail {
-    from;
-    to;
-    subject;
-    html;
     /**
      * Creates a new Mail instance
      * Sender address is automatically loaded from configuration

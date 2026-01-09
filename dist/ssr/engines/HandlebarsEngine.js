@@ -6,7 +6,6 @@ import * as fs from "fs";
  * Requires 'handlebars' package to be installed
  */
 export class HandlebarsEngine {
-    handlebars;
     constructor() {
         this.checkInstallation();
     }

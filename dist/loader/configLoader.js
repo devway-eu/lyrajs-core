@@ -108,7 +108,7 @@ class LyraConfig {
             const imported = await import(pathToFileURL(jsPath).href);
             // Extraire la config
             const config = imported.lyraConfig;
-            return typeof config?.then === 'function' ? await config : config;
+            return typeof (config === null || config === void 0 ? void 0 : config.then) === 'function' ? await config : config;
         }
         finally {
             await unlink(jsPath);

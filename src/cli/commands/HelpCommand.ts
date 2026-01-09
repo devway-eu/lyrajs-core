@@ -27,8 +27,10 @@ export class HelpCommand {
       "make:controller      \u279E Creates new controller based on entity, blank controller with methods, or totally blank controller",
       "make:entity          \u279E Creates new entity and help you to set properties, and creates related repository",
       "make:fixtures        \u279E Creates new fixture file for database seeding",
+      "make:job             \u279E Creates new scheduled job class in src/jobs",
       "make:migration       \u279E Generates incremental TypeScript migration from entity changes",
       "make:routes          \u279E Creates a routes file based on a controller's methods",
+      "make:scheduler       \u279E Adds a new scheduled method to an existing job class",
       "migration:fresh      \u279E Drops all tables and re-runs migrations (requires --force)",
       "migration:migrate    \u279E Executes all pending migrations with tracking, transactions, and automated backups",
       "migration:refresh    \u279E Rolls back all migrations and re-runs them (requires --force)",
@@ -40,7 +42,8 @@ export class HelpCommand {
       "show:entities        \u279E Shows all entities",
       "show:migrations      \u279E Shows migration status (executed vs pending)",
       "show:repositories    \u279E Shows all repositories",
-      "show:routes          \u279E Shows all API routes"
+      "show:routes          \u279E Shows all API routes",
+      "show:schedulers      \u279E Shows all scheduled jobs with their recurrency and status"
     )
   }
 }

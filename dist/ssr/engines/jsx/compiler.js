@@ -11,14 +11,14 @@ import { transformSync } from 'esbuild';
  * Compiles and caches JSX/TSX files at runtime using esbuild
  */
 export class TsxCompiler {
-    memoryCache = new Map();
-    options;
     constructor(options = {}) {
+        var _a, _b, _c, _d;
+        this.memoryCache = new Map();
         this.options = {
-            cache: options.cache ?? true,
-            fileCache: options.fileCache ?? false,
-            cacheDir: options.cacheDir ?? path.join(process.cwd(), '.lyra-cache'),
-            verbose: options.verbose ?? process.env.NODE_ENV !== 'production'
+            cache: (_a = options.cache) !== null && _a !== void 0 ? _a : true,
+            fileCache: (_b = options.fileCache) !== null && _b !== void 0 ? _b : false,
+            cacheDir: (_c = options.cacheDir) !== null && _c !== void 0 ? _c : path.join(process.cwd(), '.lyra-cache'),
+            verbose: (_d = options.verbose) !== null && _d !== void 0 ? _d : process.env.NODE_ENV !== 'production'
         };
         // Ensure cache directory exists if file caching is enabled
         if (this.options.fileCache && !fs.existsSync(this.options.cacheDir)) {
@@ -32,7 +32,7 @@ export class TsxCompiler {
         try {
             return fs.statSync(filePath).mtimeMs;
         }
-        catch {
+        catch (_a) {
             return 0;
         }
     }

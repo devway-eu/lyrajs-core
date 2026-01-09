@@ -6,7 +6,6 @@ import * as fs from "fs";
  * Requires 'pug' package to be installed
  */
 export class PugEngine {
-    pug;
     constructor() {
         this.checkInstallation();
     }

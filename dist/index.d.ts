@@ -13,6 +13,7 @@ export * from "./mailer/Transporter.js";
 export * from "./middlewares/index.js";
 export * from "./orm/index.js";
 export * from "./security/index.js";
+export * from "./scheduler/index.js";
 export * from "./server/index.js";
 export * from "./ssr/index.js";
 export * from "./types/index.js";

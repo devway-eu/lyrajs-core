@@ -5,7 +5,6 @@ import { DatabaseSchema } from '../interfaces/DatabaseSchema.js';
  * MySQL-specific implementation
  */
 export class SchemaIntrospector {
-    connection;
     constructor(connection) {
         this.connection = connection;
     }

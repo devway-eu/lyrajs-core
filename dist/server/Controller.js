@@ -16,18 +16,6 @@ import { HTTP_STATUS } from '../errors/index.js';
  */
 export class Controller extends Container {
     /**
-     * HTTP Request object (automatically injected)
-     */
-    req;
-    /**
-     * HTTP Response object (automatically injected)
-     */
-    res;
-    /**
-     * Next function for middleware chain (automatically injected)
-     */
-    next;
-    /**
      * Send 200 OK response with JSON data
      * @param {any} data - Response data
      * @returns {void}
@@ -104,7 +92,7 @@ export class Controller extends Container {
      * @returns {void}
      */
     serverError(error) {
-        const message = error?.message || 'Internal Server Error';
+        const message = (error === null || error === void 0 ? void 0 : error.message) || 'Internal Server Error';
         this.res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: message });
     }
     /**

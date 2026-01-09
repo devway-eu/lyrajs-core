@@ -8,8 +8,6 @@ import { ConfigParser } from "../config/ConfigParser.js";
  * Enforces use of specialized config classes for security and database settings
  */
 export class Config {
-    folderPath;
-    configFiles = [];
     /**
      * Creates a new Config instance
      * Scans the config directory and loads all YAML configuration files
@@ -18,6 +16,7 @@ export class Config {
      * const appName = config.get('app.name')
      */
     constructor() {
+        this.configFiles = [];
         this.folderPath = path.join(process.cwd(), "config");
         const folderFiles = fs.readdirSync(this.folderPath).filter((f) => f.endsWith(".yaml"));
         folderFiles.forEach((file) => {
@@ -41,6 +40,7 @@ export class Config {
      * const routerConfig = config.get('router')
      */
     get(fullKey) {
+        var _a;
         const splittedKey = fullKey.split(".");
         const configFileName = splittedKey.length > 0 ? splittedKey[0] : null;
         const key = splittedKey.length > 1 ? splittedKey[1] : null;
@@ -63,7 +63,7 @@ export class Config {
         // if (!key) {
         //   throw new Error("Key parameter not found")
         // }
-        const configFileFullPath = this.configFiles.find((file) => file.name === configFileName)?.fullPath;
+        const configFileFullPath = (_a = this.configFiles.find((file) => file.name === configFileName)) === null || _a === void 0 ? void 0 : _a.fullPath;
         if (!configFileFullPath) {
             throw new Error("Config file not found");
         }
@@ -87,7 +87,8 @@ export class Config {
      * const appVersion = config.getParam('app_version')
      */
     getParam(param) {
-        const parameterfileFullPath = this.configFiles.find((file) => file.name === "parameters")?.fullPath;
+        var _a;
+        const parameterfileFullPath = (_a = this.configFiles.find((file) => file.name === "parameters")) === null || _a === void 0 ? void 0 : _a.fullPath;
         if (!parameterfileFullPath) {
             throw new Error("Config file not found");
         }

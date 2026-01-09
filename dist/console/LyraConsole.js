@@ -5,15 +5,6 @@
  * Supports grouping multiple messages and customizable styling
  */
 class LyraConsoleClass {
-    closeByNewLine;
-    useIcons;
-    logsTitle;
-    warningsTitle;
-    errorsTitle;
-    informationsTitle;
-    successesTitle;
-    debugsTitle;
-    assertsTitle;
     /**
      * Creates a new LyraConsoleClass instance
      * Initializes default settings for console output styling

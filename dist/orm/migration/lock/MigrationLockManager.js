@@ -4,10 +4,9 @@ import * as os from 'os';
  * Prevents concurrent migration execution
  */
 export class MigrationLockManager {
-    connection;
-    lockAcquired = false;
     constructor(connection) {
         this.connection = connection;
+        this.lockAcquired = false;
     }
     /**
      * Acquire a migration lock

@@ -19,36 +19,38 @@
  * }
  */
 export class BaseMigration {
-    /**
-     * Default: non-destructive migration
-     * Override to true for DROP, TRUNCATE, or DELETE operations
-     */
-    isDestructive = false;
-    /**
-     * Default: no forced backup
-     * Override to true for risky operations
-     */
-    requiresBackup = false;
-    /**
-     * Default: automatic rollback on error
-     * Override to false if migration handles errors internally
-     */
-    autoRollbackOnError = true;
-    /**
-     * Default: no dependencies
-     * Override to specify required preceding migrations
-     */
-    dependsOn = [];
-    /**
-     * Default: no conflicts
-     * Override to specify incompatible concurrent migrations
-     */
-    conflictsWith = [];
-    /**
-     * Default: can run in parallel
-     * Override to false for migrations requiring exclusive access
-     */
-    canRunInParallel = true;
+    constructor() {
+        /**
+         * Default: non-destructive migration
+         * Override to true for DROP, TRUNCATE, or DELETE operations
+         */
+        this.isDestructive = false;
+        /**
+         * Default: no forced backup
+         * Override to true for risky operations
+         */
+        this.requiresBackup = false;
+        /**
+         * Default: automatic rollback on error
+         * Override to false if migration handles errors internally
+         */
+        this.autoRollbackOnError = true;
+        /**
+         * Default: no dependencies
+         * Override to specify required preceding migrations
+         */
+        this.dependsOn = [];
+        /**
+         * Default: no conflicts
+         * Override to specify incompatible concurrent migrations
+         */
+        this.conflictsWith = [];
+        /**
+         * Default: can run in parallel
+         * Override to false for migrations requiring exclusive access
+         */
+        this.canRunInParallel = true;
+    }
     /**
      * Preview migration SQL
      * Default implementation returns empty array

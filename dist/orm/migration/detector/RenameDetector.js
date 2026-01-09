@@ -4,8 +4,10 @@
  * Helps prevent accidental data loss from DROP + CREATE operations
  */
 export class RenameDetector {
-    SIMILARITY_THRESHOLD = 0.6; // 60% similarity minimum
-    HIGH_CONFIDENCE_THRESHOLD = 0.8; // 80% for high confidence
+    constructor() {
+        this.SIMILARITY_THRESHOLD = 0.6; // 60% similarity minimum
+        this.HIGH_CONFIDENCE_THRESHOLD = 0.8; // 80% for high confidence
+    }
     /**
      * Detect potential column renames within a table
      */

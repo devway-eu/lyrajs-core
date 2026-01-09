@@ -9,8 +9,6 @@ const execPromise = promisify(exec);
  * Creates, restores, and cleans up backup files
  */
 export class BackupManager {
-    connection;
-    backupDir;
     constructor(connection) {
         this.connection = connection;
         this.backupDir = path.join(process.cwd(), 'backups');

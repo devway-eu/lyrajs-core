@@ -5,9 +5,6 @@ import { HTTP_STATUS } from "../errors/HttpStatus.js";
  * Extends native Error with HTTP status code and optional error details
  */
 export class HttpException extends Error {
-    status;
-    message;
-    errors;
     /**
      * Creates a new HttpException
      * @param {string} message - Error message

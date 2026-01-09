@@ -11,7 +11,6 @@ import { SchemaDiffer } from '../differ/SchemaDiffer.js';
  * Generates TypeScript migration files based on entity changes
  */
 export class MigrationGenerator {
-    connection;
     constructor(connection) {
         this.connection = connection;
     }

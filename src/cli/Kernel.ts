@@ -13,6 +13,8 @@ import {
   ShowBackupsCommand,
   LoadFixturesCommand,
   MakeFixturesCommand,
+  MakeJobCommand,
+  MakeSchedulerCommand,
   MigrateMigrationCommand,
   RefreshMigrationCommand,
   RestoreBackupCommand,
@@ -21,6 +23,7 @@ import {
   ShowEntitiesCommand,
   ShowMigrationsCommand,
   ShowRepositoriesCommand,
+  ShowSchedulersCommand,
   SquashMigrationCommand
 } from "./commands"
 
@@ -48,8 +51,10 @@ export class Kernel {
     "make:controller": GenerateControllerCommand,
     "make:entity": GenerateEntityCommand,
     "make:fixtures": MakeFixturesCommand,
+    "make:job": MakeJobCommand,
     "make:migration": GenerateMigrationCommand,
     "make:routes": CreateRoutesCommand,
+    "make:scheduler": MakeSchedulerCommand,
     "migration:fresh": FreshMigrationCommand,
     "migration:migrate": MigrateMigrationCommand,
     "migration:refresh": RefreshMigrationCommand,
@@ -60,7 +65,8 @@ export class Kernel {
     "show:entities": ShowEntitiesCommand,
     "show:migrations": ShowMigrationsCommand,
     "show:repositories": ShowRepositoriesCommand,
-    "show:routes": ShowRoutesCommand
+    "show:routes": ShowRoutesCommand,
+    "show:schedulers": ShowSchedulersCommand
   }
 
   /**

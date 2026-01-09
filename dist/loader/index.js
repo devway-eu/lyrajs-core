@@ -23,19 +23,19 @@ async function ensureLoaded() {
     try {
         _AppFixtures = await ProjectModuleLoader.loadProjectFixtures();
     }
-    catch {
+    catch (_a) {
         _AppFixtures = undefined;
     }
     try {
         _User = await ProjectModuleLoader.loadProjectEntity('User');
     }
-    catch {
+    catch (_b) {
         _User = undefined;
     }
     try {
         _userRepository = await ProjectModuleLoader.loadProjectRepository('UserRepository');
     }
-    catch {
+    catch (_c) {
         _userRepository = undefined;
     }
 }

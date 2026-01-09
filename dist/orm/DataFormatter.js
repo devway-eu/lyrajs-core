@@ -20,7 +20,7 @@ export class DataFormatter {
         const EntityClass = entity.constructor;
         const formattedEntity = new EntityClass(entity);
         for (const [property, value] of Object.entries(entity)) {
-            const columnInfo = columns?.find((col) => col.name === property);
+            const columnInfo = columns === null || columns === void 0 ? void 0 : columns.find((col) => col.name === property);
             if (!columnInfo) {
                 ;
                 formattedEntity[property] = value;

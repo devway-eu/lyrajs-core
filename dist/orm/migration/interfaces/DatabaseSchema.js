@@ -15,11 +15,13 @@
  * console.log(schema.hasTable('users')) // true
  */
 export class DatabaseSchema {
-    /**
-     * Internal map of table definitions indexed by table name
-     * @private
-     */
-    tables = new Map();
+    constructor() {
+        /**
+         * Internal map of table definitions indexed by table name
+         * @private
+         */
+        this.tables = new Map();
+    }
     /**
      * Adds a table definition to the schema
      * If a table with the same name exists, it will be replaced
@@ -135,7 +137,6 @@ export class DatabaseSchema {
  * const pk = tableSchema.getPrimaryKey()
  */
 export class TableSchema {
-    table;
     /**
      * Creates a new TableSchema instance
      * @param {TableDefinition} table - Table definition to wrap
@@ -214,28 +215,30 @@ export class TableSchema {
  * }
  */
 export class SchemaDiffResult {
-    /** Tables to be created */
-    tablesToCreate = [];
-    /** Tables to be renamed (preserves data) */
-    tablesToRename = [];
-    /** Tables to be dropped (destructive) */
-    tablesToDrop = [];
-    /** Columns to be added to existing tables */
-    columnsToAdd = [];
-    /** Columns to be renamed (preserves data) */
-    columnsToRename = [];
-    /** Columns to be modified (type, length, nullable, etc.) */
-    columnsToModify = [];
-    /** Columns to be removed (destructive) */
-    columnsToRemove = [];
-    /** Indexes to be created */
-    indexesToAdd = [];
-    /** Indexes to be dropped */
-    indexesToRemove = [];
-    /** Foreign keys to be added */
-    foreignKeysToAdd = [];
-    /** Foreign keys to be dropped */
-    foreignKeysToRemove = [];
+    constructor() {
+        /** Tables to be created */
+        this.tablesToCreate = [];
+        /** Tables to be renamed (preserves data) */
+        this.tablesToRename = [];
+        /** Tables to be dropped (destructive) */
+        this.tablesToDrop = [];
+        /** Columns to be added to existing tables */
+        this.columnsToAdd = [];
+        /** Columns to be renamed (preserves data) */
+        this.columnsToRename = [];
+        /** Columns to be modified (type, length, nullable, etc.) */
+        this.columnsToModify = [];
+        /** Columns to be removed (destructive) */
+        this.columnsToRemove = [];
+        /** Indexes to be created */
+        this.indexesToAdd = [];
+        /** Indexes to be dropped */
+        this.indexesToRemove = [];
+        /** Foreign keys to be added */
+        this.foreignKeysToAdd = [];
+        /** Foreign keys to be dropped */
+        this.foreignKeysToRemove = [];
+    }
     /**
      * Checks if there are no schema changes
      * @returns {boolean} True if no changes detected, false otherwise

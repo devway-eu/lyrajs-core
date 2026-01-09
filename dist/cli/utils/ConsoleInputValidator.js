@@ -4,12 +4,6 @@
  * Ensures naming conventions and format requirements are met
  */
 export class ConsoleInputValidator {
-    static patterns = {
-        entityName: /^[A-Z][a-z]*(?:[A-Z][a-z]*)*$/,
-        controllerName: /^[A-Z][a-z]*(?:[A-Z][a-z]*)*$/,
-        propertyName: /^[a-z]+(_[a-z]+)*$/,
-        routePathEnd: /^\/[a-zA-Z0-9\/_:-]*$/
-    };
     /**
      * Validates entity name input
      * @param {string} input - Entity name to validate
@@ -77,4 +71,10 @@ export class ConsoleInputValidator {
         return true;
     }
 }
+ConsoleInputValidator.patterns = {
+    entityName: /^[A-Z][a-z]*(?:[A-Z][a-z]*)*$/,
+    controllerName: /^[A-Z][a-z]*(?:[A-Z][a-z]*)*$/,
+    propertyName: /^[a-z]+(_[a-z]+)*$/,
+    routePathEnd: /^\/[a-zA-Z0-9\/_:-]*$/
+};
 //# sourceMappingURL=ConsoleInputValidator.js.map

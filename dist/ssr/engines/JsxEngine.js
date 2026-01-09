@@ -39,15 +39,14 @@ import { resolveAsync } from './jsx/async.js';
  * }
  */
 export class JsxEngine {
-    compiler;
-    options;
     constructor(options = {}) {
+        var _a, _b, _c, _d;
         this.options = {
-            cache: options.cache ?? true,
-            fileCache: options.fileCache ?? false,
+            cache: (_a = options.cache) !== null && _a !== void 0 ? _a : true,
+            fileCache: (_b = options.fileCache) !== null && _b !== void 0 ? _b : false,
             cacheDir: options.cacheDir,
-            verbose: options.verbose ?? process.env.NODE_ENV !== 'production',
-            defaultExtension: options.defaultExtension ?? '.tsx'
+            verbose: (_c = options.verbose) !== null && _c !== void 0 ? _c : process.env.NODE_ENV !== 'production',
+            defaultExtension: (_d = options.defaultExtension) !== null && _d !== void 0 ? _d : '.tsx'
         };
         this.compiler = new TsxCompiler({
             cache: this.options.cache,

@@ -3,9 +3,8 @@
  * For production with multiple servers, consider using Redis or another distributed store
  */
 class RateLimitMemoryStore {
-    store = new Map();
-    cleanupInterval;
     constructor() {
+        this.store = new Map();
         // Cleanup expired entries every minute
         this.cleanupInterval = setInterval(() => {
             const now = Date.now();
@@ -64,10 +63,11 @@ class RateLimitMemoryStore {
  */
 export function rateLimit(options) {
     const { windowMs, max, message = 'Too many requests, please try again later.', statusCode = 429, keyGenerator = (req) => {
+        var _a;
         // Default: use IP address as key
         return req.headers['x-forwarded-for'] ||
             req.headers['x-real-ip'] ||
-            (req.socket?.remoteAddress || 'unknown');
+            (((_a = req.socket) === null || _a === void 0 ? void 0 : _a.remoteAddress) || 'unknown');
     }, skip = () => false, handler } = options;
     const store = new RateLimitMemoryStore();
     const middleware = (req, res, next) => {
@@ -114,9 +114,10 @@ export function rateLimit(options) {
  */
 export function rateLimitSliding(options) {
     const { windowMs, max, message = 'Too many requests, please try again later.', statusCode = 429, keyGenerator = (req) => {
+        var _a;
         return req.headers['x-forwarded-for'] ||
             req.headers['x-real-ip'] ||
-            (req.socket?.remoteAddress || 'unknown');
+            (((_a = req.socket) === null || _a === void 0 ? void 0 : _a.remoteAddress) || 'unknown');
     }, skip = () => false, handler } = options;
     // Store request timestamps for sliding window
     const store = new Map();

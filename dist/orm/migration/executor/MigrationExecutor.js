@@ -11,7 +11,6 @@ import { BackupManager } from '../backup/BackupManager.js';
  * Executes and tracks migrations with transaction support
  */
 export class MigrationExecutor {
-    connection;
     constructor(connection) {
         this.connection = connection;
     }
@@ -172,7 +171,7 @@ export class MigrationExecutor {
         for (const m of executed) {
             const migration = await this.loadMigration(m.version);
             const flags = [];
-            if (migration?.isDestructive) {
+            if (migration === null || migration === void 0 ? void 0 : migration.isDestructive) {
                 flags.push("\u26A0"); // ⚠ Warning sign
             }
             if (m.backup_path) {
@@ -419,12 +418,13 @@ export class MigrationExecutor {
      * Get the next batch number for migrations
      */
     async getNextBatchNumber() {
+        var _a;
         try {
             const result = await this.connection.query(`
         SELECT MAX(batch) as maxBatch FROM migrations
       `);
             const rows = Array.isArray(result[0]) ? result[0] : result;
-            const maxBatch = rows[0]?.maxBatch || 0;
+            const maxBatch = ((_a = rows[0]) === null || _a === void 0 ? void 0 : _a.maxBatch) || 0;
             return maxBatch + 1;
         }
         catch (error) {

@@ -118,7 +118,7 @@ export class GenerateEntityCommand {
             properties.push({
                 name: propName,
                 type: propType,
-                size: size ?? undefined,
+                size: size !== null && size !== void 0 ? size : undefined,
                 nullable,
                 unique,
                 references,
@@ -265,7 +265,7 @@ export class GenerateEntityCommand {
             properties.push({
                 name: propName,
                 type: propType,
-                size: size ?? undefined,
+                size: size !== null && size !== void 0 ? size : undefined,
                 nullable,
                 unique,
                 references,

@@ -14,12 +14,13 @@ export class CreateDatabaseCommand {
      * @returns {Promise<void>}
      */
     async execute() {
+        var _a;
         const connection = mysql.createPool({
             host: process.env.DB_HOST,
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD
         });
-        const dbName = process.env.DB_NAME?.replace(/[^a-zA-Z0-9_]/g, '');
+        const dbName = (_a = process.env.DB_NAME) === null || _a === void 0 ? void 0 : _a.replace(/[^a-zA-Z0-9_]/g, '');
         if (!dbName)
             throw new Error("Invalid database name");
         await connection.query(`CREATE DATABASE IF NOT EXISTS ??`, [dbName]);

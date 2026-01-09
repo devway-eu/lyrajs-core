@@ -6,7 +6,6 @@ import * as fs from "fs";
  * Requires 'ejs' package to be installed
  */
 export class EjsEngine {
-    ejs;
     constructor() {
         this.checkInstallation();
     }

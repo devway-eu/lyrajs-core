@@ -6,7 +6,6 @@ import * as fs from "fs";
  * Requires 'zare' package to be installed
  */
 export class ZareEngine {
-    zare;
     constructor() {
         this.checkInstallation();
     }

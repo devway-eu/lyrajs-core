@@ -27,6 +27,8 @@ export * from "./middlewares/index.js";
 export * from "./orm/index.js";
 // Security
 export * from "./security/index.js";
+// Scheduler
+export * from "./scheduler/index.js";
 // Server
 export * from "./server/index.js";
 // SSR (Server-Side Rendering)
