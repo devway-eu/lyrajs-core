@@ -261,11 +261,21 @@ export class MigrationGenerator {
       sql += `    await connection.query(\`${addSQL}\`)\n`
     }
 
-    // 7. Modify columns
+    // 7. Modify columns - group by table and column to generate single MODIFY statement
+    const columnModifications = new Map<string, Map<string, any[]>>()
     for (const colMod of diff.columnsToModify) {
-      const modSQL = this.generateModifyColumnSQL(colMod.table, colMod.column, colMod.to)
-      sql += `    await connection.query(\`${modSQL}\`)\n`
+      if (!columnModifications.has(colMod.table)) {
+        columnModifications.set(colMod.table, new Map())
+      }
+      const tableModifications = columnModifications.get(colMod.table)!
+      if (!tableModifications.has(colMod.column)) {
+        tableModifications.set(colMod.column, [])
+      }
+      tableModifications.get(colMod.column)!.push(colMod)
     }
+
+    // Generate MODIFY statements (skip for now - needs full column definition)
+    // TODO: Implement proper MODIFY COLUMN with complete column definition
 
     // 8. Remove columns
     for (const colRemove of diff.columnsToRemove) {

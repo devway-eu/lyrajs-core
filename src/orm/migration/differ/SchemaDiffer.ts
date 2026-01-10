@@ -232,6 +232,7 @@ export class SchemaDiffer {
   private findRemovedIndexes(currentTable: TableDefinition, desiredTable: TableDefinition): string[] {
     const desiredIndexNames = new Set(desiredTable.indexes.map(i => i.name))
     return currentTable.indexes
+      .filter(i => i.name != null && i.name !== '') // Filter out undefined/null/empty names
       .filter(i => !desiredIndexNames.has(i.name))
       .map(i => i.name)
   }
@@ -250,6 +251,7 @@ export class SchemaDiffer {
   private findRemovedForeignKeys(currentTable: TableDefinition, desiredTable: TableDefinition): string[] {
     const desiredFkNames = new Set(desiredTable.foreignKeys.map(fk => fk.name))
     return currentTable.foreignKeys
+      .filter(fk => fk.name != null && fk.name !== '') // Filter out undefined/null/empty names
       .filter(fk => !desiredFkNames.has(fk.name))
       .map(fk => fk.name)
   }

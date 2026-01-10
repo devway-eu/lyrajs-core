@@ -1,28 +1,33 @@
 /**
  * BackupManager
- * Manages database backups for migrations
- * Creates, restores, and cleans up backup files
+ * Manages database backups for migrations using pure SQL and Node.js native libraries
+ * No external dependencies required (mysqldump, mysql, gzip)
+ * Works cross-platform: Windows, Linux, macOS
  */
 export declare class BackupManager {
     private connection;
     private backupDir;
     constructor(connection: any);
     /**
-     * Create a full database backup before destructive migration
+     * Create a full database backup using SQL queries (no mysqldump needed)
      */
     createBackup(migrationVersion: string): Promise<string>;
     /**
-     * Create selective backup of specific tables only
+     * Create selective backup of specific tables only using SQL queries
      */
     createSelectiveBackup(migrationVersion: string, tables: string[]): Promise<string>;
     /**
-     * Compress backup file using gzip
+     * Compress backup file using Node.js native zlib (no external gzip needed)
      */
-    private compressBackup;
+    private compressBackupNative;
     /**
-     * Restore database from backup file
+     * Restore database from backup file using native SQL execution (no external mysql needed)
      */
     restore(backupPath: string): Promise<void>;
+    /**
+     * Decompress backup file using Node.js native zlib
+     */
+    private decompressBackupNative;
     /**
      * List all available backups
      */
