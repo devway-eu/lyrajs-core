@@ -6,4 +6,4 @@
  * import { rateLimiter } from '@lyra-js/core'
  * app.use(rateLimiter)
  */
-export declare const rateLimiter: (req: import("../../server/index.js").Request, res: import("../../server/index.js").Response, next: import("../../server/index.js").NextFunction) => void;
+export declare const rateLimiter: (req: import("../../index.js").Request, res: import("../../index.js").Response, next: import("../../index.js").NextFunction) => void;

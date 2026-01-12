@@ -134,6 +134,181 @@ class LyraServer {
         }
         return this;
     }
+    /**
+     * Serve static files from a directory with security protection against directory traversal
+     * @param {string} urlPrefix - URL path prefix (e.g., '/public', '/static', '/assets')
+     * @param {object} [options] - Static file serving options
+     * @param {string} [options.root='public'] - Root directory to serve files from (relative to project root)
+     * @param {number} [options.maxAge=0] - Cache-Control max-age in seconds
+     * @param {string[]} [options.allowedExtensions] - Array of allowed file extensions (e.g., ['.css', '.js', '.png'])
+     * @param {'allow'|'deny'|'ignore'} [options.dotfiles='deny'] - How to handle dotfiles
+     * @returns {this} - Server instance for chaining
+     * @example
+     * // Basic usage (serves from 'public' folder by default)
+     * app.serveStatic('/public')
+     *
+     * // Custom root directory
+     * app.serveStatic('/assets', { root: 'public/assets' })
+     *
+     * // With caching
+     * app.serveStatic('/public', { maxAge: 86400 })
+     *
+     * // Important: In HTML templates, always use absolute paths with leading slash
+     * // Correct:   <link rel="stylesheet" href="/assets/style/app.css" />
+     * // Wrong:     <link rel="stylesheet" href="assets/style/app.css" />
+     * // Or use <base href="/"> in your HTML head to make relative paths work from root
+     */
+    serveStatic(urlPrefix, options = {}) {
+        const { root = 'public', maxAge = 0, allowedExtensions, dotfiles = 'deny' } = options;
+        // MIME type mapping
+        const MIME_TYPES = {
+            '.html': 'text/html',
+            '.css': 'text/css',
+            '.js': 'application/javascript',
+            '.json': 'application/json',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+            '.ico': 'image/x-icon',
+            '.webp': 'image/webp',
+            '.woff': 'font/woff',
+            '.woff2': 'font/woff2',
+            '.ttf': 'font/ttf',
+            '.eot': 'application/vnd.ms-fontobject',
+            '.otf': 'font/otf',
+            '.mp4': 'video/mp4',
+            '.webm': 'video/webm',
+            '.mp3': 'audio/mpeg',
+            '.wav': 'audio/wav',
+            '.pdf': 'application/pdf',
+            '.txt': 'text/plain',
+            '.xml': 'application/xml',
+            '.zip': 'application/zip'
+        };
+        // Normalize URL prefix
+        const normalizedPrefix = urlPrefix.endsWith('/') ? urlPrefix.slice(0, -1) : urlPrefix;
+        // Resolve root directory to absolute path
+        const rootDir = path.resolve(process.cwd(), root);
+        // Create middleware for static file serving
+        const staticMiddleware = (req, res, next) => {
+            var _a;
+            // Only handle requests matching the prefix
+            if (!((_a = req.url) === null || _a === void 0 ? void 0 : _a.startsWith(normalizedPrefix))) {
+                return next();
+            }
+            // Extract the file path after the prefix
+            let requestedPath = req.url.slice(normalizedPrefix.length);
+            // Remove query string
+            const queryIndex = requestedPath.indexOf('?');
+            if (queryIndex !== -1) {
+                requestedPath = requestedPath.slice(0, queryIndex);
+            }
+            // Default to index.html for directory requests
+            if (requestedPath === '' || requestedPath === '/') {
+                requestedPath = '/index.html';
+            }
+            // SECURITY: Prevent directory traversal
+            // Replace all occurrences of ../ and ..\
+            const sanitizedPath = requestedPath
+                .replace(/\.\./g, '') // Remove all ..
+                .replace(/\/\//g, '/') // Remove double slashes
+                .replace(/\\/g, '/'); // Normalize backslashes to forward slashes
+            // Check for dotfiles
+            const pathSegments = sanitizedPath.split('/').filter(Boolean);
+            if (dotfiles === 'deny' || dotfiles === 'ignore') {
+                for (const segment of pathSegments) {
+                    if (segment.startsWith('.')) {
+                        if (dotfiles === 'deny') {
+                            res.statusCode = 403;
+                            res.end('403 Forbidden');
+                            return;
+                        }
+                        else {
+                            // ignore: treat as not found
+                            return next();
+                        }
+                    }
+                }
+            }
+            // Build absolute file path
+            const filePath = path.join(rootDir, sanitizedPath);
+            // SECURITY: Ensure the resolved path is still within rootDir
+            const normalizedFilePath = path.normalize(filePath);
+            const normalizedRootDir = path.normalize(rootDir);
+            if (!normalizedFilePath.startsWith(normalizedRootDir)) {
+                res.statusCode = 403;
+                res.end('403 Forbidden');
+                return;
+            }
+            // Check if file exists
+            if (!fs.existsSync(filePath)) {
+                return next();
+            }
+            // Check if it's a file (not a directory)
+            const stats = fs.statSync(filePath);
+            if (!stats.isFile()) {
+                return next();
+            }
+            // Get file extension
+            const ext = path.extname(filePath).toLowerCase();
+            // Check if extension is allowed
+            if (allowedExtensions && !allowedExtensions.includes(ext)) {
+                res.statusCode = 403;
+                res.end('403 Forbidden');
+                return;
+            }
+            // Get MIME type
+            const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
+            // Set response headers
+            res.setHeader('Content-Type', mimeType);
+            if (maxAge > 0) {
+                res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
+            }
+            else {
+                res.setHeader('Cache-Control', 'no-cache');
+            }
+            // Set content length
+            res.setHeader('Content-Length', stats.size);
+            // Read and send file
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.on('error', (error) => {
+                console.error('Error reading file:', error);
+                res.statusCode = 500;
+                res.end('500 Internal Server Error');
+            });
+            fileStream.pipe(res);
+        };
+        // Register as a GET route with wildcard parameter
+        // Use :filepath* notation for wildcard that matches all remaining path segments
+        const wildcardPath = normalizedPrefix + '/:filepath*';
+        // Create route handler wrapper that properly handles the static file logic
+        const routeHandler = async (req, res) => {
+            // Call the static middleware directly
+            return new Promise((resolve, reject) => {
+                staticMiddleware(req, res, (error) => {
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        // If next() was called (file not found), send 404
+                        if (!res.writableEnded) {
+                            res.statusCode = 404;
+                            res.end('404 Not Found');
+                        }
+                        resolve();
+                    }
+                });
+            });
+        };
+        // Add metadata for show:routes command
+        routeHandler.__isStaticRoute__ = true;
+        routeHandler.__staticRoot__ = root;
+        // Use addRoute to properly register with pattern matching
+        this.addRoute('GET', wildcardPath, [routeHandler]);
+        return this;
+    }
     // Check if handler is a router
     isRouter(handler) {
         return handler && typeof handler.getRoutes === 'function';
@@ -484,16 +659,19 @@ class LyraServer {
         };
     }
     // Convert route path to regex (e.g., /users/:id -> regex)
+    // Supports :param for single segment and :param* for wildcard (multiple segments)
     pathToRegex(path) {
         const pattern = path
             .replace(/\//g, '\\/')
-            .replace(/:(\w+)/g, '([^/]+)');
+            .replace(/:(\w+)\*/g, '(.+)') // :param* matches everything (including /)
+            .replace(/:(\w+)/g, '([^/]+)'); // :param matches single segment
         return new RegExp(`^${pattern}$`);
     }
     // Extract parameter names from path
+    // Handles both :param and :param* syntax
     extractParamNames(path) {
-        const matches = path.match(/:(\w+)/g);
-        return matches ? matches.map(m => m.slice(1)) : [];
+        const matches = path.match(/:(\w+)\*?/g);
+        return matches ? matches.map(m => m.slice(1).replace('*', '')) : [];
     }
     // Match incoming request to route
     matchRoute(method, pathname) {

@@ -1,4 +1,4 @@
-import { rateLimit } from '../../server/index.js';
+import { rateLimit } from '../../server/rateLimit.js';
 import { SecurityConfig } from "../../config/index.js";
 const securityConfig = new SecurityConfig().getConfig();
 /**

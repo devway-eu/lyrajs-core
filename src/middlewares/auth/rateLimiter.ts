@@ -1,4 +1,4 @@
-import { rateLimit } from '@/core/server'
+import { rateLimit } from '../../server/rateLimit'
 import { SecurityConfig } from "@/core/config"
 
 const securityConfig = new SecurityConfig().getConfig()

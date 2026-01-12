@@ -58,6 +58,36 @@ declare class LyraServer {
      * @returns {this} - Server instance for chaining
      */
     use(pathOrHandler: string | Middleware | IRouter, handler?: Middleware | IRouter): this;
+    /**
+     * Serve static files from a directory with security protection against directory traversal
+     * @param {string} urlPrefix - URL path prefix (e.g., '/public', '/static', '/assets')
+     * @param {object} [options] - Static file serving options
+     * @param {string} [options.root='public'] - Root directory to serve files from (relative to project root)
+     * @param {number} [options.maxAge=0] - Cache-Control max-age in seconds
+     * @param {string[]} [options.allowedExtensions] - Array of allowed file extensions (e.g., ['.css', '.js', '.png'])
+     * @param {'allow'|'deny'|'ignore'} [options.dotfiles='deny'] - How to handle dotfiles
+     * @returns {this} - Server instance for chaining
+     * @example
+     * // Basic usage (serves from 'public' folder by default)
+     * app.serveStatic('/public')
+     *
+     * // Custom root directory
+     * app.serveStatic('/assets', { root: 'public/assets' })
+     *
+     * // With caching
+     * app.serveStatic('/public', { maxAge: 86400 })
+     *
+     * // Important: In HTML templates, always use absolute paths with leading slash
+     * // Correct:   <link rel="stylesheet" href="/assets/style/app.css" />
+     * // Wrong:     <link rel="stylesheet" href="assets/style/app.css" />
+     * // Or use <base href="/"> in your HTML head to make relative paths work from root
+     */
+    serveStatic(urlPrefix: string, options?: {
+        root?: string;
+        maxAge?: number;
+        allowedExtensions?: string[];
+        dotfiles?: 'allow' | 'deny' | 'ignore';
+    }): this;
     private isRouter;
     private mountRouter;
     /**

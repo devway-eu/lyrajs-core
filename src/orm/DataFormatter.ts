@@ -40,7 +40,7 @@ export class DataFormatter {
         case "year":
         case "datetime":
         case "timestamp":
-          ;(formattedEntity as StdObject)[property] = value && !nullable ? new Date(value as string) : null
+          ;(formattedEntity as StdObject)[property] = value !== null && value !== undefined ? new Date(value as string) : null
           break
         case "tinyint":
         case "smallint":
@@ -48,12 +48,12 @@ export class DataFormatter {
         case "int":
         case "integer":
         case "bigint":
-          ;(formattedEntity as StdObject)[property] = value && !nullable ? parseInt(value as string) : null
+          ;(formattedEntity as StdObject)[property] = value !== null && value !== undefined ? parseInt(value as string) : null
           break
         case "float":
         case "double":
         case "decimal":
-          ;(formattedEntity as StdObject)[property] = value && !nullable ? parseFloat(value as string) : null
+          ;(formattedEntity as StdObject)[property] = value !== null && value !== undefined ? parseFloat(value as string) : null
           break
         case "char":
         case "varchar":
@@ -65,10 +65,10 @@ export class DataFormatter {
         case "blob":
         case "mediumblob":
         case "longblob":
-          ;(formattedEntity as StdObject)[property] = value && !nullable ? String(value) : null
+          ;(formattedEntity as StdObject)[property] = value !== null && value !== undefined ? String(value) : null
           break
         case "json":
-          ;(formattedEntity as StdObject)[property] = value && !nullable ? JSON.stringify(value) : null
+          ;(formattedEntity as StdObject)[property] = value !== null && value !== undefined ? JSON.stringify(value) : null
           break
         default:
           ;(formattedEntity as StdObject)[property] = value

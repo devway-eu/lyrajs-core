@@ -34,7 +34,7 @@ export class DataFormatter {
                 case "datetime":
                 case "timestamp":
                     ;
-                    formattedEntity[property] = value && !nullable ? new Date(value) : null;
+                    formattedEntity[property] = value !== null && value !== undefined ? new Date(value) : null;
                     break;
                 case "tinyint":
                 case "smallint":
@@ -43,13 +43,13 @@ export class DataFormatter {
                 case "integer":
                 case "bigint":
                     ;
-                    formattedEntity[property] = value && !nullable ? parseInt(value) : null;
+                    formattedEntity[property] = value !== null && value !== undefined ? parseInt(value) : null;
                     break;
                 case "float":
                 case "double":
                 case "decimal":
                     ;
-                    formattedEntity[property] = value && !nullable ? parseFloat(value) : null;
+                    formattedEntity[property] = value !== null && value !== undefined ? parseFloat(value) : null;
                     break;
                 case "char":
                 case "varchar":
@@ -62,11 +62,11 @@ export class DataFormatter {
                 case "mediumblob":
                 case "longblob":
                     ;
-                    formattedEntity[property] = value && !nullable ? String(value) : null;
+                    formattedEntity[property] = value !== null && value !== undefined ? String(value) : null;
                     break;
                 case "json":
                     ;
-                    formattedEntity[property] = value && !nullable ? JSON.stringify(value) : null;
+                    formattedEntity[property] = value !== null && value !== undefined ? JSON.stringify(value) : null;
                     break;
                 default:
                     ;
