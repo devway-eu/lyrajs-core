@@ -30,6 +30,8 @@ import {
 import { TemplateRenderer, SSRConfig } from '@/core/ssr';
 import { parseXML, serializeToXML } from './xmlParser';
 import { Scheduler, SchedulerOptions } from '@/core/scheduler';
+import { logger as loggerSingleton } from '@/core/logger';
+import { mailer } from '@/core/mailer';
 
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
@@ -1528,6 +1530,13 @@ class LyraServer {
         // Step 1: Auto-register services and repositories
         if (!this.servicesRegistered) {
             await this.autoRegister();
+
+            // Auto-register logger singleton for DI
+            this.diContainer.registerInstance('logger', loggerSingleton, 'service');
+
+            // Auto-register mailer singleton for DI
+            this.diContainer.registerInstance('mailer', mailer, 'service');
+
             this.servicesRegistered = true;
         }
 

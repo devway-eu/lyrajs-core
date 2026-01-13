@@ -6,38 +6,7 @@ import { getAllSchedules } from './decorators/Schedule';
 import { JobInstance, ScheduledMethod, SchedulerOptions } from './types/SchedulerTypes';
 import { CronParser } from './CronParser';
 import { DIContainer } from '@/core/server';
-import { LyraConsole } from '@/core/console/LyraConsole';
-
-/**
- * Writes a scheduler log message to the appropriate log file based on environment
- * Creates the logs directory and log file if they don't exist
- * @param {string} message - Log message to write
- * @returns {void}
- */
-function writeSchedulerLogFile(message: string): void {
-    try {
-        const env = process.env.NODE_ENV || 'dev';
-        const logDir = path.join(process.cwd(), 'logs');
-        const logFile = env === 'production' || env === 'prod' ? 'scheduler.prod.log' : 'scheduler.dev.log';
-        const logPath = path.join(logDir, logFile);
-
-        // Ensure logs directory exists
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
-
-        // Ensure log file exists
-        if (!fs.existsSync(logPath)) {
-            fs.writeFileSync(logPath, '', 'utf8');
-        }
-
-        // Append log message with newline
-        fs.appendFileSync(logPath, message + '\n', 'utf8');
-    } catch (error) {
-        // If file logging fails, log error to console but don't crash the app
-        console.error('Failed to write to scheduler log file:', error);
-    }
-}
+import { logger } from '@/core/logger';
 
 /**
  * Scheduler class - Discovers and executes scheduled jobs
@@ -66,7 +35,7 @@ export class Scheduler {
         const absolutePath = path.resolve(process.cwd(), jobsPath);
 
         if (!fs.existsSync(absolutePath)) {
-            LyraConsole.warn(`Jobs directory not found: ${jobsPath}`);
+            logger.warn(`Jobs directory not found: ${jobsPath}`);
             return;
         }
 
@@ -91,7 +60,7 @@ export class Scheduler {
                     }
                 }
             } catch (error) {
-                LyraConsole.error(`Error loading job from ${file}:`, String(error));
+                logger.error(`Error loading job from ${file}: ${String(error)}`);
             }
         }
     }
@@ -139,12 +108,12 @@ export class Scheduler {
      */
     async start(): Promise<void> {
         if (!this.options.enabled) {
-            LyraConsole.warn('Scheduler is disabled in options');
+            logger.warn('Scheduler is disabled in options');
             return;
         }
 
         if (this.isRunning) {
-            LyraConsole.warn('Scheduler is already running');
+            logger.warn('Scheduler is already running');
             return;
         }
 
@@ -155,12 +124,12 @@ export class Scheduler {
                 if (schedule.enabled) {
                     this.scheduleMethod(jobInstance, schedule);
                 } else {
-                    LyraConsole.warn(`Skipping disabled schedule: ${schedule.jobName}.${schedule.methodName}`);
+                    logger.warn(`Skipping disabled schedule: ${schedule.jobName}.${schedule.methodName}`);
                 }
             }
         }
 
-        LyraConsole.print('blue', '', '✓ Scheduler started successfully');
+        logger.success('✓ Scheduler started successfully');
     }
 
     /**
@@ -172,7 +141,7 @@ export class Scheduler {
         try {
             // Validate cron expression
             if (!CronParser.validate(schedule.cronExpression)) {
-                LyraConsole.error(`Invalid cron expression for ${key}: ${schedule.cronExpression}`);
+                logger.error(`Invalid cron expression for ${key}: ${schedule.cronExpression}`);
                 return;
             }
 
@@ -193,7 +162,7 @@ export class Scheduler {
                 this.scheduleWithCron(jobInstance, schedule);
             }
         } catch (error) {
-            LyraConsole.error(`Error scheduling ${key}:`, String(error));
+            logger.error(`Error scheduling ${key}: ${String(error)}`);
         }
     }
 
@@ -256,7 +225,7 @@ export class Scheduler {
             const method = jobInstance.instance[schedule.methodName];
 
             if (!method || typeof method !== 'function') {
-                LyraConsole.error(`Method ${key} not found`);
+                logger.error(`Method ${key} not found`);
                 return;
             }
 
@@ -277,13 +246,9 @@ export class Scheduler {
             }
 
             const duration = Date.now() - startTime;
-            const logMessage = `[${timestamp}] ${key} completed successfully (${duration}ms)`;
-            writeSchedulerLogFile(logMessage);
+            logger.info(`[SCHEDULER] ${key} completed successfully (${duration}ms)`);
         } catch (error) {
-            const timestamp = new Date().toISOString();
-            const logMessage = `[${timestamp}] ${key} failed: ${String(error)}`;
-            writeSchedulerLogFile(logMessage);
-            LyraConsole.error(`Error executing ${key}:`, String(error));
+            logger.error(`[SCHEDULER] ${key} failed: ${String(error)}`);
         }
     }
 
@@ -291,17 +256,17 @@ export class Scheduler {
      * Stop the scheduler - clears all scheduled intervals
      */
     stop(): void {
-        LyraConsole.info('Stopping scheduler...');
+        logger.info('Stopping scheduler...');
 
         for (const [key, interval] of this.intervals) {
             clearInterval(interval);
-            LyraConsole.info(`Cleared schedule: ${key}`);
+            logger.info(`Cleared schedule: ${key}`);
         }
 
         this.intervals.clear();
         this.isRunning = false;
 
-        LyraConsole.success('Scheduler stopped');
+        logger.success('Scheduler stopped');
     }
 
     /**

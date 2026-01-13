@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "@/core/server"
 
 import { Config } from "@/core/config"
-import { LyraConsole } from "@/core/console/LyraConsole"
+import { logger } from "@/core/logger"
 import { HttpException } from "@/core/errors"
 import { ErrorResponse, HttpExceptionType } from "@/core/types/Errors"
 
@@ -30,8 +30,9 @@ const getErrorMessage = (error: HttpException): string => {
 }
 
 /**
- * Logs error details to the console
+ * Logs error details to the console and file
  * Includes request metadata and stack trace in non-production environments
+ * Uses the Logger class for centralized logging
  * @param {HttpException} error - The error object
  * @param {Request} req - Express request object
  * @private
@@ -43,15 +44,12 @@ const logError = (error: HttpException, req: Request): void => {
   const userAgent = req.headers["user-agent"] || "unknown"
   const ip = req.socket.remoteAddress || "unknown"
 
-  LyraConsole.error(
-    "ERROR",
-    `[${timestamp}] ${method} ${path} - ${error.status} - ${error.message}`,
-    `User-Agent: ${userAgent}`,
-    `IP: ${ip}`
-  )
+  const errorMessage = `[${timestamp}] ${method} ${path} - ${error.status} - ${error.message} | User-Agent: ${userAgent} | IP: ${ip}`
+
+  logger.error(errorMessage)
 
   if (!isProduction() && error.stack) {
-    LyraConsole.error("ERROR", `Stack: ${error.stack}`)
+    logger.error(`Stack: ${error.stack}`)
   }
 }
 
@@ -118,7 +116,7 @@ export const errorHandler = async (error: HttpExceptionType, req: Request, res: 
           return;
         } catch (handlerError: any) {
           // If error handler itself fails, fall through to JSON response
-          LyraConsole.error('ERROR', 'Error handler failed:', handlerError?.message || String(handlerError));
+          logger.error(`Error handler failed: ${handlerError?.message || String(handlerError)}`);
         }
       }
     }

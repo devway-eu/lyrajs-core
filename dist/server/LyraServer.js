@@ -9,6 +9,8 @@ import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, l
 import { TemplateRenderer } from '../ssr/index.js';
 import { parseXML, serializeToXML } from './xmlParser.js';
 import { Scheduler } from '../scheduler/index.js';
+import { logger as loggerSingleton } from '../logger/index.js';
+import { mailer } from '../mailer/index.js';
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
     constructor() {
@@ -1300,6 +1302,10 @@ class LyraServer {
         // Step 1: Auto-register services and repositories
         if (!this.servicesRegistered) {
             await this.autoRegister();
+            // Auto-register logger singleton for DI
+            this.diContainer.registerInstance('logger', loggerSingleton, 'service');
+            // Auto-register mailer singleton for DI
+            this.diContainer.registerInstance('mailer', mailer, 'service');
             this.servicesRegistered = true;
         }
         // Step 2: Load controllers (AFTER services are registered)

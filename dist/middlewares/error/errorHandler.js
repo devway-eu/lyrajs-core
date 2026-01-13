@@ -1,5 +1,5 @@
 import { Config } from "../../config/index.js";
-import { LyraConsole } from "../../console/LyraConsole.js";
+import { logger } from "../../logger/index.js";
 /**
  * Checks if the application is running in production mode
  * @returns {boolean} - True if api_env is 'prod' or 'production'
@@ -23,8 +23,9 @@ const getErrorMessage = (error) => {
     return error.message || "An error occurred";
 };
 /**
- * Logs error details to the console
+ * Logs error details to the console and file
  * Includes request metadata and stack trace in non-production environments
+ * Uses the Logger class for centralized logging
  * @param {HttpException} error - The error object
  * @param {Request} req - Express request object
  * @private
@@ -35,9 +36,10 @@ const logError = (error, req) => {
     const path = req.url || "unknown";
     const userAgent = req.headers["user-agent"] || "unknown";
     const ip = req.socket.remoteAddress || "unknown";
-    LyraConsole.error("ERROR", `[${timestamp}] ${method} ${path} - ${error.status} - ${error.message}`, `User-Agent: ${userAgent}`, `IP: ${ip}`);
+    const errorMessage = `[${timestamp}] ${method} ${path} - ${error.status} - ${error.message} | User-Agent: ${userAgent} | IP: ${ip}`;
+    logger.error(errorMessage);
     if (!isProduction() && error.stack) {
-        LyraConsole.error("ERROR", `Stack: ${error.stack}`);
+        logger.error(`Stack: ${error.stack}`);
     }
 };
 /**
@@ -97,7 +99,7 @@ export const errorHandler = async (error, req, res, _next) => {
                 }
                 catch (handlerError) {
                     // If error handler itself fails, fall through to JSON response
-                    LyraConsole.error('ERROR', 'Error handler failed:', (handlerError === null || handlerError === void 0 ? void 0 : handlerError.message) || String(handlerError));
+                    logger.error(`Error handler failed: ${(handlerError === null || handlerError === void 0 ? void 0 : handlerError.message) || String(handlerError)}`);
                 }
             }
         }

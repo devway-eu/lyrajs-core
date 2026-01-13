@@ -12,6 +12,7 @@ export class Mail {
      * @param {string} to - Recipient email address
      * @param {string} subject - Email subject line
      * @param {string} html - Email body in HTML format
+     * @param attachments - Email attached files
      * @example
      * const mail = new Mail(
      *   'user@example.com',
@@ -19,11 +20,16 @@ export class Mail {
      *   '<h1>Hello!</h1><p>Welcome aboard.</p>'
      * )
      */
-    constructor(to, subject, html) {
+    constructor(to, subject, html, attachments) {
         this.from = mailFrom;
         this.to = to;
         this.subject = subject;
         this.html = html;
+        this.attachments = attachments;
+    }
+    addAttachment(attachment) {
+        this.attachments.push(attachment);
+        return this;
     }
 }
 //# sourceMappingURL=Mail.js.map

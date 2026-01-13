@@ -17,6 +17,8 @@ export * from "./console/LyraConsole.js";
 export * from "./errors/index.js";
 // loader
 export * from "./loader/index.js";
+// Logger
+export { logger } from "./logger/index.js";
 // Mailer
 export { mailer } from "./mailer/index.js";
 export * from "./mailer/Mail.js";

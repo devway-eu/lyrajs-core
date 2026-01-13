@@ -24,6 +24,9 @@ export * from "./errors"
 // loader
 export * from "./loader"
 
+// Logger
+export { logger } from "./logger"
+
 // Mailer
 export { mailer } from "./mailer"
 export * from "./mailer/Mail"

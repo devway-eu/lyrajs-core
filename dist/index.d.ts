@@ -7,6 +7,7 @@ export * from "./config/index.js";
 export * from "./console/LyraConsole.js";
 export * from "./errors/index.js";
 export * from "./loader/index.js";
+export { logger } from "./logger/index.js";
 export { mailer } from "./mailer/index.js";
 export * from "./mailer/Mail.js";
 export * from "./mailer/Transporter.js";
