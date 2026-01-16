@@ -358,7 +358,7 @@ LyraJS is licensed under the [GPL-3.0 License](./LICENSE).
 ## Authors
 
 - Matthieu Fergola
-- 
+
 ## Acknowledgments
 
 Built with dedication by the Devway team and our amazing contributors.
