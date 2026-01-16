@@ -24,43 +24,84 @@ The core package is published to npm and installed as a dependency in LyraJS pro
 
 ## Features Provided
 
-### 1. ORM System
+### 1. Server-Side Rendering (SSR) 🆕
+- **Template Engine System** - Complete SSR framework with pluggable template engines
+- **JSX/TSX Support** - Native support for JSX and TSX template rendering
+- **TemplateRenderer** - High-level API for rendering templates with data
+- **Template Engines** - Extensible engine architecture for multiple template formats
+- **SSR Middleware** - Seamless integration with the server middleware stack
+
+### 2. Job Scheduler 🆕
+- **Scheduler System** - Comprehensive cron-based job scheduling framework
+- **@Job Decorator** - Decorator for marking classes as scheduled jobs
+- **@Schedule Decorator** - Decorator for defining cron schedules on job methods
+- **CronParser** - Built-in cron expression parser and validator
+- **Job Management** - Start, stop, and manage scheduled jobs programmatically
+- **Timezone Support** - Configure timezone for scheduled job execution
+
+### 3. Dependency Injection (DI) 🆕
+- **DIContainer** - Full-featured dependency injection container
+- **@Injectable Decorator** - Mark classes as injectable services
+- **Auto-injection** - Automatic dependency resolution in controllers and services
+- **Service Registration** - Register third-party libraries for injection (bcrypt, jwt, etc.)
+- **Singleton Management** - Automatic singleton pattern for services
+
+### 4. Enhanced Server Module 🆕
+- **LyraServer Class** - New unified server class with modern API
+- **createServer()** - Factory function for creating server instances
+- **Controller Registration** - Automatic controller discovery and registration
+- **Route Decorators** - @Route, @Get, @Post, @Put, @Patch, @Delete decorators
+- **Parameter Decorators** - @Param, @Body, @Query, @Headers decorators
+- **Rate Limiting** - Built-in rate limiting middleware with configurable options
+- **XML Parser** - XML request body parsing support
+- **Static File Serving** - Built-in middleware for serving static assets
+
+### 5. ORM System
 - **Entity Management** - Decorator-based entity definitions with `@Table()` and `@Column()`
-- **Repository Pattern** - Base `Repository<T>` class with common database operations
-- **Query Builder** - Fluent API for building complex SQL queries
+- **Repository Pattern** - Enhanced base `Repository<T>` class with DI support
+- **Query Builder** - Improved query builder with additional methods and better type safety
 - **Database Abstraction** - Connection management and query execution for MySQL/MariaDB
 
-### 2. CLI Tool (Maestro)
-- **Interactive Code Generation** - Entities, controllers, repositories, and routes
+### 6. CLI Tool (Maestro)
+- **Interactive Code Generation** - Entities, controllers, repositories, routes, and jobs
 - **Database Management** - Database creation, migration generation, and execution
-- **Project Introspection** - Commands to list entities, controllers, routes, and migrations
-- **Fixture Management** - Load seed data into the database
+- **Backup & Restore** - Database backup, restore, and cleanup commands 🆕
+- **Migration Tools** - Squash, rollback, refresh, and fresh commands 🆕
+- **Project Introspection** - Commands to list entities, controllers, routes, migrations, and schedulers
+- **Fixture Management** - Enhanced fixture loading with dependencies
 
-### 3. Configuration System
+### 7. Configuration System
 - **YAML Configuration** - Support for structured configuration files
-- **Environment Variables** - Interpolation syntax `%env(VAR_NAME)%`
+- **Environment Variables** - Enhanced environment variable interpolation
 - **Config Loader** - Runtime access to configuration via `Config` class
 - **Multi-file Support** - Separate configs for database, security, routing, and parameters
+- **Type Safety** - Improved TypeScript types for configuration values
 
-### 4. Authentication & Authorization
+### 8. Authentication & Authorization
 - **JWT Authentication** - Token generation and validation
 - **Role-Based Access Control (RBAC)** - Route protection based on user roles
 - **Role Hierarchy** - Automatic permission inheritance between roles
 - **Configuration-Driven** - Access control rules defined in YAML
+- **Enhanced Security** - Better JWT validation and error handling
 
-### 5. Middleware
+### 9. Middleware
 - **Access Control Middleware** - Automatic route protection based on configuration
-- **Error Handler** - Centralized error handling with proper HTTP responses
-- **HTTP Request Middleware** - Request logging and metadata tracking
+- **Error Handler** - Enhanced error handler with better error formatting
+- **HTTP Request Middleware** - Improved request logging with more details
 - **Built-in Validators** - Email, password, and username validation
+- **Rate Limiting** - Configurable rate limiting middleware 🆕
 
-### 6. Type System
+### 10. Type System
 - **Request Types** - `AuthenticatedRequest<T>` for authenticated routes
 - **ORM Types** - Column types, entity metadata, and repository interfaces
 - **Config Types** - Typed access to configuration values
 - **Routing Types** - Route definitions and controller signatures
+- **Decorator Metadata** - New types for decorator metadata 🆕
+- **Server Types** - Comprehensive type definitions for server components 🆕
+- **DI Types** - Type definitions for dependency injection system 🆕
+- **Scheduler Types** - Type definitions for job scheduling 🆕
 
-### 7. Error Handling
+### 11. Error Handling
 - **HTTP Exceptions** - Pre-built exception classes for common HTTP errors
   - `NotFoundException`
   - `BadRequestException`
@@ -69,15 +110,16 @@ The core package is published to npm and installed as a dependency in LyraJS pro
 - **HTTP Status Codes** - Standardized status code constants
 - **Error Handler Middleware** - Automatic exception-to-response conversion
 
-### 8. Email Integration
+### 12. Email Integration
 - **Mailer Service** - Nodemailer integration
-- **Mail Class** - Type-safe email composition
-- **Transporter** - SMTP configuration and sending
+- **Mail Class** - Enhanced Mail class with more options
+- **Transporter** - Improved SMTP configuration and connection management
+- **Template Support** - Integration with SSR system for email templates 🆕
 
-### 9. Utilities
+### 13. Utilities
 - **Validator** - Email, password, and username validation
 - **Console Logging** - Colored console output with `LyraConsole`
-- **Module Loaders** - Dynamic loading of user modules (entities, controllers, fixtures)
+- **Module Loaders** - Dynamic loading of user modules (entities, controllers, fixtures, jobs)
 - **Data Formatters** - Data transformation and cleaning utilities
 
 ## Installation
@@ -221,7 +263,7 @@ Found a bug or have a feature request?
 lyrajs-core/
 ├── src/
 │   ├── cli/              # Maestro CLI commands and kernel
-│   │   ├── commands/     # Individual CLI commands
+│   │   ├── commands/     # Individual CLI commands (including new v2 commands)
 │   │   ├── utils/        # CLI helper utilities
 │   │   └── Kernel.ts     # CLI command manager
 │   ├── config/           # Configuration system
@@ -232,7 +274,8 @@ lyrajs-core/
 │   ├── console/          # Console logging utilities
 │   ├── errors/           # HTTP exceptions and status codes
 │   ├── loader/           # Module loaders
-│   ├── mailer/           # Email integration
+│   ├── logger/           # Logging system
+│   ├── mailer/           # Email integration with template support
 │   ├── middlewares/      # Express middleware
 │   │   ├── auth/         # Authentication middleware
 │   │   ├── error/        # Error handler
@@ -241,10 +284,29 @@ lyrajs-core/
 │   │   ├── decorator/    # @Table and @Column decorators
 │   │   ├── types/        # ORM type definitions
 │   │   ├── Entity.ts     # Base entity class
-│   │   ├── Repository.ts # Base repository class
+│   │   ├── Repository.ts # Enhanced repository with DI support
 │   │   ├── QueryBuilder.ts
 │   │   └── Database.ts   # Database connection
+│   ├── scheduler/        # 🆕 Job scheduling system
+│   │   ├── decorators/   # @Job and @Schedule decorators
+│   │   ├── types/        # Scheduler type definitions
+│   │   ├── Job.ts        # Base job class
+│   │   ├── Scheduler.ts  # Scheduler manager
+│   │   └── CronParser.ts # Cron expression parser
 │   ├── security/         # Security utilities
+│   ├── server/           # 🆕 Enhanced server module
+│   │   ├── decorators/   # Route and parameter decorators
+│   │   ├── middlewares/  # Server-specific middleware
+│   │   ├── Container.ts  # Service container
+│   │   ├── Controller.ts # Base controller class
+│   │   ├── DIContainer.ts # Dependency injection container
+│   │   ├── LyraServer.ts # Main server class
+│   │   ├── Router.ts     # Enhanced router
+│   │   └── Service.ts    # Base service class
+│   ├── ssr/              # 🆕 Server-side rendering
+│   │   ├── engines/      # Template engines (JSX, etc.)
+│   │   ├── TemplateEngine.ts
+│   │   └── TemplateRenderer.ts
 │   ├── types/            # TypeScript type definitions
 │   ├── validator/        # Validation utilities
 │   └── index.ts          # Main exports
@@ -253,6 +315,7 @@ lyrajs-core/
 ├── dist/                 # Compiled JavaScript
 ├── package.json
 ├── tsconfig.json
+├── CHANGELOG.md          # 🆕 Version history
 ├── LICENSE
 └── README.md
 ```
