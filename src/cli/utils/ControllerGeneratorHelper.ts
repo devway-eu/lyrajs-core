@@ -209,7 +209,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `import { ${entityName} } from "@entity/${entityName}"\n\n`
     controllerCodeContent += `@Route({ path: "/${entityPath}" })\n`
     controllerCodeContent += `export class ${controller.name} extends Controller {\n`
-    controllerCodeContent += `  @Get({ path: "/all" })\n`
+    controllerCodeContent += `  @Get({ path: "/" })\n`
     controllerCodeContent += `  async list() {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      const ${entityVarNamePlural} = await this.${repository}.findAll()\n`
@@ -276,7 +276,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `import { Controller, Delete, Get, Post, Put, Route } from "@lyra-js/core"\n\n`
     controllerCodeContent += `@Route({ path: "/${controllerBaseName}" })\n`
     controllerCodeContent += `export class ${controller.name} extends Controller {\n`
-    controllerCodeContent += `  @Get({ path: "/all" })\n`
+    controllerCodeContent += `  @Get({ path: "/" })\n`
     controllerCodeContent += `  async list() {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
