@@ -3,7 +3,7 @@
  * Handles async components that fetch data during rendering
  */
 
-import { JSXElement } from './runtime'
+import { JSXElement, isSafeHTML } from './runtime'
 
 /**
  * Resolve a JSX element that may contain async components
@@ -13,6 +13,11 @@ import { JSXElement } from './runtime'
  * @returns Promise<string> - Fully resolved HTML string
  */
 export async function resolveAsync(element: JSXElement): Promise<string> {
+  // If it's a SafeHTML wrapper (output of h()), extract the HTML string
+  if (isSafeHTML(element)) {
+    return element.html
+  }
+
   // If it's already a string, return it
   if (typeof element === 'string') {
     return element

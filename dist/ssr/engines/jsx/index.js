@@ -3,7 +3,7 @@
  * Public API for JSX/TSX templates in LyraJS
  */
 // Core JSX runtime
-export { h, jsx, jsxs, jsxDEV, Fragment, escape, renderProps } from './runtime.js';
+export { h, jsx, jsxs, jsxDEV, Fragment, escape, renderProps, SafeHTML, SAFE_HTML_BRAND, rawHtml, isSafeHTML } from './runtime.js';
 // Async component utilities
 export { resolveAsync, AsyncComponent, ErrorBoundary, renderParallel, renderSequential } from './async.js';
 // Compiler (for advanced use cases)

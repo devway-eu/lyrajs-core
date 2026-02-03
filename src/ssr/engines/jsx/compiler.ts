@@ -8,6 +8,8 @@ import * as path from 'path'
 import { createRequire } from 'module'
 import { transformSync } from 'esbuild'
 
+import { escape, isSafeHTML, rawHtml, SafeHTML, SAFE_HTML_BRAND } from './runtime'
+
 /**
  * Compiler options
  */
@@ -220,17 +222,30 @@ export class TsxCompiler {
     return `
 // Inlined JSX Runtime
 const Fragment = Symbol.for('jsx.fragment');
+const SAFE_HTML_BRAND = Symbol.for('lyra.safehtml');
 const SELF_CLOSING_TAGS = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+class SafeHTML {
+  constructor(html) { this.html = html; this[SAFE_HTML_BRAND] = true; }
+  toString() { return this.html; }
+}
+function rawHtml(html) { return new SafeHTML(String(html)); }
+function isSafeHTML(v) { return v != null && typeof v === 'object' && SAFE_HTML_BRAND in v; }
 function escape(text) {
   if (text == null) return '';
   const str = String(text);
   return str.replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
+function renderChild(c) {
+  if (isSafeHTML(c)) return c.html;
+  if (typeof c === 'string') return escape(c);
+  if (typeof c === 'number') return String(c);
+  return escape(c);
+}
 function renderProps(props) {
   if (!props) return '';
   const attrs = [];
   for (const [key, value] of Object.entries(props)) {
-    if (key === 'children' || key === 'key' || key === 'ref') continue;
+    if (key === 'children' || key === 'key' || key === 'ref' || key === 'dangerouslySetInnerHTML') continue;
     if (typeof value === 'boolean') {
       if (value) attrs.push(key);
       continue;
@@ -257,8 +272,8 @@ function flattenChildren(children) {
 function h(tag, props, ...children) {
   if (tag === Fragment) {
     const flat = flattenChildren(children);
-    if (flat.some(c => c instanceof Promise)) return Promise.all(flat).then(r => r.join(''));
-    return flat.join('');
+    if (flat.some(c => c instanceof Promise)) return Promise.all(flat).then(r => new SafeHTML(r.map(renderChild).join('')));
+    return new SafeHTML(flat.map(renderChild).join(''));
   }
   if (typeof tag === 'function') {
     const componentProps = {...props, children: children.length === 1 ? children[0] : children};
@@ -266,23 +281,20 @@ function h(tag, props, ...children) {
     if (result instanceof Promise) return result;
     if (Array.isArray(result)) {
       const flat = flattenChildren(result);
-      if (flat.some(c => c instanceof Promise)) return Promise.all(flat).then(r => r.join(''));
-      return flat.join('');
+      if (flat.some(c => c instanceof Promise)) return Promise.all(flat).then(r => new SafeHTML(r.map(renderChild).join('')));
+      return new SafeHTML(flat.map(renderChild).join(''));
     }
     return result;
   }
   if (typeof tag === 'string') {
+    if (SELF_CLOSING_TAGS.has(tag)) return new SafeHTML('<'+tag+renderProps(props)+' />');
+    if (props && props.dangerouslySetInnerHTML) return new SafeHTML('<'+tag+renderProps(props)+'>'+props.dangerouslySetInnerHTML.__html+'</'+tag+'>');
     const flat = flattenChildren(children);
     const hasAsync = flat.some(c => c instanceof Promise);
-    if (SELF_CLOSING_TAGS.has(tag)) return '<'+tag+renderProps(props)+' />';
     if (hasAsync) {
-      return Promise.all(flat).then(resolved => {
-        const html = resolved.map(c => typeof c === 'string' ? c : typeof c === 'number' ? String(c) : escape(c)).join('');
-        return '<'+tag+renderProps(props)+'>'+html+'</'+tag+'>';
-      });
+      return Promise.all(flat).then(resolved => new SafeHTML('<'+tag+renderProps(props)+'>'+resolved.map(renderChild).join('')+'</'+tag+'>'));
     }
-    const html = flat.map(c => typeof c === 'string' ? c : typeof c === 'number' ? String(c) : escape(c)).join('');
-    return '<'+tag+renderProps(props)+'>'+html+'</'+tag+'>';
+    return new SafeHTML('<'+tag+renderProps(props)+'>'+flat.map(renderChild).join('')+'</'+tag+'>');
   }
   throw new Error('Invalid JSX tag type: '+typeof tag);
 }
@@ -298,8 +310,10 @@ function h(tag, props, ...children) {
     const dirname = path.dirname(filePath)
     const filename = filePath
 
-    // Create a proper require function for ESM environment
-    const require = createRequire(import.meta.url)
+    // Require resolution must be rooted at the template file so that
+    // node_modules are looked up from the consuming project, not from
+    // this compiler's own package directory.
+    const require = createRequire(filePath)
 
     // Create require function for the module
     const moduleRequire = (id: string) => {
@@ -355,6 +369,13 @@ function h(tag, props, ...children) {
             }
           }
         }
+      }
+
+      // @lyra-js/core is ESM-only ("type": "module") and cannot be loaded
+      // via CJS require().  Return the SSR runtime exports directly; they
+      // are brand-compatible with the inlined runtime (shared Symbol.for).
+      if (id === '@lyra-js/core') {
+        return { rawHtml, SafeHTML, isSafeHTML, escape, SAFE_HTML_BRAND }
       }
 
       // Handle node_modules imports

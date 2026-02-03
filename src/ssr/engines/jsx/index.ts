@@ -4,7 +4,7 @@
  */
 
 // Core JSX runtime
-export { h, jsx, jsxs, jsxDEV, Fragment, escape, renderProps } from './runtime'
+export { h, jsx, jsxs, jsxDEV, Fragment, escape, renderProps, SafeHTML, SAFE_HTML_BRAND, rawHtml, isSafeHTML } from './runtime'
 export type { JSXElement, Props, Component } from './runtime'
 
 // Async component utilities

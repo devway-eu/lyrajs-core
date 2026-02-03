@@ -2,6 +2,7 @@
  * Async Component Support for JSX Runtime
  * Handles async components that fetch data during rendering
  */
+import { isSafeHTML } from './runtime.js';
 /**
  * Resolve a JSX element that may contain async components
  * Recursively resolves all promises in the component tree
@@ -10,6 +11,10 @@
  * @returns Promise<string> - Fully resolved HTML string
  */
 export async function resolveAsync(element) {
+    // If it's a SafeHTML wrapper (output of h()), extract the HTML string
+    if (isSafeHTML(element)) {
+        return element.html;
+    }
     // If it's already a string, return it
     if (typeof element === 'string') {
         return element;

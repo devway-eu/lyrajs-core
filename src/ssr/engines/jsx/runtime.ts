@@ -6,7 +6,7 @@
 /**
  * JSX Element type - can be a string (HTML), Promise<string> for async components, or array of elements
  */
-export type JSXElement = string | Promise<string> | JSXElement[]
+export type JSXElement = string | SafeHTML | Promise<string | SafeHTML> | JSXElement[]
 
 /**
  * Fragment symbol for grouping elements without a wrapper
@@ -46,6 +46,64 @@ export function escape(text: any): string {
 }
 
 /**
+ * Global brand symbol for SafeHTML.
+ * Uses Symbol.for so it is shared across module boundaries
+ * (inlined runtime in compiled templates vs. package import).
+ */
+export const SAFE_HTML_BRAND = Symbol.for('lyra.safehtml')
+
+/**
+ * Wrapper that marks a string as already-escaped HTML.
+ * h() returns SafeHTML for every rendered element; plain strings
+ * passed as {expression} children are escaped automatically.
+ * Use rawHtml() when you intentionally need to bypass escaping.
+ */
+export class SafeHTML {
+  readonly html: string
+
+  constructor(html: string) {
+    this.html = html
+    Object.defineProperty(this, SAFE_HTML_BRAND, { value: true })
+  }
+
+  toString(): string {
+    return this.html
+  }
+}
+
+/**
+ * Check whether a value is a SafeHTML instance.
+ * Works across module boundaries because it checks the shared symbol brand.
+ */
+export function isSafeHTML(value: any): value is SafeHTML {
+  return value != null && typeof value === 'object' && SAFE_HTML_BRAND in value
+}
+
+/**
+ * Mark a string as trusted HTML that should NOT be escaped.
+ * Only use with content you fully trust (e.g. output from a
+ * sanitization library, or static markup you control).
+ *
+ * @example
+ *   <div>{rawHtml(sanitizedContent)}</div>
+ */
+export function rawHtml(html: string): SafeHTML {
+  return new SafeHTML(String(html))
+}
+
+/**
+ * Render a single child value to an HTML string.
+ * SafeHTML (output of h() or rawHtml()) passes through unchanged;
+ * plain strings are escaped.
+ */
+function renderChild(child: any): string {
+  if (isSafeHTML(child)) return child.html
+  if (typeof child === 'string') return escape(child)
+  if (typeof child === 'number') return String(child)
+  return escape(child)
+}
+
+/**
  * Render props/attributes to HTML string
  */
 export function renderProps(props: Props | null): string {
@@ -55,7 +113,7 @@ export function renderProps(props: Props | null): string {
 
   for (const [key, value] of Object.entries(props)) {
     // Skip special props
-    if (key === 'children' || key === 'key' || key === 'ref') {
+    if (key === 'children' || key === 'key' || key === 'ref' || key === 'dangerouslySetInnerHTML') {
       continue
     }
 
@@ -122,12 +180,15 @@ function flattenChildren(children: any[]): any[] {
 
 /**
  * Core JSX factory function
- * Creates HTML elements from JSX syntax
+ * Creates HTML elements from JSX syntax.
+ * All string children are HTML-escaped automatically.
+ * Use rawHtml() to opt a specific value out of escaping, or
+ * dangerouslySetInnerHTML={{ __html }} as a React-compatible alternative.
  *
  * @param tag - HTML tag name or Component function
  * @param props - Element properties/attributes
  * @param children - Child elements
- * @returns HTML string or Promise<string> for async components
+ * @returns SafeHTML or Promise<SafeHTML> for async components
  */
 export function h(
   tag: string | Component | symbol,
@@ -138,9 +199,9 @@ export function h(
   if (tag === Fragment) {
     const flatChildren = flattenChildren(children)
     if (flatChildren.some((child) => child instanceof Promise)) {
-      return Promise.all(flatChildren).then((resolved) => resolved.join(''))
+      return Promise.all(flatChildren).then((resolved) => new SafeHTML(resolved.map(renderChild).join('')))
     }
-    return flatChildren.join('')
+    return new SafeHTML(flatChildren.map(renderChild).join(''))
   }
 
   // Handle Component functions
@@ -148,18 +209,18 @@ export function h(
     const componentProps = { ...props, children: children.length === 1 ? children[0] : children }
     const result = tag(componentProps)
 
-    // If component returns a Promise, handle it
+    // Promise: passes through, resolves to SafeHTML
     if (result instanceof Promise) {
       return result
     }
 
-    // If component returns an array, join it
+    // Array: render each child through renderChild
     if (Array.isArray(result)) {
       const flatResult = flattenChildren(result)
       if (flatResult.some((child) => child instanceof Promise)) {
-        return Promise.all(flatResult).then((resolved) => resolved.join(''))
+        return Promise.all(flatResult).then((resolved) => new SafeHTML(resolved.map(renderChild).join('')))
       }
-      return flatResult.join('')
+      return new SafeHTML(flatResult.map(renderChild).join(''))
     }
 
     return result
@@ -170,32 +231,25 @@ export function h(
     const flatChildren = flattenChildren(children)
     const hasAsyncChildren = flatChildren.some((child) => child instanceof Promise)
 
-    // Self-closing tags
+    // Self-closing tags have no children or innerHTML
     if (SELF_CLOSING_TAGS.has(tag)) {
-      return `<${tag}${renderProps(props)} />`
+      return new SafeHTML(`<${tag}${renderProps(props)} />`)
     }
 
-    // If we have async children, return a Promise
+    // dangerouslySetInnerHTML: inject raw HTML without escaping
+    if (props && props.dangerouslySetInnerHTML) {
+      return new SafeHTML(`<${tag}${renderProps(props)}>${props.dangerouslySetInnerHTML.__html}</${tag}>`)
+    }
+
+    // Async children: await all promises then render
     if (hasAsyncChildren) {
       return Promise.all(flatChildren).then((resolvedChildren) => {
-        const childrenHtml = resolvedChildren.map((child) => {
-          if (typeof child === 'string') return child
-          if (typeof child === 'number') return String(child)
-          return escape(child)
-        }).join('')
-
-        return `<${tag}${renderProps(props)}>${childrenHtml}</${tag}>`
+        return new SafeHTML(`<${tag}${renderProps(props)}>${resolvedChildren.map(renderChild).join('')}</${tag}>`)
       })
     }
 
     // Synchronous rendering
-    const childrenHtml = flatChildren.map((child) => {
-      if (typeof child === 'string') return child
-      if (typeof child === 'number') return String(child)
-      return escape(child)
-    }).join('')
-
-    return `<${tag}${renderProps(props)}>${childrenHtml}</${tag}>`
+    return new SafeHTML(`<${tag}${renderProps(props)}>${flatChildren.map(renderChild).join('')}</${tag}>`)
   }
 
   throw new Error(`Invalid JSX tag type: ${typeof tag}`)
