@@ -48,7 +48,7 @@ export class EntitySchemaBuilder {
             var _a, _b, _c, _d;
             return ({
                 name: col.name,
-                type: col.type.toLowerCase(),
+                type: col.type.toLowerCase() === 'relation' ? 'bigint' : col.type.toLowerCase(),
                 length: col.size,
                 nullable: (_a = col.nullable) !== null && _a !== void 0 ? _a : true,
                 default: col.default,
@@ -97,9 +97,9 @@ export class EntitySchemaBuilder {
                 foreignKeys.push({
                     name: `fk_${tableName}_${fk.name}`,
                     column: fk.name,
-                    referencedTable: reference[0],
+                    referencedTable: reference[0].toLowerCase(),
                     referencedColumn: reference[1],
-                    onUpdate: 'RESTRICT',
+                    onUpdate: fk.onUpdate || 'CASCADE',
                     onDelete: fk.onDelete || 'RESTRICT'
                 });
             }

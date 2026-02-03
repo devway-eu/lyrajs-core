@@ -26,15 +26,6 @@ export class RepositoryGeneratorHelper {
   }
 
   /**
-   * Generates export statement for repository instance
-   * @param {string} entityName - Name of the entity
-   * @returns {string} - Export statement code
-   */
-  static exportString = (entityName: string) => {
-    return `export const ${entityName.toLowerCase()}Repository = new ${entityName}Repository()` + `\n`
-  }
-
-  /**
    * Generates complete repository file code
    * @param {string} entityName - Name of the entity
    * @returns {string} - Complete repository code
@@ -54,8 +45,6 @@ export class RepositoryGeneratorHelper {
     entityCodeContent += this.constructorString(entityName)
 
     entityCodeContent += `}` + `\n`
-
-    entityCodeContent += this.exportString(entityName)
 
     return entityCodeContent
   }

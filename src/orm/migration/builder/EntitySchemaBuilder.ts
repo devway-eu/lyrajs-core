@@ -60,7 +60,7 @@ export class EntitySchemaBuilder<T extends object> {
       })
       .map((col: ColumnType) => ({
         name: col.name!,
-        type: col.type.toLowerCase(),
+        type: col.type.toLowerCase() === 'relation' ? 'bigint' : col.type.toLowerCase(),
         length: col.size,
         nullable: col.nullable ?? true,
         default: col.default,
@@ -109,9 +109,9 @@ export class EntitySchemaBuilder<T extends object> {
         foreignKeys.push({
           name: `fk_${tableName}_${fk.name}`,
           column: fk.name,
-          referencedTable: reference[0],
+          referencedTable: reference[0].toLowerCase(),
           referencedColumn: reference[1],
-          onUpdate: 'RESTRICT',
+          onUpdate: fk.onUpdate || 'CASCADE',
           onDelete: fk.onDelete || 'RESTRICT'
         })
       }

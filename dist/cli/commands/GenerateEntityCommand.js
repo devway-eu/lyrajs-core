@@ -13,18 +13,33 @@ import { LyraConsole } from "../../orm/index.js";
 export class GenerateEntityCommand {
     /**
      * Executes the generate entity command
-     * Prompts for entity name and either creates new entity or updates existing one
+     * Accepts an optional entity name as CLI argument (npx maestro make:entity EntityName)
+     * If provided, validates it the same way as the interactive prompt
+     * If omitted, falls back to the interactive prompt
+     * @param {string[]} args - Command arguments [entity_name]
      * @returns {Promise<void>}
      */
-    async execute() {
-        const { entityName } = await inquirer.prompt([
-            {
-                type: "input",
-                name: "entityName",
-                message: "Entity name (ie: Fruit, FruitType) ?",
-                validate: (input) => ConsoleInputValidator.isEntityNameValid(input)
+    async execute(args = []) {
+        let entityName;
+        if (args[0]) {
+            const validation = ConsoleInputValidator.isEntityNameValid(args[0]);
+            if (validation !== true) {
+                LyraConsole.error("Invalid entity name", validation);
+                return;
             }
-        ]);
+            entityName = args[0];
+        }
+        else {
+            const answer = await inquirer.prompt([
+                {
+                    type: "input",
+                    name: "entityName",
+                    message: "Entity name (ie: Fruit, FruitType) ?",
+                    validate: (input) => ConsoleInputValidator.isEntityNameValid(input)
+                }
+            ]);
+            entityName = answer.entityName;
+        }
         const entity = entityName.charAt(0).toUpperCase() + entityName.slice(1);
         if (this.entityExists(entity)) {
             // 3. If exists, prompt to add properties to existing entity

@@ -68,7 +68,7 @@ export type ConstraintType =
   | "cascade"
   | "SET NULL"
   | "set null"
-  | "NO Action"
+  | "NO ACTION"
   | "no action"
   | "RESTRICT"
   | "restrict"
@@ -85,5 +85,6 @@ export type ColumnType = {
   fk?: boolean
   references?: string
   onDelete?: ConstraintType
+  onUpdate?: ConstraintType
   default?: StdNativeType
 }

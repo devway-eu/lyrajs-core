@@ -17,12 +17,6 @@ export declare class RepositoryGeneratorHelper {
      */
     static constructorString: (entityName: string) => string;
     /**
-     * Generates export statement for repository instance
-     * @param {string} entityName - Name of the entity
-     * @returns {string} - Export statement code
-     */
-    static exportString: (entityName: string) => string;
-    /**
      * Generates complete repository file code
      * @param {string} entityName - Name of the entity
      * @returns {string} - Complete repository code

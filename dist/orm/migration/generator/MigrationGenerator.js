@@ -225,6 +225,13 @@ export class MigrationGenerator {
             const idxSQL = this.generateAddIndexSQL(idxAdd.table, idxAdd.index);
             sql += `    await connection.query(\`${idxSQL}\`)\n`;
         }
+        // 9b. Add indexes for newly created tables
+        for (const table of diff.tablesToCreate) {
+            for (const index of table.indexes) {
+                const idxSQL = this.generateAddIndexSQL(table.name, index);
+                sql += `    await connection.query(\`${idxSQL}\`)\n`;
+            }
+        }
         // 10. Remove indexes
         for (const idxRemove of diff.indexesToRemove) {
             sql += `    await connection.query(\`ALTER TABLE \\\`${idxRemove.table}\\\` DROP INDEX \\\`${idxRemove.index}\\\`\`)\n`;
@@ -233,6 +240,13 @@ export class MigrationGenerator {
         for (const fkAdd of diff.foreignKeysToAdd) {
             const fkSQL = this.generateAddForeignKeySQL(fkAdd.table, fkAdd.foreignKey);
             sql += `    await connection.query(\`${fkSQL}\`)\n`;
+        }
+        // 11b. Add foreign keys for newly created tables
+        for (const table of diff.tablesToCreate) {
+            for (const fk of table.foreignKeys) {
+                const fkSQL = this.generateAddForeignKeySQL(table.name, fk);
+                sql += `    await connection.query(\`${fkSQL}\`)\n`;
+            }
         }
         if (sql === ``) {
             sql = `    // No changes\n`;
@@ -272,6 +286,12 @@ export class MigrationGenerator {
         for (const tableName of diff.tablesToDrop) {
             sql += `    // TODO: Restore table ${tableName} - requires backup\n`;
         }
+        // 5b. Drop foreign keys for tables that will be dropped
+        for (const table of diff.tablesToCreate) {
+            for (const fk of table.foreignKeys) {
+                sql += `    await connection.query(\`ALTER TABLE \\\`${table.name}\\\` DROP FOREIGN KEY \\\`${fk.name}\\\`\`)\n`;
+            }
+        }
         // 6. Drop tables that were created
         for (const table of diff.tablesToCreate) {
             sql += `    await connection.query(\`DROP TABLE IF EXISTS \\\`${table.name}\\\`\`)\n`;
@@ -297,6 +317,26 @@ export class MigrationGenerator {
         for (const colAdd of diff.columnsToAdd) {
             const addSQL = this.generateAddColumnSQL(colAdd.table, colAdd.column).replace(/"/g, '\\"');
             sql += `      "${addSQL}",\n`;
+        }
+        for (const idxAdd of diff.indexesToAdd) {
+            const idxSQL = this.generateAddIndexSQL(idxAdd.table, idxAdd.index).replace(/"/g, '\\"');
+            sql += `      "${idxSQL}",\n`;
+        }
+        for (const table of diff.tablesToCreate) {
+            for (const index of table.indexes) {
+                const idxSQL = this.generateAddIndexSQL(table.name, index).replace(/"/g, '\\"');
+                sql += `      "${idxSQL}",\n`;
+            }
+        }
+        for (const fkAdd of diff.foreignKeysToAdd) {
+            const fkSQL = this.generateAddForeignKeySQL(fkAdd.table, fkAdd.foreignKey).replace(/"/g, '\\"');
+            sql += `      "${fkSQL}",\n`;
+        }
+        for (const table of diff.tablesToCreate) {
+            for (const fk of table.foreignKeys) {
+                const fkSQL = this.generateAddForeignKeySQL(table.name, fk).replace(/"/g, '\\"');
+                sql += `      "${fkSQL}",\n`;
+            }
         }
         // Remove trailing comma and newline
         if (sql.endsWith(',\n')) {
@@ -373,15 +413,13 @@ export class MigrationGenerator {
      * Generate ADD FOREIGN KEY SQL
      */
     generateAddForeignKeySQL(tableName, fk) {
+        const onUpdate = fk.onUpdate ? fk.onUpdate.toUpperCase() : 'CASCADE';
+        const onDelete = fk.onDelete ? fk.onDelete.toUpperCase() : 'RESTRICT';
         let sql = `ALTER TABLE \\\`${tableName}\\\` ADD CONSTRAINT \\\`${fk.name}\\\` `;
         sql += `FOREIGN KEY (\\\`${fk.column}\\\`) `;
         sql += `REFERENCES \\\`${fk.referencedTable}\\\` (\\\`${fk.referencedColumn}\\\`)`;
-        if (fk.onUpdate && fk.onUpdate !== 'RESTRICT') {
-            sql += ` ON UPDATE ${fk.onUpdate}`;
-        }
-        if (fk.onDelete && fk.onDelete !== 'RESTRICT') {
-            sql += ` ON DELETE ${fk.onDelete}`;
-        }
+        sql += ` ON UPDATE ${onUpdate}`;
+        sql += ` ON DELETE ${onDelete}`;
         return sql;
     }
     /**
@@ -432,8 +470,12 @@ export class MigrationGenerator {
         if (diff.indexesToAdd.length > 0) {
             console.log(`  ${GREEN}✓ Indexes to add: ${diff.indexesToAdd.length}${RESET}`);
         }
-        if (diff.foreignKeysToAdd.length > 0) {
-            console.log(`  ${GREEN}✓ Foreign keys to add: ${diff.foreignKeysToAdd.length}${RESET}`);
+        const newTableFkCount = diff.tablesToCreate.reduce((sum, t) => sum + t.foreignKeys.length, 0);
+        const totalFkCount = diff.foreignKeysToAdd.length + newTableFkCount;
+        if (totalFkCount > 0) {
+            console.log(`  ${GREEN}✓ Foreign keys to add: ${totalFkCount}${RESET}`);
+            diff.foreignKeysToAdd.forEach(fk => console.log(`    ${GREEN}- ${fk.table}.${fk.foreignKey.column} → ${fk.foreignKey.referencedTable}.${fk.foreignKey.referencedColumn}${RESET}`));
+            diff.tablesToCreate.forEach(t => t.foreignKeys.forEach(fk => console.log(`    ${GREEN}- ${t.name}.${fk.column} → ${fk.referencedTable}.${fk.referencedColumn}${RESET}`)));
         }
         console.log('');
     }

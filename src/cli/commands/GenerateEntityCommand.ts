@@ -15,18 +15,33 @@ import { ColumnType, ConstraintType, LyraConsole } from "@/core/orm"
 export class GenerateEntityCommand {
   /**
    * Executes the generate entity command
-   * Prompts for entity name and either creates new entity or updates existing one
+   * Accepts an optional entity name as CLI argument (npx maestro make:entity EntityName)
+   * If provided, validates it the same way as the interactive prompt
+   * If omitted, falls back to the interactive prompt
+   * @param {string[]} args - Command arguments [entity_name]
    * @returns {Promise<void>}
    */
-  async execute() {
-    const { entityName } = await inquirer.prompt([
-      {
-        type: "input",
-        name: "entityName",
-        message: "Entity name (ie: Fruit, FruitType) ?",
-        validate: (input) => ConsoleInputValidator.isEntityNameValid(input)
+  async execute(args: string[] = []) {
+    let entityName: string
+
+    if (args[0]) {
+      const validation = ConsoleInputValidator.isEntityNameValid(args[0])
+      if (validation !== true) {
+        LyraConsole.error("Invalid entity name", validation as string)
+        return
       }
-    ])
+      entityName = args[0]
+    } else {
+      const answer = await inquirer.prompt([
+        {
+          type: "input",
+          name: "entityName",
+          message: "Entity name (ie: Fruit, FruitType) ?",
+          validate: (input) => ConsoleInputValidator.isEntityNameValid(input)
+        }
+      ])
+      entityName = answer.entityName
+    }
 
     const entity = entityName.charAt(0).toUpperCase() + entityName.slice(1)
 

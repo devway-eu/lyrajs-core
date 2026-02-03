@@ -207,15 +207,13 @@ export class MigrationSquasher {
      * Generate ADD FOREIGN KEY SQL
      */
     generateCreateForeignKeySQL(tableName, fk) {
+        const onUpdate = fk.onUpdate ? fk.onUpdate.toUpperCase() : 'CASCADE';
+        const onDelete = fk.onDelete ? fk.onDelete.toUpperCase() : 'RESTRICT';
         let sql = `ALTER TABLE \\\`${tableName}\\\` ADD CONSTRAINT \\\`${fk.name}\\\` `;
         sql += `FOREIGN KEY (\\\`${fk.column}\\\`) `;
         sql += `REFERENCES \\\`${fk.referencedTable}\\\` (\\\`${fk.referencedColumn}\\\`)`;
-        if (fk.onUpdate && fk.onUpdate !== "RESTRICT") {
-            sql += ` ON UPDATE ${fk.onUpdate}`;
-        }
-        if (fk.onDelete && fk.onDelete !== "RESTRICT") {
-            sql += ` ON DELETE ${fk.onDelete}`;
-        }
+        sql += ` ON UPDATE ${onUpdate}`;
+        sql += ` ON DELETE ${onDelete}`;
         return sql;
     }
 }

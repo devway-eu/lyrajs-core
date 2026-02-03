@@ -7,10 +7,13 @@
 export declare class GenerateEntityCommand {
     /**
      * Executes the generate entity command
-     * Prompts for entity name and either creates new entity or updates existing one
+     * Accepts an optional entity name as CLI argument (npx maestro make:entity EntityName)
+     * If provided, validates it the same way as the interactive prompt
+     * If omitted, falls back to the interactive prompt
+     * @param {string[]} args - Command arguments [entity_name]
      * @returns {Promise<void>}
      */
-    execute(): Promise<void>;
+    execute(args?: string[]): Promise<void>;
     /**
      * Prompts for entity properties and generates entity and repository files
      * @param {string} entity - Name of the entity to generate

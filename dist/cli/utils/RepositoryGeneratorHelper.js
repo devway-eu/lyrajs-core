@@ -19,7 +19,6 @@ export class RepositoryGeneratorHelper {
         entityCodeContent += `\n`;
         entityCodeContent += this.constructorString(entityName);
         entityCodeContent += `}` + `\n`;
-        entityCodeContent += this.exportString(entityName);
         return entityCodeContent;
     }
 }
@@ -39,13 +38,5 @@ RepositoryGeneratorHelper.importsString = (entityName) => {
  */
 RepositoryGeneratorHelper.constructorString = (entityName) => {
     return `  constructor() {` + `\n` + `    super(${entityName})` + `\n` + `  }` + `\n`;
-};
-/**
- * Generates export statement for repository instance
- * @param {string} entityName - Name of the entity
- * @returns {string} - Export statement code
- */
-RepositoryGeneratorHelper.exportString = (entityName) => {
-    return `export const ${entityName.toLowerCase()}Repository = new ${entityName}Repository()` + `\n`;
 };
 //# sourceMappingURL=RepositoryGeneratorHelper.js.map
