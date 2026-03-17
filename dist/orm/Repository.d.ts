@@ -70,14 +70,14 @@ export declare class Repository<T extends {
      * Performs INSERT if entity has no id, UPDATE if id exists
      * Automatically formats data according to column metadata
      * @param {T | StdObject} entity - Entity to save
-     * @returns {Promise<void>}
+     * @returns {Promise<T>} - The saved entity
      * @example
      * const user = new User({ name: 'John', email: 'john@example.com' })
-     * await userRepository.save(user) // INSERT
-     * user.name = 'Jane'
-     * await userRepository.save(user) // UPDATE
+     * const savedUser = await userRepository.save(user) // INSERT
+     * savedUser.name = 'Jane'
+     * const updatedUser = await userRepository.save(savedUser) // UPDATE
      */
-    save: (entity: T | StdObject) => Promise<void>;
+    save: (entity: T | StdObject) => Promise<T | null>;
     /**
      * Deletes an entity by its primary key ID
      * @param {number | string} id - Primary key value of entity to delete

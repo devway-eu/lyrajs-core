@@ -38,7 +38,7 @@ export class QueryBuilder {
             const safeColumns = Object.keys(data).map((col) => this.sanitizeIdentifier(col));
             this.sql += `(${safeColumns.join(", ")}) VALUES (${Object.values(data)
                 .map(() => "?")
-                .join(", ")})`;
+                .join(", ")}) `;
             this.params = Object.values(data);
             return this;
         };
@@ -49,7 +49,7 @@ export class QueryBuilder {
         };
         this.updateData = (data) => {
             const safeUpdates = Object.entries(data).map(([key]) => `${this.sanitizeIdentifier(key)} = ?`);
-            this.sql += `SET ${safeUpdates.join(", ")}`;
+            this.sql += `SET ${safeUpdates.join(", ")} `;
             this.params = Object.values(data);
             return this;
         };
@@ -62,7 +62,7 @@ export class QueryBuilder {
             const safeTable = this.sanitizeIdentifier(table);
             // Sanitize the ON clause by validating it contains only valid identifiers and operators
             const sanitizedOn = this.sanitizeJoinCondition(on);
-            this.sql += ` ${type} JOIN ${safeTable} ON ${sanitizedOn}`;
+            this.sql += ` ${type} JOIN ${safeTable} ON ${sanitizedOn} `;
             return this;
         };
         this.where = (column, test, value) => {
@@ -85,11 +85,11 @@ export class QueryBuilder {
         };
         this.orderBy = (column, direction = "ASC") => {
             const safeColumn = this.sanitizeIdentifier(column);
-            this.sql += `ORDER BY ${safeColumn} ${direction}`;
+            this.sql += `ORDER BY ${safeColumn} ${direction} `;
             return this;
         };
         this.limit = (limit, offset = 0) => {
-            this.sql += `LIMIT ${offset}, ${limit}`;
+            this.sql += `LIMIT ${offset}, ${limit} `;
             return this;
         };
         this.raw = (sql, params) => {

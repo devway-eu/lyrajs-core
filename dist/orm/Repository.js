@@ -94,12 +94,12 @@ export class Repository {
          * Performs INSERT if entity has no id, UPDATE if id exists
          * Automatically formats data according to column metadata
          * @param {T | StdObject} entity - Entity to save
-         * @returns {Promise<void>}
+         * @returns {Promise<T>} - The saved entity
          * @example
          * const user = new User({ name: 'John', email: 'john@example.com' })
-         * await userRepository.save(user) // INSERT
-         * user.name = 'Jane'
-         * await userRepository.save(user) // UPDATE
+         * const savedUser = await userRepository.save(user) // INSERT
+         * savedUser.name = 'Jane'
+         * const updatedUser = await userRepository.save(savedUser) // UPDATE
          */
         this.save = async (entity) => {
             // const columns = Reflect.getMetadata("entity:columns", this.entityClass) || []
@@ -107,6 +107,7 @@ export class Repository {
             let columns = Object.keys(entity);
             // const entityObj = entity as T | any
             const isUpdate = !!entity.id;
+            const entityId = entity.id; // Store ID before formatting
             const formattedEntity = DataFormatter.getFormattedEntityData(entity);
             entity = formattedEntity;
             const safeTable = this.sanitizeIdentifier(this.table);
@@ -114,8 +115,9 @@ export class Repository {
                 columns = columns.filter((col) => col !== "id");
                 const updates = columns.map((col) => `${this.sanitizeIdentifier(col)} = ?`).join(", ");
                 const values = columns.map((col) => entity[col]);
-                values.push(entity.id);
+                values.push(entityId);
                 await db.query(`UPDATE ${safeTable} SET ${updates} WHERE id = ?`, values);
+                return await this.find(entityId);
             }
             else {
                 const columnNames = columns
@@ -125,7 +127,11 @@ export class Repository {
                     .filter((col) => col !== "id")
                     .map((key) => (key === "content" ? JSON.stringify({}) : entity[key]));
                 const placeholders = columnNames.map(() => "?").join(", ");
-                await db.query(`INSERT INTO ${safeTable} (${columnNames.join(", ")}) VALUES (${placeholders})`, values);
+                const [result] = await db.query(`INSERT INTO ${safeTable} (${columnNames.join(", ")}) VALUES (${placeholders})`, values);
+                // Get the insertId from the result
+                const insertId = result.insertId;
+                // Fetch and return the newly created entity
+                return await this.find(insertId);
             }
         };
         /**
