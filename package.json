@@ -1,6 +1,6 @@
 {
   "name": "@lyra-js/core",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "busboy": "^1.6.0",
     "chalk": "^5.0.0",
     "commander": "^11.0.0",
     "cors": "^2.8.5",
@@ -55,6 +56,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/bcrypt": "^5.0.2",
+    "@types/busboy": "^1.5.4",
     "@types/cors": "^2.8.18",
     "@types/dotenv": "^8.2.3",
     "@types/jsonwebtoken": "^9.0.9",

@@ -3,14 +3,15 @@ import * as http from "http";
 import * as url from "url";
 import * as fs from "fs";
 import * as path from "path";
-import { errorHandler, httpRequestMiddleware, accessMiddleware } from "../middlewares/index.js";
+import { accessMiddleware, errorHandler, httpRequestMiddleware } from "../middlewares/index.js";
 import { Config } from "../config/index.js";
-import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger } from '../server/index.js';
+import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger, multipartMiddleware, MultipartParser } from '../server/index.js';
 import { TemplateRenderer } from '../ssr/index.js';
 import { parseXML, serializeToXML } from './xmlParser.js';
 import { Scheduler } from '../scheduler/index.js';
 import { logger as loggerSingleton } from '../logger/index.js';
 import { mailer } from '../mailer/index.js';
+import { FileManager } from "../services/index.js";
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
     constructor() {
@@ -23,7 +24,8 @@ class LyraServer {
             POST: {},
             PUT: {},
             DELETE: {},
-            PATCH: {}
+            PATCH: {},
+            OPTIONS: {}
         };
         this.middlewares = [];
         this.settings = new Map();
@@ -41,6 +43,7 @@ class LyraServer {
         this.middlewares.push({ path: '', middleware: logger });
         this.middlewares.push({ path: '', middleware: httpRequestMiddleware });
         this.middlewares.push({ path: '', middleware: accessMiddleware });
+        this.middlewares.push({ path: '', middleware: multipartMiddleware });
     }
     /**
      * Set application setting
@@ -650,6 +653,16 @@ class LyraServer {
         this.addRoute('PATCH', path, handlers);
         return this;
     }
+    /**
+     * Register OPTIONS route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    options(path, ...handlers) {
+        this.addRoute('OPTIONS', path, handlers);
+        return this;
+    }
     addRoute(method, path, handlers, parserType) {
         const pattern = this.pathToRegex(path);
         const paramNames = this.extractParamNames(path);
@@ -770,6 +783,14 @@ class LyraServer {
             req.on('error', reject);
         });
     }
+    // Parse MultipartFormData
+    // async parseMultipartFormData(req: Request): Promise<ParsedMultipartData> {
+    //   const multipartParser = new MultipartParser();
+    //   const { fields, files } = await multipartParser.parse(req)
+    //   return {
+    //     fields
+    //   }
+    // }
     // Parse cookies from request headers
     parseCookies(req) {
         const cookieHeader = req.headers.cookie;
@@ -1249,8 +1270,16 @@ class LyraServer {
             res = this.createResponse(res);
             // Parse cookies
             req.cookies = this.parseCookies(req);
+            // parse multipart data
             // Execute middlewares early (including logger) so they run for all requests including 404s
             await this.executeMiddlewares(req, res, pathname);
+            // Automatic OPTIONS request handling (CORS preflight)
+            if (req.method === 'OPTIONS') {
+                res.statusCode = 204;
+                res.setHeader('Content-Length', '0');
+                res.end();
+                return;
+            }
             // Match route early to get parser type
             const route = this.matchRoute(req.method, pathname);
             if (!route) {
@@ -1306,6 +1335,10 @@ class LyraServer {
             this.diContainer.registerInstance('logger', loggerSingleton, 'service');
             // Auto-register mailer singleton for DI
             this.diContainer.registerInstance('mailer', mailer, 'service');
+            // Auto-register multpartParser singleton for DI
+            this.diContainer.registerInstance('multipartParser', new MultipartParser(), 'service');
+            // Auto-register fileManager singleton for DI
+            this.diContainer.registerInstance('fileManager', new FileManager(), 'service');
             this.servicesRegistered = true;
         }
         // Step 2: Load controllers (AFTER services are registered)

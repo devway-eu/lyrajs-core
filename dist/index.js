@@ -31,6 +31,8 @@ export * from "./orm/index.js";
 export * from "./security/index.js";
 // Scheduler
 export * from "./scheduler/index.js";
+// Services
+export * from "./services/index.js";
 // Server
 export * from "./server/index.js";
 // SSR (Server-Side Rendering)

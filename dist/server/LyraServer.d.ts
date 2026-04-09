@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import * as http from "http";
-import { HttpMethod, RouteHandler, Middleware, NextFunction, Request, Response, RouteParams, ParsedQuery, MatchedRoute, IRouter } from '../server/index.js';
+import { HttpMethod, IRouter, MatchedRoute, Middleware, NextFunction, ParsedQuery, Request, Response, RouteHandler, RouteParams } from '../server/index.js';
 import { Scheduler, SchedulerOptions } from '../scheduler/index.js';
 /** Main HTTP server class with routing, middleware, and dependency injection */
 declare class LyraServer {
@@ -187,6 +187,13 @@ declare class LyraServer {
      * @returns {this} - Server instance for chaining
      */
     patch(path: string, ...handlers: RouteHandler[]): this;
+    /**
+     * Register OPTIONS route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    options(path: string, ...handlers: RouteHandler[]): this;
     addRoute(method: HttpMethod, path: string, handlers: RouteHandler[], parserType?: 'json' | 'xml' | 'urlencoded' | 'raw'): void;
     pathToRegex(path: string): RegExp;
     extractParamNames(path: string): string[];

@@ -1,8 +1,9 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import { User } from '@/core/loader';
+import { ParsedMultipartData } from './MultipartParser';
 
 /** Supported HTTP methods */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS';
 
 /** Route methods including middleware */
 export type RouteMethod = HttpMethod | 'USE';
@@ -35,6 +36,7 @@ export interface Request extends IncomingMessage {
     body: any;
     cookies: { [key: string]: string };
     user?: typeof User | Partial<typeof User> | null;
+    multipartData: ParsedMultipartData;
     _server?: any; // Internal reference to server for error handling
 }
 

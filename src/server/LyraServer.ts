@@ -3,35 +3,38 @@ import * as http from "http";
 import * as url from "url";
 import * as fs from "fs";
 import * as path from "path";
-import { errorHandler, httpRequestMiddleware, accessMiddleware } from "@/core/middlewares"
-import { Config } from "@/core/config"
+import {accessMiddleware, errorHandler, httpRequestMiddleware} from "@/core/middlewares"
+import {Config} from "@/core/config"
 import {
-    Controller,
-    DIContainer,
-    getParamMetadata,
-    ParamMetadata,
-    getRoutePrefix,
-    getRoutes,
-    HttpMethod,
-    logger,
-    RouteHandler,
-    Middleware,
-    NextFunction,
-    Routes,
-    Request,
-    Response,
-    RouteParams,
-    ParsedQuery,
-    MatchedRoute,
-    IRouter,
-    MiddlewareRoute,
-    CookieOptions
+  Controller,
+  CookieOptions,
+  DIContainer,
+  getParamMetadata,
+  getRoutePrefix,
+  getRoutes,
+  HttpMethod,
+  IRouter,
+  logger,
+  MatchedRoute,
+  Middleware,
+  MiddlewareRoute,
+  multipartMiddleware,
+  MultipartParser,
+  NextFunction,
+  ParamMetadata,
+  ParsedQuery,
+  Request,
+  Response,
+  RouteHandler,
+  RouteParams,
+  Routes
 } from '@/core/server';
-import { TemplateRenderer, SSRConfig } from '@/core/ssr';
-import { parseXML, serializeToXML } from './xmlParser';
-import { Scheduler, SchedulerOptions } from '@/core/scheduler';
-import { logger as loggerSingleton } from '@/core/logger';
-import { mailer } from '@/core/mailer';
+import {SSRConfig, TemplateRenderer} from '@/core/ssr';
+import {parseXML, serializeToXML} from './xmlParser';
+import {Scheduler, SchedulerOptions} from '@/core/scheduler';
+import {logger as loggerSingleton} from '@/core/logger';
+import {mailer} from '@/core/mailer';
+import {FileManager} from "@/core/services";
 
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
@@ -54,7 +57,8 @@ class LyraServer {
             POST: {},
             PUT: {},
             DELETE: {},
-            PATCH: {}
+            PATCH: {},
+            OPTIONS: {}
         };
         this.middlewares = [];
         this.settings = new Map();
@@ -74,6 +78,7 @@ class LyraServer {
         this.middlewares.push({ path: '', middleware: logger });
         this.middlewares.push({ path: '', middleware: httpRequestMiddleware as Middleware });
         this.middlewares.push({ path: '', middleware: accessMiddleware as Middleware });
+        this.middlewares.push({ path: '', middleware: multipartMiddleware as Middleware });
     }
 
     /**
@@ -788,6 +793,17 @@ class LyraServer {
         return this;
     }
 
+    /**
+     * Register OPTIONS route
+     * @param {string} path - Route path
+     * @param {...RouteHandler[]} handlers - Route handlers
+     * @returns {this} - Server instance for chaining
+     */
+    options(path: string, ...handlers: RouteHandler[]): this {
+        this.addRoute('OPTIONS', path, handlers);
+        return this;
+    }
+
     addRoute(method: HttpMethod, path: string, handlers: RouteHandler[], parserType?: 'json' | 'xml' | 'urlencoded' | 'raw'): void {
         const pattern = this.pathToRegex(path);
         const paramNames = this.extractParamNames(path);
@@ -924,6 +940,15 @@ class LyraServer {
             req.on('error', reject);
         });
     }
+
+    // Parse MultipartFormData
+    // async parseMultipartFormData(req: Request): Promise<ParsedMultipartData> {
+    //   const multipartParser = new MultipartParser();
+    //   const { fields, files } = await multipartParser.parse(req)
+    //   return {
+    //     fields
+    //   }
+    // }
 
     // Parse cookies from request headers
     parseCookies(req: Request): { [key: string]: string } {
@@ -1468,8 +1493,19 @@ class LyraServer {
             // Parse cookies
             req.cookies = this.parseCookies(req);
 
+            // parse multipart data
+
+
             // Execute middlewares early (including logger) so they run for all requests including 404s
             await this.executeMiddlewares(req, res, pathname);
+
+            // Automatic OPTIONS request handling (CORS preflight)
+            if (req.method === 'OPTIONS') {
+                res.statusCode = 204;
+                res.setHeader('Content-Length', '0');
+                res.end();
+                return;
+            }
 
             // Match route early to get parser type
             const route = this.matchRoute(req.method as HttpMethod, pathname);
@@ -1536,6 +1572,12 @@ class LyraServer {
 
             // Auto-register mailer singleton for DI
             this.diContainer.registerInstance('mailer', mailer, 'service');
+
+            // Auto-register multpartParser singleton for DI
+            this.diContainer.registerInstance('multipartParser', new MultipartParser(), 'service');
+
+            // Auto-register fileManager singleton for DI
+            this.diContainer.registerInstance('fileManager', new FileManager(), 'service');
 
             this.servicesRegistered = true;
         }

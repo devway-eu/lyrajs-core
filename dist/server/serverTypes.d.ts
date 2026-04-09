@@ -1,7 +1,8 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import { User } from '../loader/index.js';
+import { ParsedMultipartData } from './MultipartParser.js';
 /** Supported HTTP methods */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS';
 /** Route methods including middleware */
 export type RouteMethod = HttpMethod | 'USE';
 /**
@@ -31,6 +32,7 @@ export interface Request extends IncomingMessage {
         [key: string]: string;
     };
     user?: typeof User | Partial<typeof User> | null;
+    multipartData: ParsedMultipartData;
     _server?: any;
 }
 /** Enhanced HTTP Response with helper methods */

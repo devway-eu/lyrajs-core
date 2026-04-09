@@ -3,6 +3,7 @@ import inquirer from "inquirer";
 import path from "path";
 import { EntityGeneratorHelper, onDeleteChoices, RepositoryGeneratorHelper, sqlTypeChoices } from "../../cli/utils/index.js";
 import { ConsoleInputValidator } from "../../cli/utils/ConsoleInputValidator.js";
+import { MiddlewareGeneratorHelper } from "../../cli/utils/MiddlewareGeneratorHelper.js";
 import { LyraConsole } from "../../orm/index.js";
 /**
  * GenerateEntityCommand class
@@ -182,6 +183,8 @@ export class GenerateEntityCommand {
         else {
             LyraConsole.success(`Entity generated!`, `Entity file at: ${entityFilePath}`, `Repository file at: ${repositoryFilePath} (existing file preserved)`, "", "You can create a controller for this entity using the 'make:controller' command");
         }
+        // Check for User relations and generate ownership middleware
+        this.generateOwnershipMiddleware(entity, properties);
     }
     /**
      * Prompts for new properties to add to existing entity
@@ -303,6 +306,8 @@ export class GenerateEntityCommand {
         const updatedContent = EntityGeneratorHelper.addPropertiesToExistingEntity(existingContent, properties);
         fs.writeFileSync(entityFilePath, updatedContent);
         LyraConsole.success(`Entity updated successfully!`, `New ${properties.length > 1 ? "properties" : "property"} added to: ${entityFilePath}`, "", "Don't forget to run migrations to update your database schema!");
+        // Check for User relations in new properties and generate ownership middleware
+        this.generateOwnershipMiddleware(entityName, properties);
     }
     /**
      * Generates entity file content
@@ -329,6 +334,35 @@ export class GenerateEntityCommand {
     entityExists(entityName) {
         const entityFilePath = path.join(process.cwd(), "src", "entity", `${entityName}.ts`);
         return fs.existsSync(entityFilePath);
+    }
+    /**
+     * Detects User relations and generates ownership middleware
+     * @param {string} entityName - Name of the entity
+     * @param {Array<ColumnType>} properties - Array of entity properties
+     * @returns {void}
+     */
+    generateOwnershipMiddleware(entityName, properties) {
+        // Find properties that reference the User entity
+        const userRelations = properties.filter((prop) => prop.references && prop.references.toLowerCase() === "user");
+        if (userRelations.length === 0) {
+            return;
+        }
+        // For each User relation, generate a middleware
+        userRelations.forEach((relation) => {
+            if (!relation.name)
+                return;
+            const middlewareCode = MiddlewareGeneratorHelper.getOwnershipMiddlewareCode(entityName, relation.name);
+            const middlewareFileName = MiddlewareGeneratorHelper.getMiddlewareFileName(entityName);
+            const middlewareFilePath = path.join(process.cwd(), "src", "middleware", middlewareFileName);
+            // Ensure middleware directory exists
+            const middlewareDir = path.join(process.cwd(), "src", "middleware");
+            if (!fs.existsSync(middlewareDir)) {
+                fs.mkdirSync(middlewareDir, { recursive: true });
+            }
+            // Write middleware file
+            fs.writeFileSync(middlewareFilePath, middlewareCode);
+            LyraConsole.success(`Ownership middleware generated!`, `Middleware file at: ${middlewareFilePath}`, `Property "${relation.name}" references User entity`, `Use this middleware in your routes to protect ${entityName} resources`);
+        });
     }
 }
 //# sourceMappingURL=GenerateEntityCommand.js.map

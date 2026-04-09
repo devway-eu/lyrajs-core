@@ -45,4 +45,11 @@ export declare class GenerateEntityCommand {
      * @returns {boolean} - True if entity exists, false otherwise
      */
     private entityExists;
+    /**
+     * Detects User relations and generates ownership middleware
+     * @param {string} entityName - Name of the entity
+     * @param {Array<ColumnType>} properties - Array of entity properties
+     * @returns {void}
+     */
+    private generateOwnershipMiddleware;
 }
