@@ -207,6 +207,11 @@ declare class LyraServer {
     createResponse(res: Response): Response;
     private matchMiddlewarePath;
     /**
+     * Check if a route handler needs parameter resolution
+     * Returns true if the route has resolve config or @Param decorators
+     */
+    private needsParameterResolution;
+    /**
      * Wrap a handler with automatic parameter resolution
      * Returns a new handler that resolves parameters before calling the original
      */

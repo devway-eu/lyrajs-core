@@ -1,5 +1,7 @@
 import { Mail } from "./Mail"
-import { Transporter } from "./Transporter"
+import { Transporter, verifyMailerConnection } from "./Transporter"
+
+export { verifyMailerConnection }
 
 /**
  * Mailer class

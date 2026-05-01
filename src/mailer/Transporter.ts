@@ -2,7 +2,8 @@ import nodemailer from "nodemailer"
 
 import { Config } from "@/core/config"
 
-const { host, port, user, password } = new Config().get("mailer")
+const config = new Config().get("mailer")
+const { host, port, user, pass } = config
 
 /**
  * Nodemailer transporter instance
@@ -14,10 +15,35 @@ const { host, port, user, password } = new Config().get("mailer")
  */
 export const Transporter = nodemailer.createTransport({
   host,
-  port,
-  secure: port === 465,
+  port: Number(port),
+  secure: Number(port) === 465,
   auth: {
     user,
-    password
-  }
+    pass
+  },
+  // Add timeout settings to prevent hanging
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,   // 10 seconds
+  socketTimeout: 10000,     // 10 seconds
 } as nodemailer.TransportOptions)
+
+/**
+ * Verify SMTP connection
+ * Useful for testing configuration on startup
+ */
+export async function verifyMailerConnection(): Promise<boolean> {
+  try {
+    await Transporter.verify()
+    console.log('[Mailer] ✓ SMTP connection verified successfully')
+    return true
+  } catch (error: any) {
+    console.error('[Mailer] ✗ SMTP connection failed:', error.message)
+    console.error('[Mailer] Check your mailer configuration:')
+    console.error(`  - Host: ${host}`)
+    console.error(`  - Port: ${port}`)
+    console.error(`  - User: ${user}`)
+    console.error(`  - Secure: ${Number(port) === 465}`)
+    return false
+  }
+}
+

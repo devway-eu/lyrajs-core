@@ -1,4 +1,6 @@
 import { Mail } from "./Mail.js";
+import { verifyMailerConnection } from "./Transporter.js";
+export { verifyMailerConnection };
 /**
  * Mailer class
  * Service for sending individual and bulk emails via SMTP
@@ -50,4 +52,3 @@ declare class Mailer {
  * await mailer.send(mail)
  */
 export declare const mailer: Mailer;
-export {};

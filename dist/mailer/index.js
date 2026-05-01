@@ -1,4 +1,5 @@
-import { Transporter } from "./Transporter.js";
+import { Transporter, verifyMailerConnection } from "./Transporter.js";
+export { verifyMailerConnection };
 /**
  * Mailer class
  * Service for sending individual and bulk emails via SMTP

@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 import * as http from "http";
-import * as url from "url";
 import * as fs from "fs";
 import * as path from "path";
 import { accessMiddleware, errorHandler, httpRequestMiddleware } from "../middlewares/index.js";
@@ -377,8 +376,25 @@ class LyraServer {
                 if (!originalHandler || typeof originalHandler !== 'function') {
                     throw new Error(`Method ${methodName} not found on controller ${controller.name}.`);
                 }
-                // Wrap handler with parameter resolution
-                handler = this.wrapHandlerWithParameterResolution(originalHandler, controllerInstance, methodName);
+                // Check if parameter resolution is needed
+                const needsParameterResolution = this.needsParameterResolution(route, controllerInstance, methodName);
+                if (needsParameterResolution) {
+                    // Wrap handler with parameter resolution
+                    handler = this.wrapHandlerWithParameterResolution(originalHandler, controllerInstance, methodName);
+                }
+                else {
+                    // No parameter resolution needed - create request-scoped context
+                    handler = async (req, res, next) => {
+                        // Create a request-scoped context that inherits from controller instance
+                        // This prevents concurrent requests from overwriting each other's req/res/next
+                        const requestContext = Object.create(controllerInstance);
+                        requestContext.req = req;
+                        requestContext.res = res;
+                        requestContext.next = next;
+                        // Call original handler with request-scoped context
+                        return await originalHandler.call(requestContext);
+                    };
+                }
             }
             else if (isStaticMethod) {
                 // Static method (traditional controller or static method on DI controller)
@@ -975,32 +991,39 @@ class LyraServer {
         return normalizedRequestPath.startsWith(normalizedMiddlewarePath) || requestPath === middlewarePath;
     }
     /**
+     * Check if a route handler needs parameter resolution
+     * Returns true if the route has resolve config or @Param decorators
+     */
+    needsParameterResolution(route, controllerInstance, methodName) {
+        // Check if route has resolve configuration
+        if (route.resolve && Object.keys(route.resolve).length > 0) {
+            return true;
+        }
+        // Check if method has @Param decorator metadata
+        const proto = Object.getPrototypeOf(controllerInstance);
+        const paramMetadata = getParamMetadata(proto, methodName);
+        if (paramMetadata && paramMetadata.length > 0) {
+            return true;
+        }
+        return false;
+    }
+    /**
      * Wrap a handler with automatic parameter resolution
      * Returns a new handler that resolves parameters before calling the original
      */
     wrapHandlerWithParameterResolution(originalHandler, controllerInstance, methodName) {
         const self = this;
         return async function wrappedHandler(req, res, next) {
-            try {
-                // Inject req, res, and next into controller instance
-                controllerInstance.req = req;
-                controllerInstance.res = res;
-                controllerInstance.next = next;
-                // Resolve parameters using metadata
-                const resolvedParams = await self.resolveParameters(methodName, // Use methodName instead of handler
-                controllerInstance, req, res, next);
-                // Call original handler with resolved parameters
-                return await originalHandler.apply(controllerInstance, resolvedParams);
-            }
-            catch (error) {
-                // Pass errors to next
-                if (next) {
-                    next(error);
-                }
-                else {
-                    throw error;
-                }
-            }
+            // Create a request-scoped context that inherits from controller instance
+            // This prevents concurrent requests from overwriting each other's req/res/next
+            const requestContext = Object.create(controllerInstance);
+            requestContext.req = req;
+            requestContext.res = res;
+            requestContext.next = next;
+            // Resolve parameters using metadata
+            const resolvedParams = await self.resolveParameters(methodName, requestContext, req, res, next);
+            // Call original handler with request-scoped context
+            return originalHandler.apply(requestContext, resolvedParams);
         };
     }
     /**
@@ -1262,9 +1285,15 @@ class LyraServer {
             }
             // Store server reference for internal error forwarding
             req._server = this;
-            const parsedUrl = url.parse(req.url, true);
+            // Use WHATWG URL API instead of deprecated url.parse()
+            // Use a dummy base URL since req.url is relative
+            const parsedUrl = new URL(req.url || '/', 'http://localhost');
             const pathname = parsedUrl.pathname;
-            const query = parsedUrl.query;
+            // Convert URLSearchParams to plain object
+            const query = {};
+            parsedUrl.searchParams.forEach((value, key) => {
+                query[key] = value;
+            });
             // Enhance request and response early
             req = this.createRequest(req, {}, query);
             res = this.createResponse(res);

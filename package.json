@@ -1,6 +1,6 @@
 {
   "name": "@lyra-js/core",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
@@ -47,7 +47,7 @@
     "dotenv": "^16.5.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.1",
-    "nodemailer": "^7.0.7",
+    "nodemailer": "^8.0.7",
     "reflect-metadata": "^0.2.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",

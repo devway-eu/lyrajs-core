@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { Config } from "../config/index.js";
-const { host, port, user, password } = new Config().get("mailer");
+const config = new Config().get("mailer");
+const { host, port, user, pass } = config;
 /**
  * Nodemailer transporter instance
  * Configured with SMTP settings from mailer.yaml configuration file
@@ -11,11 +12,35 @@ const { host, port, user, password } = new Config().get("mailer");
  */
 export const Transporter = nodemailer.createTransport({
     host,
-    port,
-    secure: port === 465,
+    port: Number(port),
+    secure: Number(port) === 465,
     auth: {
         user,
-        password
-    }
+        pass
+    },
+    // Add timeout settings to prevent hanging
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000, // 10 seconds
+    socketTimeout: 10000, // 10 seconds
 });
+/**
+ * Verify SMTP connection
+ * Useful for testing configuration on startup
+ */
+export async function verifyMailerConnection() {
+    try {
+        await Transporter.verify();
+        console.log('[Mailer] ✓ SMTP connection verified successfully');
+        return true;
+    }
+    catch (error) {
+        console.error('[Mailer] ✗ SMTP connection failed:', error.message);
+        console.error('[Mailer] Check your mailer configuration:');
+        console.error(`  - Host: ${host}`);
+        console.error(`  - Port: ${port}`);
+        console.error(`  - User: ${user}`);
+        console.error(`  - Secure: ${Number(port) === 465}`);
+        return false;
+    }
+}
 //# sourceMappingURL=Transporter.js.map

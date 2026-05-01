@@ -8,3 +8,8 @@ import nodemailer from "nodemailer";
  * await Transporter.sendMail({ from, to, subject, html })
  */
 export declare const Transporter: nodemailer.Transporter<import("nodemailer/lib/smtp-transport").SentMessageInfo, import("nodemailer/lib/smtp-transport").Options>;
+/**
+ * Verify SMTP connection
+ * Useful for testing configuration on startup
+ */
+export declare function verifyMailerConnection(): Promise<boolean>;

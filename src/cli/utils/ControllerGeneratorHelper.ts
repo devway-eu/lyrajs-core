@@ -143,35 +143,35 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      next(error)\n`
+    controllerCodeContent += `      return next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  async read(req: Request, res: Response, next: NextFunction) {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      next(error)\n`
+    controllerCodeContent += `      return next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  async create(req: Request, res: Response, next: NextFunction) {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      next(error)\n`
+    controllerCodeContent += `      return next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  async update(req: Request, res: Response, next: NextFunction) {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      next(error)\n`
+    controllerCodeContent += `      return next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  async delete(req: Request, res: Response, next: NextFunction) {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      next(error)\n`
+    controllerCodeContent += `      return next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n`
     controllerCodeContent += `}\n`
@@ -213,18 +213,18 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `  async list() {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      const ${entityVarNamePlural} = await this.${repository}.findAll()\n`
-    controllerCodeContent += `      this.res.status(200).json({ message: "${entityName} list fetched successfully", ${entityVarNamePlural} })\n`
+    controllerCodeContent += `      return this.res.status(200).json({ message: "${entityName} list fetched successfully", ${entityVarNamePlural} })\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Get({ path: "/:${entityVarName}", resolve: { ${entityVarName}: ${entityName} } })\n`
     controllerCodeContent += `  async read(${entityVarName}: ${entityName}) {\n`
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      if (!${entityVarName}) return this.res.status(404).json({ message: "${entityName} not found" })\n`
-    controllerCodeContent += `      this.res.status(200).json({ message: "${entityName} fetched successfully", ${entityVarName} })\n`
+    controllerCodeContent += `      return this.res.status(200).json({ message: "${entityName} fetched successfully", ${entityVarName} })\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Post({ path: "/" })\n`
@@ -232,9 +232,9 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      const data = this.req.body\n`
     controllerCodeContent += `      const ${entityVarName} = await this.${repository}.save(data)\n`
-    controllerCodeContent += `      this.res.status(201).json({ message: "${entityName} created successfully", ${entityVarName} })\n`
+    controllerCodeContent += `      return this.res.status(201).json({ message: "${entityName} created successfully", ${entityVarName} })\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Put({ path: "/:${entityVarName}", resolve: { ${entityVarName}: ${entityName} } })\n`
@@ -243,9 +243,9 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `      const data = this.req.body\n`
     controllerCodeContent += `      Object.assign(${entityVarName}, data)\n`
     controllerCodeContent += `      const updated${entityName} = await this.${repository}.save(${entityVarName})\n`
-    controllerCodeContent += `      this.res.status(200).json({ message: "${entityName} updated successfully", updated${entityName} })\n`
+    controllerCodeContent += `      return this.res.status(200).json({ message: "${entityName} updated successfully", updated${entityName} })\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Delete({ path: "/:${entityVarName}", resolve: { ${entityVarName}: ${entityName} } })\n`
@@ -255,9 +255,9 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `        return this.res.status(400).json({ message: "Invalid ${entityName} id" })\n`
     controllerCodeContent += `      }\n`
     controllerCodeContent += `      await this.${repository}.delete(${entityVarName}.id)\n`
-    controllerCodeContent += `      this.res.status(200).json({ message: "${entityName} deleted successfully" })\n`
+    controllerCodeContent += `      return this.res.status(200).json({ message: "${entityName} deleted successfully" })\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n`
     controllerCodeContent += `}\n`
@@ -281,7 +281,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Get({ path: "/:id" })\n`
@@ -289,7 +289,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Post({ path: "/" })\n`
@@ -297,7 +297,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Put({ path: "/:id" })\n`
@@ -305,7 +305,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n\n`
     controllerCodeContent += `  @Delete({ path: "/:id" })\n`
@@ -313,7 +313,7 @@ export class ControllerGeneratorHelper {
     controllerCodeContent += `    try {\n`
     controllerCodeContent += `      // method code here...\n`
     controllerCodeContent += `    } catch (error) {\n`
-    controllerCodeContent += `      this.next(error)\n`
+    controllerCodeContent += `      return this.next(error)\n`
     controllerCodeContent += `    }\n`
     controllerCodeContent += `  }\n`
     controllerCodeContent += `}\n`
