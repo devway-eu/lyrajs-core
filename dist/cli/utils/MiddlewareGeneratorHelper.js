@@ -14,7 +14,7 @@ export class MiddlewareGeneratorHelper {
      * const code = MiddlewareGeneratorHelper.getOwnershipMiddlewareCode('Post', 'author')
      */
     static getOwnershipMiddlewareCode(entityName, userPropertyName) {
-        const entityNameLower = entityName.toLowerCase();
+        const entityNameLower = String(entityName).charAt(0).toLowerCase() + String(entityName).slice(1);
         const middlewareName = `canManage${entityName}`;
         const paramName = entityNameLower;
         let middlewareCode = ``;

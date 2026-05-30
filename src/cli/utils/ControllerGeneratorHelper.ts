@@ -203,7 +203,7 @@ export class ControllerGeneratorHelper {
     const entityVarName = entityName.toLowerCase()
     const entityVarNamePlural = this.pluralize(entityVarName)
     const entityPath = entityName.charAt(0).toLowerCase() + entityName.slice(1)
-    const repository = `${entityVarName}Repository`
+    const repository = `${String(entityName).charAt(0).toLowerCase() + String(entityName).slice(1)}Repository`
 
     controllerCodeContent += `import { Controller, Delete, Get, Post, Put, Route } from "@lyra-js/core"\n\n`
     controllerCodeContent += `import { ${entityName} } from "@entity/${entityName}"\n\n`
