@@ -1,6 +1,6 @@
 // Const
-import {fileURLToPath} from "url";
-import {dirname, resolve} from "path";
+import { fileURLToPath } from "url"
+import { dirname, resolve } from "path"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -11,6 +11,9 @@ export const __lyraRootDir = resolve(__dirname, "..")
 export { Kernel } from "./cli/Kernel"
 export * from "./cli/commands"
 export * from "./cli/utils"
+
+// Cache Manager
+export * from "./cacheManager"
 
 // Configuration
 export * from "./config"

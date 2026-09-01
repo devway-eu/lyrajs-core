@@ -3,6 +3,7 @@ export declare const __lyraRootDir: string;
 export { Kernel } from "./cli/Kernel.js";
 export * from "./cli/commands/index.js";
 export * from "./cli/utils/index.js";
+export * from "./cacheManager/index.js";
 export * from "./config/index.js";
 export * from "./console/LyraConsole.js";
 export * from "./errors/index.js";

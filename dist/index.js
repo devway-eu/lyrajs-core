@@ -9,6 +9,8 @@ export const __lyraRootDir = resolve(__dirname, "..");
 export { Kernel } from "./cli/Kernel.js";
 export * from "./cli/commands/index.js";
 export * from "./cli/utils/index.js";
+// Cache Manager
+export * from "./cacheManager/index.js";
 // Configuration
 export * from "./config/index.js";
 // Console
