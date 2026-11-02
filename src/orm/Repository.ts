@@ -3,6 +3,14 @@ import { DataFormatter } from "@/core/orm/DataFormatter"
 import { StdArray, StdNativeType, StdObject } from "@/core/types"
 
 /**
+ * Pagination options for repository queries
+ */
+export type PaginationOptions = {
+  page: number
+  perPage: number
+}
+
+/**
  * Repository class
  * Generic repository for database CRUD operations
  * Provides type-safe database access with automatic entity mapping
@@ -89,12 +97,14 @@ export class Repository<T extends { id: number | string }> {
    * Finds all entities matching the given criteria
    * All criteria must be satisfied (AND condition)
    * @param {Partial<T> | StdObject} criteria - Key-value pairs for WHERE conditions
+   * @param {false | PaginationOptions} pagination - Pagination options (page and perPage) or false
    * @returns {Promise<T[]>} - Array of matching entities
    * @throws {Error} - If no criteria provided
    * @example
    * const activeUsers = await userRepository.findBy({ active: true, role: 'admin' })
+   * const paginatedUsers = await userRepository.findBy({ active: true }, { page: 2, perPage: 10 })
    */
-  findBy = async (criteria: Partial<T> | StdObject) => {
+  findBy = async (criteria: Partial<T> | StdObject, pagination: false | PaginationOptions = false) => {
     const keys = Object.keys(criteria)
 
     if (keys.length === 0) {
@@ -105,26 +115,57 @@ export class Repository<T extends { id: number | string }> {
     const whereClause = keys.map((key) => `${this.sanitizeIdentifier(key)} = ?`).join(" AND ")
     const values = keys.map((key) => (criteria as StdObject)[key])
 
-    const [rows] = await db.query(`SELECT * FROM ${safeTable} WHERE ${whereClause}`, values)
+    let query = `SELECT * FROM ${safeTable} WHERE ${whereClause}`
+
+    // Add pagination if provided
+    if (pagination !== false) {
+      const offset = (pagination.page - 1) * pagination.perPage
+      query += ` LIMIT ${pagination.perPage} OFFSET ${offset}`
+    }
+
+    const [rows] = await db.query(query, values)
     return (rows as StdArray).map((row) => Object.assign(new this.entityClass(), row))
   }
 
   /**
    * Retrieves all entities from the table
+   * @param {false | PaginationOptions} pagination - Pagination options (page and perPage) or false
    * @returns {Promise<T[]>} - Array of all entities
    * @example
    * const allUsers = await userRepository.findAll()
+   * const paginatedUsers = await userRepository.findAll({ page: 1, perPage: 20 })
    */
-  findAll = async () => {
+  findAll = async (pagination: false | PaginationOptions = false) => {
     const safeTable = this.sanitizeIdentifier(this.table)
-    const [rows] = await db.query(`SELECT * FROM ${safeTable}`, [])
+    let query = `SELECT * FROM ${safeTable}`
+
+    // Add pagination if provided
+    if (pagination !== false) {
+      const offset = (pagination.page - 1) * pagination.perPage
+      query += ` LIMIT ${pagination.perPage} OFFSET ${offset}`
+    }
+
+    const [rows] = await db.query(query, [])
     return (rows as StdArray).map((row) => Object.assign(new this.entityClass(), row))
+  }
+
+  /**
+   * Gets the list of decorated column names from entity metadata
+   * Only returns properties that have the @Column() decorator
+   * @returns {string[]} - Array of column names
+   * @private
+   */
+  private getDecoratedColumnNames(): string[] {
+    // Note: Column decorator stores metadata on the prototype, not the constructor
+    const columnMetadata = Reflect.getMetadata("entity:columns", this.entityClass.prototype) || []
+    return columnMetadata.map((col: StdObject) => col.name as string)
   }
 
   /**
    * Saves an entity (insert or update)
    * Performs INSERT if entity has no id, UPDATE if id exists
    * Automatically formats data according to column metadata
+   * Only persists properties decorated with @Column()
    * @param {T | StdObject} entity - Entity to save
    * @returns {Promise<T>} - The saved entity
    * @example
@@ -134,20 +175,21 @@ export class Repository<T extends { id: number | string }> {
    * const updatedUser = await userRepository.save(savedUser) // UPDATE
    */
   save = async (entity: T | StdObject): Promise<T|null> => {
-    // const columns = Reflect.getMetadata("entity:columns", this.entityClass) || []
-    // const primaryKey: string = Reflect.getMetadata("entity:pk", this.entityClass)
-    let columns = Object.keys(entity)
-    // const entityObj = entity as T | any
     const isUpdate = !!entity.id
     const entityId = entity.id as number | string  // Store ID before formatting
 
     const formattedEntity = DataFormatter.getFormattedEntityData(entity as StdObject)
     entity = formattedEntity as T
 
+    // Get only decorated columns from metadata
+    const decoratedColumns = this.getDecoratedColumnNames()
+    let columns = decoratedColumns.filter((col: string) =>
+      col !== "id" && entity.hasOwnProperty(col)
+    )
+
     const safeTable = this.sanitizeIdentifier(this.table)
 
     if (isUpdate) {
-      columns = columns.filter((col: string) => col !== "id")
       const updates = columns.map((col: string) => `${this.sanitizeIdentifier(col)} = ?`).join(", ")
       const values: unknown[] = columns.map((col: string) => entity[col as keyof typeof entity])
 
@@ -157,12 +199,8 @@ export class Repository<T extends { id: number | string }> {
 
       return await this.find(entityId)
     } else {
-      const columnNames = columns
-        .filter((col: string) => col !== "id")
-        .map((col: string) => this.sanitizeIdentifier(col))
-      const values = columns
-        .filter((col: string) => col !== "id")
-        .map((key: string | unknown) => (key === "content" ? JSON.stringify({}) : entity[key as keyof typeof entity]))
+      const columnNames = columns.map((col: string) => this.sanitizeIdentifier(col))
+      const values = columns.map((key: string | unknown) => (key === "content" ? JSON.stringify({}) : entity[key as keyof typeof entity]))
 
       const placeholders = columnNames.map(() => "?").join(", ")
 

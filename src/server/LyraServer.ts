@@ -20,6 +20,7 @@ import {
   multipartMiddleware,
   MultipartParser,
   NextFunction,
+  optionsHandler,
   ParamMetadata,
   ParsedQuery,
   Request,
@@ -74,6 +75,7 @@ class LyraServer {
         this.settings.set('request max size', '10mb');
 
         // Register global middlewares (run before routing)
+        this.middlewares.push({ path: '', middleware: optionsHandler() });
         this.middlewares.push({ path: '', middleware: logger });
         this.middlewares.push({ path: '', middleware: httpRequestMiddleware as Middleware });
         this.middlewares.push({ path: '', middleware: accessMiddleware as Middleware });
@@ -1535,15 +1537,8 @@ class LyraServer {
 
 
             // Execute middlewares early (including logger) so they run for all requests including 404s
+            // OPTIONS requests are handled by optionsHandler middleware
             await this.executeMiddlewares(req, res, pathname);
-
-            // Automatic OPTIONS request handling (CORS preflight)
-            if (req.method === 'OPTIONS') {
-                res.statusCode = 204;
-                res.setHeader('Content-Length', '0');
-                res.end();
-                return;
-            }
 
             // Match route early to get parser type
             const route = this.matchRoute(req.method as HttpMethod, pathname);

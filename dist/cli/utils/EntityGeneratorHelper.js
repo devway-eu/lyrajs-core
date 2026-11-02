@@ -16,7 +16,7 @@ export class EntityGeneratorHelper {
      */
     static getFullEntityCode(entityName, properties) {
         let entityCodeContent = ``;
-        entityCodeContent += this.importsString();
+        entityCodeContent += this.importsString(properties);
         entityCodeContent += this.tableDecorator();
         entityCodeContent += `export class ${entityName} extends Entity<${entityName}> {` + "\n";
         entityCodeContent += this.propertyWithDecorator({
@@ -32,6 +32,10 @@ export class EntityGeneratorHelper {
         entityCodeContent += `\n`;
         entityCodeContent += this.constructorString(entityName);
         entityCodeContent += `}` + `\n`;
+        // Relations are now defined using @Relation decorator
+        // No need to generate manual metadata registration
+        // Ensure no more than 1 successive empty line (max 2 consecutive newlines)
+        entityCodeContent = entityCodeContent.replace(/\n{3,}/g, '\n\n');
         return entityCodeContent;
     }
     /**
@@ -41,10 +45,13 @@ export class EntityGeneratorHelper {
      * @returns {string} - Updated entity file content
      */
     static addPropertiesToExistingEntity(existingContent, newProperties) {
+        // Add decorated properties
         let newPropertiesCode = `\n`;
         for (const prop of newProperties) {
             newPropertiesCode += this.propertyWithDecorator(prop);
         }
+        // DO NOT add manyToMany properties to the current entity
+        // They will be added to the related entities via updateRelatedEntitiesWithInverseProperties
         const constructorRegex = /\s+constructor\(/;
         const constructorMatch = existingContent.match(constructorRegex);
         if (!constructorMatch || constructorMatch.index === undefined) {
@@ -53,7 +60,54 @@ export class EntityGeneratorHelper {
         // Insert new properties before the constructor
         const beforeConstructor = existingContent.substring(0, constructorMatch.index);
         const fromConstructor = existingContent.substring(constructorMatch.index);
-        return beforeConstructor + newPropertiesCode + fromConstructor;
+        let updatedContent = beforeConstructor + newPropertiesCode + fromConstructor;
+        // DO NOT add manyToMany metadata to the current entity
+        // Metadata will be added to the related entities via updateRelatedEntitiesWithInverseProperties
+        // Add necessary entity type imports (ALWAYS, not just when inverseRelations exist)
+        const entityImports = new Set();
+        // DO NOT add imports for manyToMany relations (they're not added to current entity)
+        // Add imports for ALL FK properties (manyToOne) - all have "number | Entity" type
+        const allFKProperties = newProperties.filter((prop) => {
+            return prop.type.toLowerCase() === "relation" && prop.references && prop.fk;
+        });
+        allFKProperties.forEach((prop) => {
+            if (prop.references) {
+                // Extract entity name from references (e.g., "user.id" → "User")
+                const referencedEntity = prop.references.split('.')[0];
+                const capitalizedEntity = referencedEntity.charAt(0).toUpperCase() + referencedEntity.slice(1);
+                entityImports.add(capitalizedEntity);
+            }
+        });
+        // Check if imports already exist and add missing ones
+        if (entityImports.size > 0) {
+            let importsToAdd = "";
+            entityImports.forEach((entity) => {
+                if (!updatedContent.includes(`import { ${entity} }`)) {
+                    importsToAdd += `import { ${entity} } from "@entity/${entity}"\n`;
+                }
+            });
+            if (importsToAdd) {
+                // Find the last import statement and add after it with an empty line
+                const lastImportRegex = /import .+ from .+\n/g;
+                const imports = updatedContent.match(lastImportRegex);
+                if (imports && imports.length > 0) {
+                    const lastImport = imports[imports.length - 1];
+                    const lastImportIndex = updatedContent.lastIndexOf(lastImport);
+                    if (lastImportIndex !== -1) {
+                        const insertPosition = lastImportIndex + lastImport.length;
+                        // Add empty line before new imports
+                        updatedContent = updatedContent.substring(0, insertPosition) + `\n` + importsToAdd + updatedContent.substring(insertPosition);
+                    }
+                }
+                else {
+                    // No existing imports, add at the beginning
+                    updatedContent = importsToAdd + updatedContent;
+                }
+            }
+        }
+        // Ensure no more than 1 successive empty line (max 2 consecutive newlines)
+        updatedContent = updatedContent.replace(/\n{3,}/g, '\n\n');
+        return updatedContent;
     }
 }
 _a = EntityGeneratorHelper;
@@ -67,10 +121,35 @@ EntityGeneratorHelper.ends = {
 };
 /**
  * Generates import statements for entity file
+ * Imports related entities for TypeScript types (FK properties, inverse relations)
+ * @param {ColumnType[]} properties - Array of entity properties to check for relations
  * @returns {string} - Import statements code
  */
-EntityGeneratorHelper.importsString = () => {
-    return `import { Column, Entity, Table } from "@lyra-js/core"\n\n`;
+EntityGeneratorHelper.importsString = (properties = []) => {
+    let imports = `import { Column, Entity, Table } from "@lyra-js/core"\n`;
+    const entityImports = new Set();
+    // Check for ALL FK properties (manyToOne) - need to import for "number | Entity" types
+    // Note: manyToMany properties are NOT added to the current entity, so no imports needed for them
+    const allFKProperties = properties.filter((prop) => {
+        return prop.type.toLowerCase() === "relation" && prop.references && prop.fk;
+    });
+    allFKProperties.forEach((prop) => {
+        if (prop.references) {
+            // Extract entity name from references (e.g., "user.id" → "User")
+            const referencedEntity = prop.references.split('.')[0];
+            const capitalizedEntity = referencedEntity.charAt(0).toUpperCase() + referencedEntity.slice(1);
+            // Always import - all FK properties now have "number | Entity" type
+            entityImports.add(capitalizedEntity);
+        }
+    });
+    if (entityImports.size > 0) {
+        imports += `\n`;
+        // Add entity imports for TypeScript types
+        entityImports.forEach((entity) => {
+            imports += `import { ${entity} } from "@entity/${entity}"\n`;
+        });
+    }
+    return imports + `\n`;
 };
 /**
  * Generates @Table decorator
@@ -112,6 +191,7 @@ EntityGeneratorHelper.columnDecorator = (property) => {
 };
 /**
  * Generates property declaration with TypeScript type
+ * Handles foreign keys: if property name matches related entity (camelCase), type is number | Entity
  * @param {ColumnType} property - Property definition
  * @returns {string} - Property declaration code
  */
@@ -155,7 +235,17 @@ EntityGeneratorHelper.propertyString = (property) => {
                 `boolean` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ` = false`);
             break;
         case "relation":
-            propertyString += `number` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
+            // Always generate "number | Entity" type for FK properties
+            // This allows users to name FK properties however they want (author, created_by, owner, etc.)
+            if (property.references) {
+                // Extract entity name from references (e.g., "user.id" → "User")
+                const referencedEntity = property.references.split('.')[0];
+                const capitalizedEntity = referencedEntity.charAt(0).toUpperCase() + referencedEntity.slice(1);
+                propertyString += `number | ${capitalizedEntity}` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
+            }
+            else {
+                propertyString += `number` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ``);
+            }
             break;
     }
     return propertyString;
@@ -167,5 +257,26 @@ EntityGeneratorHelper.propertyString = (property) => {
  */
 EntityGeneratorHelper.propertyWithDecorator = (property) => {
     return _a.columnDecorator(property) + "\n" + _a.propertyString(property) + "\n";
+};
+/**
+ * Generates an inverse relation array property (without decorator)
+ * @param {string} propertyName - Name of the property
+ * @param {string} relatedEntity - Name of the related entity
+ * @returns {string} - Property declaration code
+ */
+EntityGeneratorHelper.inverseRelationProperty = (propertyName, relatedEntity) => {
+    return `  ${propertyName}: ${relatedEntity}[] = []\n`;
+};
+/**
+ * Generates relation metadata registration code
+ * DEPRECATED: Relations now use @Relation decorator instead of manual metadata
+ * @param {ColumnType[]} properties - Array of properties
+ * @param {string} entityName - Name of the current entity
+ * @returns {string} - Empty string (metadata no longer generated)
+ */
+EntityGeneratorHelper.relationMetadata = (properties, entityName) => {
+    // Relations are now defined using @Relation decorator
+    // No need to generate manual metadata registration
+    return "";
 };
 //# sourceMappingURL=EntityGeneratorHelper.js.map

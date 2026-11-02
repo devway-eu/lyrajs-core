@@ -15,9 +15,11 @@ export declare class EntityGeneratorHelper {
     };
     /**
      * Generates import statements for entity file
+     * Imports related entities for TypeScript types (FK properties, inverse relations)
+     * @param {ColumnType[]} properties - Array of entity properties to check for relations
      * @returns {string} - Import statements code
      */
-    static importsString: () => string;
+    static importsString: (properties?: ColumnType[]) => string;
     /**
      * Generates @Table decorator
      * @returns {string} - Table decorator code
@@ -37,6 +39,7 @@ export declare class EntityGeneratorHelper {
     static columnDecorator: (property: ColumnType) => string;
     /**
      * Generates property declaration with TypeScript type
+     * Handles foreign keys: if property name matches related entity (camelCase), type is number | Entity
      * @param {ColumnType} property - Property definition
      * @returns {string} - Property declaration code
      */
@@ -47,6 +50,21 @@ export declare class EntityGeneratorHelper {
      * @returns {string} - Complete property code
      */
     static propertyWithDecorator: (property: ColumnType) => string;
+    /**
+     * Generates an inverse relation array property (without decorator)
+     * @param {string} propertyName - Name of the property
+     * @param {string} relatedEntity - Name of the related entity
+     * @returns {string} - Property declaration code
+     */
+    static inverseRelationProperty: (propertyName: string, relatedEntity: string) => string;
+    /**
+     * Generates relation metadata registration code
+     * DEPRECATED: Relations now use @Relation decorator instead of manual metadata
+     * @param {ColumnType[]} properties - Array of properties
+     * @param {string} entityName - Name of the current entity
+     * @returns {string} - Empty string (metadata no longer generated)
+     */
+    static relationMetadata: (properties: ColumnType[], entityName?: string) => string;
     /**
      * Generates complete entity file code
      * @param {string} entityName - Name of the entity

@@ -11,11 +11,13 @@ export declare class DataFormatter {
      * Formats entity data based on column metadata
      * Converts database values to appropriate JavaScript types (Date, number, string, etc.)
      * Handles nullable columns and various SQL data types
+     * Only includes properties that have @Column() decorator
      * @param {Entity<StdObject> | StdObject} entity - Entity instance to format
-     * @returns {StdObject} - Formatted entity with properly typed values
+     * @returns {StdObject} - Formatted entity with properly typed values (only decorated columns)
      * @example
      * const formattedUser = DataFormatter.getFormattedEntityData(rawUser)
      * // Date strings become Date objects, numeric strings become numbers, etc.
+     * // Non-decorated properties (like Category.posts) are excluded
      */
     static getFormattedEntityData(entity: Entity<StdObject> | StdObject): StdObject;
 }

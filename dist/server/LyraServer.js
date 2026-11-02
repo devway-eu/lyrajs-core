@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { accessMiddleware, errorHandler, httpRequestMiddleware } from "../middlewares/index.js";
 import { Config } from "../config/index.js";
-import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger, multipartMiddleware, MultipartParser } from '../server/index.js';
+import { Controller, DIContainer, getParamMetadata, getRoutePrefix, getRoutes, logger, multipartMiddleware, MultipartParser, optionsHandler } from '../server/index.js';
 import { TemplateRenderer } from '../ssr/index.js';
 import { parseXML, serializeToXML } from './xmlParser.js';
 import { Scheduler } from '../scheduler/index.js';
@@ -39,6 +39,7 @@ class LyraServer {
         this.settings.set('trust proxy', false);
         this.settings.set('request max size', '10mb');
         // Register global middlewares (run before routing)
+        this.middlewares.push({ path: '', middleware: optionsHandler() });
         this.middlewares.push({ path: '', middleware: logger });
         this.middlewares.push({ path: '', middleware: httpRequestMiddleware });
         this.middlewares.push({ path: '', middleware: accessMiddleware });
@@ -1301,14 +1302,8 @@ class LyraServer {
             req.cookies = this.parseCookies(req);
             // parse multipart data
             // Execute middlewares early (including logger) so they run for all requests including 404s
+            // OPTIONS requests are handled by optionsHandler middleware
             await this.executeMiddlewares(req, res, pathname);
-            // Automatic OPTIONS request handling (CORS preflight)
-            if (req.method === 'OPTIONS') {
-                res.statusCode = 204;
-                res.setHeader('Content-Length', '0');
-                res.end();
-                return;
-            }
             // Match route early to get parser type
             const route = this.matchRoute(req.method, pathname);
             if (!route) {

@@ -75,6 +75,18 @@ export type ConstraintType =
   | "SET DEFAULT"
   | "set default"
 
+export type RelationMetadata = {
+  [propertyName: string]: {
+    type: "oneToMany" | "manyToMany" | "manyToOne"
+    relatedEntity: string
+    foreignKey: string
+    // For Many-to-Many only
+    junctionEntity?: string
+    junctionForeignKey?: string
+    targetForeignKey?: string
+  }
+}
+
 export type ColumnType = {
   name?: string
   type: SqlValueType
@@ -87,4 +99,15 @@ export type ColumnType = {
   onDelete?: ConstraintType
   onUpdate?: ConstraintType
   default?: StdNativeType
+  // Inverse relation metadata (for one-to-many/many-to-many)
+  inverseRelation?: {
+    propertyName: string  // Name of the array property (e.g., "posts" or "tags")
+    relatedEntity: string // Name of the related entity (e.g., "Post" or "Tag")
+    // Many-to-Many metadata (if applicable)
+    manyToMany?: {
+      junctionEntity: string      // Junction table entity name (e.g., "PostTag")
+      junctionForeignKey: string  // FK in junction table pointing to this entity (e.g., "tag_id")
+      targetForeignKey: string    // FK in junction table pointing to target entity (e.g., "post_id")
+    }
+  }
 }

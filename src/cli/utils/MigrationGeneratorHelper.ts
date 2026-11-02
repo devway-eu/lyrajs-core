@@ -60,10 +60,12 @@ export class MigrationGeneratorHelper<T extends object> {
     const queries: string[] = []
     queries.push("USE `" + dbConfig.name + "`;")
     entities.forEach((entity: StdFunction | Entity<T> | (new () => T)) => {
-      const table = Reflect.getMetadata("entity:table", entity) || entity.constructor.name.toLowerCase()
-      const columns = Reflect.getMetadata("entity:columns", entity)
-      const pk = Reflect.getMetadata("entity:columns", entity).filter((c: ColumnType) => c.pk === true)[0]
-      const fks = Reflect.getMetadata("entity:columns", entity).filter((c: ColumnType) => c.fk === true)
+      // Note: Table decorator stores metadata on constructor, Column decorator on prototype
+      const constructor = typeof entity === 'function' ? entity : entity.constructor
+      const table = Reflect.getMetadata("entity:table", constructor) || constructor.name.toLowerCase()
+      const columns = Reflect.getMetadata("entity:columns", constructor.prototype)
+      const pk = Reflect.getMetadata("entity:columns", constructor.prototype).filter((c: ColumnType) => c.pk === true)[0]
+      const fks = Reflect.getMetadata("entity:columns", constructor.prototype).filter((c: ColumnType) => c.fk === true)
 
       fks.forEach((fk: ColumnType) => {
         const reference = fk.references ? fk.references?.split(".") : null
@@ -117,8 +119,10 @@ export class MigrationGeneratorHelper<T extends object> {
     })
 
     entities.forEach((entity: StdFunction | Entity<T> | (new () => T)) => {
-      const table = Reflect.getMetadata("entity:table", entity) || entity.constructor.name.toLowerCase()
-      const fks = Reflect.getMetadata("entity:columns", entity).filter((c: ColumnType) => c.fk === true)
+      // Note: Table decorator stores metadata on constructor, Column decorator on prototype
+      const constructor = typeof entity === 'function' ? entity : entity.constructor
+      const table = Reflect.getMetadata("entity:table", constructor) || constructor.name.toLowerCase()
+      const fks = Reflect.getMetadata("entity:columns", constructor.prototype).filter((c: ColumnType) => c.fk === true)
 
       fks.forEach((fk: ColumnType) => {
         const reference = fk.references ? fk.references?.split(".") : null

@@ -46,6 +46,26 @@ export declare class GenerateEntityCommand {
      */
     private entityExists;
     /**
+     * Updates related entities with inverse relation properties
+     * When creating Post→Category FK, adds posts: Post[] = [] to Category
+     * @param {string} entityName - Name of the current entity being created
+     * @param {Array<ColumnType>} properties - Array of entity properties
+     * @returns {void}
+     */
+    private updateRelatedEntitiesWithInverseProperties;
+    /**
+     * Adds many-to-many relation (array property + metadata) to an entity
+     * @param {string} entityContent - Current entity file content
+     * @param {string} entityName - Name of the entity being updated
+     * @param {string} propertyName - Name of the array property (e.g., "tags")
+     * @param {string} relatedEntity - Name of the related entity (e.g., "Tag")
+     * @param {string} junctionEntity - Name of the junction entity (e.g., "PostTag")
+     * @param {string} junctionForeignKey - FK in junction pointing to this entity
+     * @param {string} targetForeignKey - FK in junction pointing to related entity
+     * @returns {string} - Updated entity content
+     */
+    private addManyToManyRelationToEntity;
+    /**
      * Detects User relations and generates ownership middleware
      * @param {string} entityName - Name of the entity
      * @param {Array<ColumnType>} properties - Array of entity properties

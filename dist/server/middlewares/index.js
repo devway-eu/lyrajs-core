@@ -1,4 +1,5 @@
 export * from './cors.js';
 export * from './logger.js';
 export * from './MultipartMiddleware.js';
+export * from './optionsHandler.js';
 //# sourceMappingURL=index.js.map

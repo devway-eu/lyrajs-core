@@ -9,21 +9,23 @@ export class DataFormatter {
      * Formats entity data based on column metadata
      * Converts database values to appropriate JavaScript types (Date, number, string, etc.)
      * Handles nullable columns and various SQL data types
+     * Only includes properties that have @Column() decorator
      * @param {Entity<StdObject> | StdObject} entity - Entity instance to format
-     * @returns {StdObject} - Formatted entity with properly typed values
+     * @returns {StdObject} - Formatted entity with properly typed values (only decorated columns)
      * @example
      * const formattedUser = DataFormatter.getFormattedEntityData(rawUser)
      * // Date strings become Date objects, numeric strings become numbers, etc.
+     * // Non-decorated properties (like Category.posts) are excluded
      */
     static getFormattedEntityData(entity) {
-        const columns = Reflect.getMetadata("entity:columns", entity);
+        // Note: Column decorator stores metadata on the prototype, not the instance
+        const columns = Reflect.getMetadata("entity:columns", entity.constructor.prototype);
         const EntityClass = entity.constructor;
-        const formattedEntity = new EntityClass(entity);
+        const formattedEntity = new EntityClass();
         for (const [property, value] of Object.entries(entity)) {
             const columnInfo = columns === null || columns === void 0 ? void 0 : columns.find((col) => col.name === property);
+            // Skip properties without @Column() decorator (e.g., relationship properties, methods)
             if (!columnInfo) {
-                ;
-                formattedEntity[property] = value;
                 continue;
             }
             const { type, nullable } = columnInfo;

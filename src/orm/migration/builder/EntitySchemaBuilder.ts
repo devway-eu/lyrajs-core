@@ -38,8 +38,10 @@ export class EntitySchemaBuilder<T extends object> {
    * Build a TableDefinition from an entity instance
    */
   private buildTableDefinition(entity: Entity<T> | (new () => T)): TableDefinition {
-    const tableName = Reflect.getMetadata("entity:table", entity) || entity.constructor.name.toLowerCase()
-    const columns = Reflect.getMetadata("entity:columns", entity) || []
+    // Note: Table decorator stores metadata on constructor, Column decorator on prototype
+    const constructor = typeof entity === 'function' ? entity : entity.constructor
+    const tableName = Reflect.getMetadata("entity:table", constructor) || constructor.name.toLowerCase()
+    const columns = Reflect.getMetadata("entity:columns", constructor.prototype) || []
 
     // Convert entity columns to ColumnDefinition[]
     const columnDefs: ColumnDefinition[] = columns
