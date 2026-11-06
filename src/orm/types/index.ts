@@ -99,6 +99,7 @@ export type ColumnType = {
   onDelete?: ConstraintType
   onUpdate?: ConstraintType
   default?: StdNativeType
+  enumValues?: string[]  // For ENUM type: array of allowed values (e.g., ["ACTIVE", "INACTIVE", "PENDING"])
   // Inverse relation metadata (for one-to-many/many-to-many)
   inverseRelation?: {
     propertyName: string  // Name of the array property (e.g., "posts" or "tags")

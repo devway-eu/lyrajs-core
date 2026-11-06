@@ -23,6 +23,7 @@ export type ColumnType = {
     onDelete?: ConstraintType;
     onUpdate?: ConstraintType;
     default?: StdNativeType;
+    enumValues?: string[];
     inverseRelation?: {
         propertyName: string;
         relatedEntity: string;

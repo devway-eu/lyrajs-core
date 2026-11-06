@@ -14,6 +14,7 @@ export interface ColumnDefinition {
     unique: boolean;
     autoIncrement: boolean;
     comment?: string;
+    enumValues?: string[];
 }
 /**
  * Index definition from database introspection or entity metadata

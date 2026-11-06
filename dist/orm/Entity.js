@@ -184,7 +184,8 @@ export class Entity {
                 return;
             }
             // Get related entity class
-            const relatedEntityModule = await import(`@entity/${relation.relatedEntity}`);
+            const entityPath = `file:///${process.cwd()}/src/entity/${relation.relatedEntity}.ts`.replace(/\\/g, '/');
+            const relatedEntityModule = await import(entityPath);
             const RelatedEntityClass = relatedEntityModule[relation.relatedEntity];
             // Fetch the related entity
             const relatedRepository = new Repository(RelatedEntityClass);
@@ -194,7 +195,8 @@ export class Entity {
         else if (relation.type === "manyToMany" && relation.junctionEntity && relation.junctionForeignKey && relation.targetForeignKey) {
             // Many-to-Many: Query through junction table
             // 1. Get junction entity class
-            const junctionEntityModule = await import(`@entity/${relation.junctionEntity}`);
+            const junctionPath = `file:///${process.cwd()}/src/entity/${relation.junctionEntity}.ts`.replace(/\\/g, '/');
+            const junctionEntityModule = await import(junctionPath);
             const JunctionEntityClass = junctionEntityModule[relation.junctionEntity];
             // 2. Query junction table
             const junctionRepository = new Repository(JunctionEntityClass);
@@ -207,7 +209,8 @@ export class Entity {
                 return;
             }
             // 4. Get target entity class
-            const targetEntityModule = await import(`@entity/${relation.relatedEntity}`);
+            const targetPath = `file:///${process.cwd()}/src/entity/${relation.relatedEntity}.ts`.replace(/\\/g, '/');
+            const targetEntityModule = await import(targetPath);
             const TargetEntityClass = targetEntityModule[relation.relatedEntity];
             // 5. Batch fetch all target entities using QueriesBatcher
             const targetRepository = new Repository(TargetEntityClass);
@@ -225,7 +228,8 @@ export class Entity {
         else {
             // One-to-Many: Direct query
             // 1. Get related entity class
-            const relatedEntityModule = await import(`@entity/${relation.relatedEntity}`);
+            const oneToManyPath = `file:///${process.cwd()}/src/entity/${relation.relatedEntity}.ts`.replace(/\\/g, '/');
+            const relatedEntityModule = await import(oneToManyPath);
             const RelatedEntityClass = relatedEntityModule[relation.relatedEntity];
             // 2. Determine FK column name (auto-detect if not provided)
             let foreignKeyName = relation.foreignKey;

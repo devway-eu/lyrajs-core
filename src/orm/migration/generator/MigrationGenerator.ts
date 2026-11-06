@@ -446,7 +446,11 @@ export class MigrationGenerator {
     for (const col of table.columns) {
       let colDef = `\\\`${col.name}\\\` ${col.type.toUpperCase()}`
 
-      if (col.length) {
+      // Handle ENUM values
+      if (col.type.toUpperCase() === 'ENUM' && col.enumValues && col.enumValues.length > 0) {
+        const enumVals = col.enumValues.map(v => `'${v}'`).join(', ')
+        colDef += `(${enumVals})`
+      } else if (col.length) {
         colDef += `(${col.length})`
       }
 
@@ -488,7 +492,11 @@ export class MigrationGenerator {
   private generateAddColumnSQL(tableName: string, column: ColumnDefinition): string {
     let sql = `ALTER TABLE \\\`${tableName}\\\` ADD COLUMN \\\`${column.name}\\\` ${column.type.toUpperCase()}`
 
-    if (column.length) {
+    // Handle ENUM values
+    if (column.type.toUpperCase() === 'ENUM' && column.enumValues && column.enumValues.length > 0) {
+      const enumVals = column.enumValues.map(v => `'${v}'`).join(', ')
+      sql += `(${enumVals})`
+    } else if (column.length) {
       sql += `(${column.length})`
     }
 

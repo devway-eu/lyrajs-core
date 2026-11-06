@@ -57,7 +57,8 @@ export class EntitySchemaBuilder {
                 primary: (_b = col.pk) !== null && _b !== void 0 ? _b : false,
                 unique: (_c = col.unique) !== null && _c !== void 0 ? _c : false,
                 autoIncrement: (_d = col.pk) !== null && _d !== void 0 ? _d : false, // Assume PKs are auto-increment
-                comment: undefined
+                comment: undefined,
+                enumValues: col.enumValues // Include enum values for ENUM columns
             });
         });
         // Build indexes (from unique columns and foreign keys)

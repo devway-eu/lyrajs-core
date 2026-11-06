@@ -35,6 +35,8 @@ import {Scheduler, SchedulerOptions} from '@/core/scheduler';
 import {logger as loggerSingleton} from '@/core/logger';
 import {mailer} from '@/core/mailer';
 import {FileManager} from "@/core/services";
+import {CacheAccessor, cacheAccessor} from "@/core/cacheManager/CacheAccessor";
+import {LyraConsole} from "@/core/console/LyraConsole";
 
 /** Main HTTP server class with routing, middleware, and dependency injection */
 class LyraServer {
@@ -134,6 +136,19 @@ class LyraServer {
      */
     getScheduler(): Scheduler | undefined {
         return this.scheduler;
+    }
+
+    /**
+     * Enable the cache manager (Redis)
+     * Initializes Redis connection and enables caching functionality
+     * When disabled, all cache operations will silently return without error
+     * @returns {this} - Server instance for chaining
+     * @example
+     * app.useCacheManager()
+     */
+    useCacheManager(): this {
+        CacheAccessor.enable();
+        return this;
     }
 
     /**
@@ -1627,7 +1642,13 @@ class LyraServer {
             await this.scheduler.start();
         }
 
-        // Step 4: Start the HTTP server
+        // Step 4: Initialize cache manager (if enabled) - silently, status will be shown after server starts
+        let redisStatus: {success: boolean, error?: string} | null = null;
+        if (CacheAccessor.isEnabled()) {
+            redisStatus = await cacheAccessor.initialize();
+        }
+
+        // Step 5: Start the HTTP server
         const server = http.createServer((req, res) => {
             this.handleRequest(req as Request, res as Response);
         });
@@ -1635,6 +1656,16 @@ class LyraServer {
         return new Promise((resolve) => {
             server.listen(port, () => {
                 if (callback) callback();
+
+                // Display Redis status AFTER server startup message
+                if (redisStatus) {
+                    if (redisStatus.success) {
+                        LyraConsole.success("Redis connected successfully");
+                    } else if (redisStatus.error) {
+                        LyraConsole.error(redisStatus.error);
+                    }
+                }
+
                 resolve(server);
             });
         });

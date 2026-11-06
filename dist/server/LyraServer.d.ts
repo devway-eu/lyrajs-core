@@ -47,6 +47,15 @@ declare class LyraServer {
      */
     getScheduler(): Scheduler | undefined;
     /**
+     * Enable the cache manager (Redis)
+     * Initializes Redis connection and enables caching functionality
+     * When disabled, all cache operations will silently return without error
+     * @returns {this} - Server instance for chaining
+     * @example
+     * app.useCacheManager()
+     */
+    useCacheManager(): this;
+    /**
      * Load controllers asynchronously
      * @returns {Promise<void>}
      */

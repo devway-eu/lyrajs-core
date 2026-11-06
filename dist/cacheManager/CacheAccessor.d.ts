@@ -1,6 +1,36 @@
 export declare class CacheAccessor {
     private cache;
+    private static enabled;
+    private initialized;
     constructor();
+    /**
+     * Enable cache manager and initialize Redis connection
+     * @internal - Called by LyraServer.useCacheManager()
+     */
+    static enable(): void;
+    /**
+     * Initialize Redis connection immediately (for server startup)
+     * @internal - Called by LyraServer.listen()
+     * @returns {Promise<{success: boolean, error?: string}>}
+     */
+    initialize(): Promise<{
+        success: boolean;
+        error?: string;
+    }>;
+    /**
+     * Check if cache manager is enabled
+     */
+    static isEnabled(): boolean;
+    /**
+     * Initialize Redis connection (lazy loading)
+     * @private
+     */
+    private initializeRedis;
+    /**
+     * Get Redis instance (initializes if needed)
+     * @private
+     */
+    private getCache;
     /**
      * Get a value(s) from cache
      * @param key - Cache key or array of keys

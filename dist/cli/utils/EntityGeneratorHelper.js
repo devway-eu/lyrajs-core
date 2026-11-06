@@ -180,6 +180,7 @@ EntityGeneratorHelper.columnDecorator = (property) => {
     let decoratorString = "  " + _a.starts.column;
     decoratorString += `type: "${property.type === "relation" ? "bigint" : property.type}"`;
     decoratorString += property.size ? `, size: ${property.size}` : ``;
+    decoratorString += property.enumValues !== undefined ? `, enumValues: [${property.enumValues.map(v => `"${v}"`).join(", ")}]` : ``;
     decoratorString += property.pk ? `, pk: true` : ``;
     decoratorString += property.references ? `, fk: true, references: "${property.references}.id"` : ``;
     decoratorString += property.onDelete ? `, onDelete: "${property.onDelete}"` : ``;
@@ -233,6 +234,25 @@ EntityGeneratorHelper.propertyString = (property) => {
         case "bool":
             propertyString +=
                 `boolean` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ` = false`);
+            break;
+        case "enum":
+            // Generate union type from enum values (e.g., "ACTIVE" | "INACTIVE" | "PENDING")
+            if (property.enumValues && property.enumValues.length > 0) {
+                // Special case: if only "undefined" value exists (user skipped enum values), use plain string type
+                if (property.enumValues.length === 1 && property.enumValues[0] === "undefined") {
+                    const defaultVal = property.default ? ` = ${property.default}` : (property.nullable ? ` = null` : ` = "undefined"`);
+                    propertyString += `string` + (property.nullable ? ` | null` : ``) + defaultVal;
+                }
+                else {
+                    const unionType = property.enumValues.map(v => `"${v}"`).join(' | ');
+                    const defaultVal = property.default ? ` = ${property.default}` : (property.nullable ? ` = null` : ` = ${property.enumValues.map(v => `"${v}"`)[0]}`);
+                    propertyString += unionType + (property.nullable ? ` | null` : ``) + defaultVal;
+                }
+            }
+            else {
+                // Fallback to string if no enum values defined
+                propertyString += `string` + (property.nullable ? ` | null` : ``) + (property.nullable ? ` = null` : ` = ""`);
+            }
             break;
         case "relation":
             // Always generate "number | Entity" type for FK properties

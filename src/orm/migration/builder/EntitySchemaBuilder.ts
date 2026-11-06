@@ -69,7 +69,8 @@ export class EntitySchemaBuilder<T extends object> {
         primary: col.pk ?? false,
         unique: col.unique ?? false,
         autoIncrement: col.pk ?? false, // Assume PKs are auto-increment
-        comment: undefined
+        comment: undefined,
+        enumValues: col.enumValues  // Include enum values for ENUM columns
       }))
 
     // Build indexes (from unique columns and foreign keys)

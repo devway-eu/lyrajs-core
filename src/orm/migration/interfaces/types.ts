@@ -15,6 +15,7 @@ export interface ColumnDefinition {
   unique: boolean
   autoIncrement: boolean
   comment?: string
+  enumValues?: string[]  // For ENUM type: array of allowed values
 }
 
 /**

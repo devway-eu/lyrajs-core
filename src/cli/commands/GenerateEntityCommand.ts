@@ -349,6 +349,43 @@ export class GenerateEntityCommand {
         size = parseInt(varcharLength)
       }
 
+      // Handle ENUM type - prompt for enum values first (before nullable)
+      let enumValues: string[] | undefined = undefined
+
+      if (propType === "enum") {
+        const enumValuesList: string[] = []
+
+        // Loop to add enum values (similar to adding entity properties)
+        let addingEnumValues = true
+        while (addingEnumValues) {
+          const { enumValue } = await inquirer.prompt([
+            {
+              type: "input",
+              name: "enumValue",
+              message: enumValuesList.length === 0
+                ? `Enter first enum value for "${propName}" (or leave empty to skip):`
+                : `Enter another enum value (or leave empty to finish):`,
+              validate: (input) => {
+                if (input.trim() && enumValuesList.includes(input.trim())) {
+                  return "This enum value already exists"
+                }
+                return true
+              }
+            }
+          ])
+
+          if (enumValue.trim()) {
+            enumValuesList.push(enumValue.trim())
+          } else {
+            // Empty input means stop adding enum values
+            addingEnumValues = false
+          }
+        }
+
+        // If no values provided, add "undefined" as default enum value
+        enumValues = enumValuesList.length > 0 ? enumValuesList : ["undefined"]
+      }
+
       let nullable = false
       let unique = false
 
@@ -375,6 +412,34 @@ export class GenerateEntityCommand {
         unique = uniqueAnswer.unique
       }
 
+      // Handle default value for ENUM after knowing if it's nullable
+      let defaultValue: string | undefined = undefined
+
+      if (propType === "enum" && enumValues && enumValues.length > 0) {
+        if (nullable) {
+          // If nullable, default is null
+          defaultValue = "null"
+        } else {
+          // If not nullable and only has "undefined" value (user didn't add custom values)
+          if (enumValues.length === 1 && enumValues[0] === "undefined") {
+            defaultValue = `"undefined"`
+          } else {
+            // If not nullable, prompt for which enum value to use as default
+            const { enumDefault } = await inquirer.prompt([
+              {
+                type: "list",
+                name: "enumDefault",
+                message: `Select default value for "${propName}":`,
+                choices: enumValues,
+                default: enumValues[0]
+              }
+            ])
+
+            defaultValue = `"${enumDefault}"`
+          }
+        }
+      }
+
       properties.push({
         name: propName,
         type: propType,
@@ -384,7 +449,9 @@ export class GenerateEntityCommand {
         fk: references ? true : undefined,
         references,
         onDelete,
-        inverseRelation
+        inverseRelation,
+        enumValues,
+        default: defaultValue
       })
 
       const { more } = await inquirer.prompt([
@@ -751,6 +818,43 @@ export class GenerateEntityCommand {
         size = parseInt(varcharLength)
       }
 
+      // Handle ENUM type - prompt for enum values first (before nullable)
+      let enumValues: string[] | undefined = undefined
+
+      if (propType === "enum") {
+        const enumValuesList: string[] = []
+
+        // Loop to add enum values (similar to adding entity properties)
+        let addingEnumValues = true
+        while (addingEnumValues) {
+          const { enumValue } = await inquirer.prompt([
+            {
+              type: "input",
+              name: "enumValue",
+              message: enumValuesList.length === 0
+                ? `Enter first enum value for "${propName}" (or leave empty to skip):`
+                : `Enter another enum value (or leave empty to finish):`,
+              validate: (input) => {
+                if (input.trim() && enumValuesList.includes(input.trim())) {
+                  return "This enum value already exists"
+                }
+                return true
+              }
+            }
+          ])
+
+          if (enumValue.trim()) {
+            enumValuesList.push(enumValue.trim())
+          } else {
+            // Empty input means stop adding enum values
+            addingEnumValues = false
+          }
+        }
+
+        // If no values provided, add "undefined" as default enum value
+        enumValues = enumValuesList.length > 0 ? enumValuesList : ["undefined"]
+      }
+
       let nullable = false
       let unique = false
 
@@ -777,6 +881,34 @@ export class GenerateEntityCommand {
         unique = uniqueAnswer.unique
       }
 
+      // Handle default value for ENUM after knowing if it's nullable
+      let defaultValue: string | undefined = undefined
+
+      if (propType === "enum" && enumValues && enumValues.length > 0) {
+        if (nullable) {
+          // If nullable, default is null
+          defaultValue = "null"
+        } else {
+          // If not nullable and only has "undefined" value (user didn't add custom values)
+          if (enumValues.length === 1 && enumValues[0] === "undefined") {
+            defaultValue = `"undefined"`
+          } else {
+            // If not nullable, prompt for which enum value to use as default
+            const { enumDefault } = await inquirer.prompt([
+              {
+                type: "list",
+                name: "enumDefault",
+                message: `Select default value for "${propName}":`,
+                choices: enumValues,
+                default: enumValues[0]
+              }
+            ])
+
+            defaultValue = `"${enumDefault}"`
+          }
+        }
+      }
+
       properties.push({
         name: propName,
         type: propType,
@@ -786,7 +918,9 @@ export class GenerateEntityCommand {
         fk: references ? true : undefined,
         references,
         onDelete,
-        inverseRelation
+        inverseRelation,
+        enumValues,
+        default: defaultValue
       })
 
       const { more } = await inquirer.prompt([
